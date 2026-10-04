@@ -25,7 +25,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | PLAYER | Input, locomotion, needs, progression coordinator | Needs/locomotion pure; action input dùng stable intent/mapper/policy; progression/craft/build handler còn trong `player.gd` | Gọi component con; phát snapshot/event | U1.4–U1.6 |
 | COMBAT | Damage, status, targeting, hit result | Pure DamageRequest/Result migrated vào Player + WildCreature; caller khác qua adapter | Command → deterministic result; presentation riêng | U1.5 |
 | CAPTURE | Throw, chance, result, ownership | Pure chance + sphere transaction + ownership resolver; stable species adapter; atomic roster commit | Seeded/injected RNG; ownership update một lần | U1.7 |
-| CREATURE | Wild AI, ecology, locomotion | `creature.gd` 1.054 dòng | Brain/state nodes dùng CreatureDefinition | U1.8–U1.9 |
+| CREATURE | Wild AI, ecology, locomotion | Player perception pure + 0,20s cadence; state/pack/ecosystem/skills còn trong `creature.gd` | Transition owner và CreatureDefinition | U1.8–U1.9 |
 | PET | Party, command, combat assist | `pet.gd`, `player.gd` | PetInstance state + PetCommand; không giữ Node trong save | U1.10 |
 | JOBS | Pet work/reservation | Scan group trong `pet.gd`, từng building | Job board, reservation, capability, result | U5.2 |
 | INVENTORY | Stack, transfer, equipment, loot | Stable transactions; chest finite stack slots và atomic mapped batch; other direct writers còn legacy | ID-based transaction atomic | U1.2, U1.4 |
@@ -77,7 +77,8 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 ### CREATURE và PET
 
 - CreatureDefinition chứa stats, element, behavior profile, skill IDs, drops, capture difficulty và animation set.
-- Wild brain chuyển state qua guard rõ; perception không quét toàn bộ group mỗi physics frame.
+- U1.8a player perception dùng pure candidate/request/result policy và cadence 0,20 giây; protected state bỏ qua group query. Contract và scan audit ở `CREATURE_PERCEPTION_CONTRACT.md`.
+- Wild brain vẫn còn nhiều writer state/target/velocity; U1.8b tách transition owner theo lát cắt, không viết lại toàn bộ FSM.
 - PetInstance lưu unique ID, species ID, level/EXP, stats rolled, needs, skills và assignment.
 - Pet command tối thiểu: follow, guard, attack target, work, return. Job và combat không đồng thời sở hữu locomotion.
 

@@ -64,6 +64,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Element/status, critical và defense tính trong CombatSystem; animation chỉ biểu diễn result.
 - Player, wild creature, pet và turret dùng cùng damage contract với faction/filter rõ.
 - U1.5 đã migrate target Player/WildCreature và khóa duplicate defeat; source caller vẫn đi qua signature adapter cũ.
+- U1.8a giới hạn player perception ở cadence 0,20 giây, chọn candidate deterministic và bỏ group scan trong protected state; ngưỡng aggro/suspicion/sleep giữ nguyên.
 - Acceptance: một activation không multi-hit ngoài thiết kế; chết chỉ phát reward một lần; reduced shake không đổi damage.
 
 ### G05 — capture

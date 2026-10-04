@@ -109,7 +109,11 @@ var pack_leader: WildCreature = null
 var pack_members: Array[WildCreature] = []
 var flank_angle: float = 0.0
 var howl_cooldown: float = 0.0
+const PLAYER_PERCEPTION_INTERVAL := 0.20
+
 var pack_scan_timer: float = 1.0
+var perception_cadence := CreaturePerceptionCadence.new(PLAYER_PERCEPTION_INTERVAL)
+var perception_query_count: int = 0
 
 # Natural Behaviors (Pond Drinking & Grazing)
 var water_source_pos: Vector2 = Vector2.ZERO
@@ -313,8 +317,8 @@ func _physics_process(delta: float) -> void:
 		update_pack_status()
 		check_predator_prey_ecosystem()
 	
-	# Aggro / Suspicion checks
-	check_aggro()
+	# Player perception runs at a bounded cadence; pack/ecosystem keep their existing timer.
+	update_player_perception(delta)
 	
 	var cur_speed = move_speed * (0.55 if slow_timer > 0 else 1.0)
 	
@@ -756,28 +760,63 @@ func perform_melee_attack() -> void:
 	
 	state = State.CHASE
 
-func check_aggro() -> void:
-	if state == State.CHASE or state == State.TELEGRAPH_CHARGE or state == State.CHARGING or state == State.STUNNED or state == State.CAPTURING or state == State.ALERT or state == State.FLEE:
+func update_player_perception(delta: float) -> void:
+	if not perception_cadence.advance(delta):
 		return
-	
-	var players = get_tree().get_nodes_in_group("player")
-	if players.size() > 0:
-		var p = players[0]
-		var dist = global_position.distance_to(p.global_position)
-		
-		# Sleeping check
-		if state == State.SLEEP:
-			if (p.velocity.length() > 190.0 and dist < 90.0) or dist < 40.0:
-				trigger_alert(p)
-			return
-		
-		var aggro_dist = 280.0 if is_night_raider else (150.0 if is_elite else 115.0)
-		var suspicion_dist = aggro_dist + 65.0
-		
-		if dist < aggro_dist:
-			trigger_alert(p)
-		elif dist < suspicion_dist and state != State.SUSPICIOUS and p.velocity.length() > 100.0:
-			trigger_suspicion(p)
+	if is_player_perception_blocked():
+		return
+	perception_query_count += 1
+
+	var candidate_nodes: Dictionary = {}
+	var candidates: Array[CreaturePerceptionCandidate] = []
+	for node in get_tree().get_nodes_in_group("player"):
+		if not is_instance_valid(node) or not (node is Node2D):
+			continue
+		var player_node := node as Node2D
+		var movement_speed := 0.0
+		if player_node is CharacterBody2D:
+			movement_speed = (player_node as CharacterBody2D).velocity.length()
+		var candidate_id := int(player_node.get_instance_id())
+		candidate_nodes[candidate_id] = player_node
+		candidates.append(CreaturePerceptionCandidate.new(
+			candidate_id,
+			global_position.distance_to(player_node.global_position),
+			movement_speed
+		))
+
+	var aggro_distance := 280.0 if is_night_raider else (150.0 if is_elite else 115.0)
+	var request := CreaturePerceptionRequest.new(
+		is_player_perception_blocked(),
+		state == State.SLEEP,
+		state == State.SUSPICIOUS,
+		aggro_distance,
+		aggro_distance + 65.0,
+		candidates
+	)
+	var result := CreaturePerceptionPolicy.resolve(request)
+	if not result.has_target_decision():
+		return
+	var selected_target := candidate_nodes.get(result.candidate_id) as Node2D
+	if not is_instance_valid(selected_target):
+		return
+	match result.decision:
+		CreaturePerceptionResult.Decision.ALERT:
+			trigger_alert(selected_target)
+		CreaturePerceptionResult.Decision.SUSPICIOUS:
+			trigger_suspicion(selected_target)
+
+
+func is_player_perception_blocked() -> bool:
+	return (
+		defeat_committed
+		or state == State.CHASE
+		or state == State.TELEGRAPH_CHARGE
+		or state == State.CHARGING
+		or state == State.STUNNED
+		or state == State.CAPTURING
+		or state == State.ALERT
+		or state == State.FLEE
+	)
 
 func trigger_suspicion(p: Node2D) -> void:
 	target = p

@@ -21,6 +21,7 @@ $combatLog = Join-Path $LogDirectory 'combat-validation.log'
 $playerNeedsLog = Join-Path $LogDirectory 'player-needs-validation.log'
 $playerLocomotionLog = Join-Path $LogDirectory 'player-locomotion-validation.log'
 $playerActionsLog = Join-Path $LogDirectory 'player-actions-validation.log'
+$creaturePerceptionLog = Join-Path $LogDirectory 'creature-perception-validation.log'
 $captureLog = Join-Path $LogDirectory 'capture-validation.log'
 $smokeLog = Join-Path $LogDirectory 'headless-smoke.log'
 $failurePattern = 'SCRIPT ERROR|Parse Error|Failed to load script|Cannot open file|Node not found|Invalid get index|^ERROR:'
@@ -65,6 +66,9 @@ Invoke-GodotCheck -Name 'Player locomotion validation' -LogPath $playerLocomotio
 )
 Invoke-GodotCheck -Name 'Player action validation' -LogPath $playerActionsLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_player_actions.gd')
+)
+Invoke-GodotCheck -Name 'Creature perception validation' -LogPath $creaturePerceptionLog -Arguments @(
+    '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_creature_perception.gd')
 )
 Invoke-GodotCheck -Name 'Capture validation' -LogPath $captureLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_capture.gd')

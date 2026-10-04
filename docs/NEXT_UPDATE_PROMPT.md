@@ -1,52 +1,38 @@
-# Prompt cho model tiếp theo — U1.8a Creature perception boundary
+# Prompt cho model tiếp theo — U1.8b Creature transition owner
 
-Bạn đang tiếp tục Godot 4.7.2 project Paloria 3.0. Làm đúng một work package nhỏ: U1.8a. Đọc `AGENTS.md`, `.agents/rules/game_development.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, `docs/architecture/MODULES.md`, `docs/gameplay/FEATURES.md`, `docs/roadmap/IMPLEMENTATION_PHASES.md` và `docs/roadmap/ANIME_TOWN_RENEWAL.md` trước khi sửa.
+Tiếp tục Godot 4.7.2 project Paloria 3.0 bằng đúng một package nhỏ: U1.8b. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, `docs/architecture/CREATURE_PERCEPTION_CONTRACT.md`, combat/capture contracts, `MODULES.md`, `FEATURES.md` và roadmap trước khi sửa.
 
 ## Mục tiêu
 
-Tách quyết định perception/target acquisition của WildCreature khỏi vòng physics dày đặc, có cadence rõ và logic thuần có thể test. Package này chuẩn bị cho FSM U1.8b; không viết lại toàn bộ `creature.gd` trong một lượt.
+Tạo một transition boundary deterministic cho nhóm state locomotion cơ bản của WildCreature, giảm direct writer trong `_physics_process` mà không viết lại skill/attack/capture/ecosystem.
 
 ## Phạm vi bắt buộc
 
-1. Chạy `tools/check_project.ps1` để xác nhận baseline, rồi audit có bằng chứng:
-   - mọi `_physics_process`, `_process`, timer và state branch trong `scripts/creature.gd`;
-   - `get_nodes_in_group`, Area2D overlap, distance scan và target assignment;
-   - ai ghi `state`, `target`, `velocity`, attack/capture/sleep/defeat guard;
-   - call path từ `main.tscn`/spawner tới creature setup.
-2. Ghi current-state table: state, perception cần thiết, transition owner, locomotion owner và side effect. Không đổi behavior khi chưa có bảng.
-3. Tạo boundary nhỏ trong `systems/creature/`:
-   - typed/ref-counted perception input snapshot;
-   - deterministic target/transition decision result;
-   - pure policy không truy cập SceneTree/Node/RNG.
-4. Node adapter chỉ thu thập candidate ở cadence hữu hạn hoặc từ Area2D/event, chuyển dữ liệu tối thiểu vào policy. Không scan toàn bộ group mỗi physics frame.
-5. Giữ nguyên combat/capture contract U1.5/U1.7, stable species snapshot và ownership lifecycle. CAPTURING, SLEEP, STUN và defeated không được bị perception ghi đè.
-6. Chỉ một owner ghi target/state trong phần đã migrate. Nếu chưa thể migrate mọi state, tạo compatibility adapter rõ và liệt kê path còn legacy.
-7. Regression tối thiểu:
-   - cadence không query trước hạn và query đúng khi đến hạn;
-   - candidate sorting/tie-break deterministic;
-   - out-of-range/invalid candidate bị loại;
-   - protected states không đổi target/state;
-   - target lost/acquired behavior giữ tương thích;
-   - capture rejection vẫn resume an toàn;
-   - main scene load/smoke xanh.
-8. Cập nhật tài liệu module, gameplay, roadmap, checkpoint và prompt U1.8b. Ghi metric trước/sau: số group scan hoặc perception query trong một khoảng simulation cố định.
+1. Chạy full baseline gate và audit lại mọi writer `state`, `state_timer`, `target`, `prey_target`, `velocity`. Lập ma trận owner/caller và chọn một lát cắt nhỏ để migrate.
+2. Ưu tiên state thuần thời gian/target: IDLE, WANDER, SUSPICIOUS và target-lost của CHASE. Không migrate fireball/spore/melee/charge, damage, capture hoặc predator-prey trong cùng package.
+3. Tạo request/result hoặc command trong `systems/creature/` với stable transition reason; không đưa Node, Callable, tween hoặc scene vào pure contract.
+4. Chỉ một adapter method apply state/timer/target mutation cho các transition đã migrate. Legacy writer ngoài lát cắt phải được liệt kê và giữ behavior.
+5. Bảo toàn perception U1.8a: 0,20 giây, deterministic candidate ordering, protected-state guard và metric 5 query/giây.
+6. Không để async attack callback đưa defeated/capturing/stunned actor về CHASE; thêm guard tại apply boundary nếu lát cắt chạm đường này.
+7. Regression: valid/invalid transition, timer expiry, missing target, protected state, stable reason, apply-once hoặc idempotence phù hợp, perception compatibility, capture rejection và main smoke.
+8. Cập nhật contract/module/gameplay/roadmap/checkpoint; prompt tiếp theo là U1.9a definition-driven creature skill/drop audit nếu U1.8 gate đạt.
 
 ## Giới hạn
 
-- Không triển khai skill/drop U1.9, PetInstance U1.10, save U1.11, chunk streaming U2 hoặc map/art/audio.
-- Không đổi balance, sprite, animation, collision layer hoặc scene hierarchy nếu không cần cho boundary.
-- Không tạo service/global singleton lớn và không thêm logic mới vào `player.gd`.
-- Không dùng display name, array index, asset path hoặc scene path làm identity.
-- Không tuyên bố performance tốt hơn nếu chưa có metric tái lập.
+- Không tạo BehaviorTree/global AI singleton.
+- Không migrate toàn bộ 15 state trong một commit.
+- Không thay balance, sprite, animation, collision, spawn, pet roster hoặc save.
+- Không gắn persistent identity vào Node/ObjectID; transient ID U1.8a chỉ dùng trong một query.
+- Không tuyên bố U1.8 hoàn tất nếu state writer audit còn vi phạm acceptance đã chọn.
 
 ## Definition of Done
 
-- Pure perception policy và adapter có static typing, không có parse/runtime warning.
-- Focused regression chứng minh cadence, determinism, state guards và behavior adapter.
-- Full `tools/check_project.ps1` xanh; quét mọi `build/checks/*.log` không có script/parse/missing dependency/error/leak.
-- `git diff --check` xanh; tài liệu ghi save/data compatibility, asset impact, rollback, manual gaps.
-- Commit trên branch riêng rồi fast-forward `main` khi gate xanh.
+- Pure transition tests và focused actor adapter test xanh.
+- Số direct writer trong lát cắt đã chọn giảm và có before/after count.
+- Full `tools/check_project.ps1` cùng log scan sạch error/leak.
+- Tài liệu ghi exact migrated writers, legacy writers, compatibility, save/asset impact, rollback và manual gaps.
+- Commit branch riêng và fast-forward `main` khi gate xanh.
 
 ## Hướng sản phẩm phải bảo toàn
 
-Paloria Luminous Town vẫn là initiative nổi bật cho U2–U4. Kiến trúc perception phải phù hợp world chunk admission/unload sau này: không giữ Node ngoài chunk như dữ liệu bền vững và không phụ thuộc scan toàn world. Your Name chỉ là mood reference; content phát hành phải nguyên bản và có license/provenance hợp lệ.
+Kiến trúc Creature phải sẵn sàng cho chunk unload ở U2: pure state không giữ Node làm dữ liệu bền vững. Paloria Luminous Town vẫn là initiative U2–U4; Your Name chỉ là mood reference và không được dùng asset/nhạc/map có bản quyền.

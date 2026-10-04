@@ -1,60 +1,48 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.7c — stable species và atomic roster ownership
+## U1.8a — Creature player-perception cadence
 
-Trạng thái: `VERIFIED` ngày 2026-10-04; package branch `work/u1.7c-roster-ownership`.
+Trạng thái: `VERIFIED` ngày 2026-10-04; package branch `work/u1.8a-creature-perception`.
 
 ### Mục tiêu và invariant
 
-- Stable species ID đi xuyên capture request, ownership result và party entry.
-- Rarity/trait được resolve thuần từ hai roll đã inject; resolver không gọi RNG hay Node.
-- Accepted append/reward/quest đúng một lần; invalid/unknown/duplicate không mutation.
-- Wild creature chỉ despawn sau accepted ownership; rejection phục hồi actor trong world.
-- Giữ party dictionary và summon adapter hiện hữu; chưa tạo persistent PetInstance hay save schema.
+- Bỏ player group scan khỏi mỗi physics frame của WildCreature.
+- Chuyển selection/alert/suspicion rule sang pure deterministic policy.
+- Protected states và defeated không query hoặc bị perception ghi đè.
+- Giữ nguyên combat, capture, pack/ecosystem, scene và balance.
 
 ### Kết quả đã triển khai
 
-- `LegacySpeciesAdapter` map cố định 5 species legacy sang `creature.*` ID và deep-copy stable snapshot.
-- `CaptureOwnershipRequest`, `CaptureOwnershipResult`, `CaptureOwnershipResolver` tạo boundary thuần, deterministic.
-- Giữ đúng rarity threshold 0.05/0.20/0.45, multiplier 1.5/1.3/1.15/1.0 và reward 75 EXP.
-- Player commit party entry có top-level `species_id`, chống token lặp trong phiên và chỉ chạy side effect sau accepted.
-- WildCreature tạo token theo instance, lấy đúng hai roll cho ownership và chỉ `queue_free()` sau accepted.
-- Rejection clear capture attempt, khôi phục visual và chuyển CHASE/IDLE an toàn.
+- Thêm candidate/request/result/policy thuần trong `systems/creature/`.
+- Thêm `CreaturePerceptionCadence` interval 0,20 giây và metric `perception_query_count`.
+- Node adapter map transient instance ID về Node chỉ trong query hiện tại.
+- Deterministic selection: distance trước, candidate ID sau.
+- Giữ ngưỡng normal/elite/raid 115/150/280, suspicion +65 và sleep wake cũ.
+- Protected states bỏ qua group scan; target loss vẫn do state timer legacy xử lý.
 
-Contract chi tiết: `architecture/CAPTURE_OWNERSHIP_CONTRACT.md`.
-
-### File và API chính
-
-- `data/legacy_species_adapter.gd`: mapping index ↔ stable ID và `create_stable_snapshot()`.
-- `systems/capture/capture_ownership_request.gd`: immutable-by-convention input snapshot.
-- `systems/capture/capture_ownership_result.gd`: `ACCEPTED | INVALID_REQUEST | UNKNOWN_SPECIES | DUPLICATE`.
-- `systems/capture/capture_ownership_resolver.gd`: validation, rarity/trait, stat boost và party projection.
-- `scripts/player.gd`: `on_pet_captured(...) -> CaptureOwnershipResult`, `commit_capture_ownership()`.
-- `scripts/creature.gd`: `capture_succeeded(...) -> CaptureOwnershipResult`, rejection restore và duplicate guard.
-- `tools/validate_capture.gd`: pure boundary và lifecycle regression.
+Contract và audit đầy đủ: `architecture/CREATURE_PERCEPTION_CONTRACT.md`.
 
 ### Validation hiện tại
 
-- Focused capture regression đạt: deterministic chance, sphere transaction và atomic roster ownership.
-- Full `tools/check_project.ps1` đạt: 26 required file, 30 Markdown file; 166 asset inventory/action; editor import/load, content, inventory, combat, needs, locomotion, action, capture và main-scene smoke đều xanh.
-- Log scan không có script error, parse error, missing dependency, runtime error hoặc resource leak.
+- Focused `validate_creature_perception.gd` đạt.
+- Full `tools/check_project.ps1` đạt sau cập nhật tài liệu: 26 required file, 31 Markdown file, 166 asset inventory/action; mọi Godot regression và main smoke xanh.
+- Metric regression: 20 tick × 0,05 giây tạo đúng 5 query thay cho baseline 60 query/giây ở 60 physics FPS, giảm 91,67% số lần player group scan có thể xảy ra.
 
 ### Compatibility, save, asset và giới hạn
 
-- Save/data breaking change: none. Dự án chưa lưu roster; party dictionary chỉ thêm `species_id`.
-- Token `wild_capture_<instance_id>` và committed-token set chỉ tồn tại trong session, không phải persistent identity.
-- Caller cũ chỉ truyền pet data/level giờ fail closed vì thiếu token/roll; runtime chính đã migrate.
-- Asset/provenance: không thêm hoặc sửa asset; inventory 166 asset giữ nguyên.
-- Manual editor test còn cần cho HUD/audio/timing reject-resume và summon party entry mới.
-- Party chưa có capacity/storage policy; persistent PetInstance thuộc U1.10, save roster thuộc U1.11.
-- Rollback: revert commit U1.7c; không cần migration.
+- Save/data breaking change: none; cadence, count và instance ID đều transient.
+- Asset/provenance: không thêm hoặc sửa asset; 166 asset giữ nguyên trạng thái.
+- Pack/ecosystem còn hai wild-creature group scan mỗi chu kỳ 2,0–3,5 giây; howl scan theo event.
+- Nhiều writer state/target/velocity và async attack vẫn trong `creature.gd`; U1.8 chưa hoàn tất.
+- Manual editor test còn cần cho response latency, sleep wake, raid và nhiều candidate.
+- Rollback: revert commit U1.8a; không cần migration.
 
 ### Gói tiếp theo
 
-U1.8a chỉ tách creature perception cadence/query boundary và regression; không viết lại toàn bộ AI. Đọc `NEXT_UPDATE_PROMPT.md`, chạy full gate baseline, audit `_physics_process`, group scans và target acquisition trước khi sửa.
+U1.8b tách transition request/result và một transition owner cho phần state loop đã chọn. Không triển khai skill/drop U1.9 hoặc refactor toàn bộ Creature trong một lượt. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
 
 ## Hướng sản phẩm phải giữ
 
-- Paloria Luminous Town là initiative hình ảnh/world/audio ưu tiên sau khi U2 chunk/persistence contract ổn định.
-- Kế hoạch AT0–AT7 ở `roadmap/ANIME_TOWN_RENEWAL.md`; dùng thiết kế nguyên bản, không sao chép map/sprite/nhạc của Your Name.
-- Asset admission mới vẫn bị chặn vì `game-dev` CLI chưa có trong PATH.
+- Paloria Luminous Town vẫn là initiative world/art/audio ưu tiên sau U2 chunk/persistence contract.
+- Không sao chép map, sprite hoặc nhạc của Your Name; content phát hành phải nguyên bản và có provenance/license.
+- `game-dev` CLI vẫn chưa có trong PATH nên asset admission mới còn bị chặn.
