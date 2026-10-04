@@ -2,7 +2,7 @@
 
 Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md` và tài liệu module/feature liên quan trước. Kiểm tra code thực tế, không suy trạng thái chỉ từ tài liệu.
 
-Luôn làm một work package nhỏ 0,5–2 ngày. U0.1–U0.4 đã kiểm chứng; restore tag là `baseline-u0.3`. Gói kế tiếp là U1.1 Core IDs/registry trên branch riêng: tạo ID contract, typed definition base/registry và validator, chỉ migrate một content slice nhỏ. Không xóa hoặc di chuyển asset trong U1.1.
+Luôn làm một work package nhỏ 0,5–2 ngày. U0.1–U0.4 và U1.1 đã kiểm chứng; restore tag là `baseline-u0.3`. Gói kế tiếp là U1.2 item definitions + legacy adapter: migrate `Gỗ`/`item.wood` xuyên một luồng pickup → inventory read/write, giữ adapter cho recipe/chest/HUD chưa migrate. Không đổi toàn bộ item catalog trong một package.
 
 Sau U0, tách lần lượt data Resources và boundary nhỏ; không rewrite `player.gd`, `creature.gd`, HUD và world cùng lúc. Giữ vertical slice chơi được sau mỗi gói. Không thêm feature mới vào god scripts nếu boundary liên quan chưa được tách.
 

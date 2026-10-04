@@ -13,6 +13,8 @@ Ngày lập: 2026-10-04. Project: Godot 4.7.2, top-down 2D, pet/căn cứ/nông 
 
 Không xóa gameplay hiện có trong một lần. Mỗi milestone là một vertical slice chạy được, có migration tạm nếu data format đổi.
 
+U1.1 ngày 2026-10-04 đã tạo stable content ID, typed `ContentDefinition`/`ItemDefinition`, registry và `item.wood` canary. Runtime inventory vẫn dùng legacy key; migration bắt đầu ở U1.2.
+
 ## Kiến trúc mục tiêu
 
 ```text

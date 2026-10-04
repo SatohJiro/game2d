@@ -2,6 +2,8 @@
 
 Đọc `docs/INDEX.md`, `docs/CHECKPOINT.md`, tài liệu module/feature liên quan và `.agents/rules/game_development.md` trước khi sửa. Roadmap được chia theo milestone/gate; mỗi lượt chỉ làm một work package nhỏ và cập nhật checkpoint.
 
+Khi sửa content ID, definition hoặc registry, đọc `docs/architecture/DATA_CONTRACTS.md`. Không dùng localized text, asset path hoặc scene path làm identity mới.
+
 ## Baseline và kiểm chứng
 
 - Godot chuẩn hiện tại: 4.7.2. Dùng executable console trong `D:\desktop\Godot_v4.7.2-stable_win64.exe` nếu `godot` chưa có PATH.

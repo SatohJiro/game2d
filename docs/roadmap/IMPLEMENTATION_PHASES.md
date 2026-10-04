@@ -15,7 +15,7 @@ U0 chỉ hoàn tất khi baseline có thể khôi phục và asset mới không 
 
 ## U1 — data và ranh giới domain
 
-1. **U1.1 Core IDs/registry:** `ContentId`, result types, definition registry và validator.
+1. **U1.1 Core IDs/registry — VERIFIED:** `ContentId`, definition base/item canary, registry và validator. Generic result types được hoãn tới package domain đầu tiên để tránh abstraction chưa có consumer.
 2. **U1.2 Item/Creature definitions:** chuyển một vertical slice (wood, sphere, Foxfire) sang Resource.
 3. **U1.3 Recipe/Building/Crop definitions:** chuyển một recipe, workbench, farm crop; giữ adapter dictionary cũ.
 4. **U1.4 Inventory transaction:** ID/stack/capacity/transfer; migrate pickup và chest.

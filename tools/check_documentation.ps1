@@ -11,6 +11,7 @@ $requiredFiles = @(
     'docs/MAJOR_UPDATE_PLAN.md',
     'docs/ASSET_PLAN.md',
     'docs/architecture/MODULES.md',
+    'docs/architecture/DATA_CONTRACTS.md',
     'docs/gameplay/FEATURES.md',
     'docs/roadmap/IMPLEMENTATION_PHASES.md',
     'docs/process/DOCUMENTATION_STANDARD.md',
@@ -22,7 +23,8 @@ $requiredFiles = @(
     'docs/assets/provenance_overrides.csv',
     'docs/assets/asset_actions.csv',
     'docs/assets/asset_action_overrides.csv',
-    'docs/assets/REPLACEMENT_PLAN.md'
+    'docs/assets/REPLACEMENT_PLAN.md',
+    'docs/decisions/ADR-0002-stable-content-ids.md'
 )
 
 $errors = [System.Collections.Generic.List[string]]::new()

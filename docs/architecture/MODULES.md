@@ -20,8 +20,8 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 
 | ID | Module mục tiêu | Hiện trạng/owner | Contract mục tiêu | Work package |
 |---|---|---|---|---|
-| CORE | Clock, RNG, command/result, IDs | Chưa có; logic rải trong scripts | Kiểu dữ liệu thuần, deterministic, không phụ thuộc scene | U1.1 |
-| DATA | Definition registry | Dictionary trong `player.gd`, `creature.gd`, building scripts | Typed Resource, ID ổn định, validator | U1.1–U1.3 |
+| CORE | Clock, RNG, command/result, IDs | `ContentId` đã có; clock/RNG/result chưa tách | Kiểu dữ liệu thuần, deterministic, không phụ thuộc scene | U1.1, package sau |
+| DATA | Definition registry | Base/ItemDefinition + registry + `item.wood` canary đã có; runtime còn dictionary legacy | Typed Resource, ID ổn định, validator | U1.1–U1.3 |
 | PLAYER | Input, locomotion, needs, progression coordinator | `player.gd` 1.087 dòng | Gọi component con; phát snapshot/event | U1.4–U1.6 |
 | COMBAT | Damage, status, targeting, hit result | Player/creature/pet/slash/turret | Command → deterministic result; presentation riêng | U1.5 |
 | CAPTURE | Throw, catch chance, capture result | `sphere.gd`, cuối `creature.gd` | CaptureRequest/Result; seeded RNG; ownership update một lần | U1.7 |
@@ -49,6 +49,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - Tên, mô tả và text UI là localization key; không dùng text hiển thị làm key inventory/save.
 - Definition bất biến trong runtime. State instance chỉ lưu ID và giá trị thay đổi như HP, level, durability.
 - Registry fail sớm khi duplicate ID, resource thiếu, giá trị âm, recipe cycle hoặc asset path không tồn tại.
+- Contract thực thi hiện tại được mô tả tại `docs/architecture/DATA_CONTRACTS.md`. `tools/validate_content.gd` là gate cho grammar, duplicate và toàn bộ definition tree.
 
 ### PLAYER
 
@@ -109,4 +110,3 @@ Không xóa group trong cùng package tạo service mới. Chạy song song qua 
 ## Quy tắc thay đổi module
 
 Mỗi module mới cần: owner path, public types/API, signals/events, invariant, dependency cho phép, save impact, test và mục tương ứng trong `docs/gameplay/FEATURES.md`. Nếu một thay đổi chạm hơn ba module, phải chia adapter/migration thành nhiều package.
-

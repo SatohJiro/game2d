@@ -8,10 +8,11 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 2. `docs/CHECKPOINT.md`: work package gần nhất, thay đổi thật và phần còn lại.
 3. `docs/roadmap/IMPLEMENTATION_PHASES.md`: thứ tự package và gate.
 4. `docs/architecture/MODULES.md`: ownership, contract và ranh giới module.
-5. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
-6. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
-7. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
-8. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
+5. `docs/architecture/DATA_CONTRACTS.md`: grammar ID, typed Resource, registry và migration legacy.
+6. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
+7. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
+8. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+9. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 
@@ -33,6 +34,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U0.2 asset inventory | Hoàn tất | Manifest/hash gate xanh; 166/166 asset chưa xác minh provenance |
 | Git snapshot | Hoàn tất | Branch `main`, root commit `2c243e1`, tag `baseline-u0.3` |
 | U0.4 asset triage | Hoàn tất | 166/166 có action; 69 runtime asset ở P0 |
+| U1.1 content foundation | Hoàn tất | Stable ID, typed base/item definition, registry và headless validator |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

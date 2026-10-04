@@ -18,6 +18,7 @@ Một thay đổi chỉ hoàn tất khi code/data chạy đúng **và** tài li�
 | Nếu thay đổi | Bắt buộc cập nhật |
 |---|---|
 | Trách nhiệm/API/signal module | `architecture/MODULES.md` |
+| Content ID/definition/registry | `architecture/DATA_CONTRACTS.md` và ADR nếu rename/remove ID |
 | Luật, reward, input, state gameplay | `gameplay/FEATURES.md` |
 | Thứ tự/dependency/gate | `roadmap/IMPLEMENTATION_PHASES.md` |
 | Asset file hoặc license | `assets/provenance_overrides.csv`, regenerate inventory, `ASSET_PLAN.md` |
