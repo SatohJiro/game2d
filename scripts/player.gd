@@ -338,68 +338,47 @@ func upgrade_stat(stat_name: String) -> void:
 	update_hud()
 
 func _input(event: InputEvent) -> void:
-	# Build mode placement
-	if is_building:
-		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			place_current_building()
-			return
-		elif (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed) or (event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE):
-			cancel_build_mode()
-			return
-	
-	# Right mouse or Q: Throw sphere
-	if event.is_action_pressed("ui_focus_next") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed):
-		throw_pal_sphere()
-	
-	# Key C: Toggle Crafting Menu
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_C:
-		if hud_ref:
-			hud_ref.toggle_crafting(not hud_ref.is_crafting_visible())
-	
-	# Key P: Toggle Character Sheet (Stat Points)
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_P:
-		if hud_ref:
-			hud_ref.toggle_stat_modal(not hud_ref.is_stat_modal_visible())
-	
-	# Key E: Interact
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_E:
-		try_interact()
-	
-	# Key R: Command pet
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R:
-		command_pets()
-	
-	# Key G: Partner Active Skill
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_G:
-		activate_partner_skill()
-	
-	# Key H: Use Pal Elixir
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
-		use_pal_elixir()
-	
-	# Key F: Eat berry to heal
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F:
-		eat_berry()
-	
-	# Key B: Quick build fence
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_B:
-		start_build_mode("wood_fence")
-	
-	# Spacebar: Combat Roll (Dodge & Invulnerability Frames)
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
-		var modal_open = (hud_ref != null) and (hud_ref.is_crafting_visible() or hud_ref.is_stat_modal_visible())
-		if not is_building and not modal_open:
-			try_combat_roll()
-			return
+	var intent := PlayerActionInputMapper.map_event(event, is_building)
+	if intent.is_valid():
+		dispatch_action_intent(intent)
 
-	# Keys 1, 2, 3: Swap active pet from party
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_1:
-			swap_active_pet(0)
-		elif event.keycode == KEY_2:
-			swap_active_pet(1)
-		elif event.keycode == KEY_3:
-			swap_active_pet(2)
+
+func dispatch_action_intent(intent: PlayerActionIntent) -> bool:
+	var modal_open: bool = (hud_ref != null) and (hud_ref.is_crafting_visible() or hud_ref.is_stat_modal_visible())
+	if not PlayerActionPolicy.is_allowed(intent, is_building, modal_open, is_rolling):
+		return false
+	match intent.action_id:
+		PlayerActionIntent.ACTION_ATTACK:
+			perform_attack(intent.aim_direction)
+		PlayerActionIntent.ACTION_ROLL:
+			try_combat_roll()
+		PlayerActionIntent.ACTION_INTERACT:
+			try_interact()
+		PlayerActionIntent.ACTION_CAPTURE_THROW:
+			throw_pal_sphere()
+		PlayerActionIntent.ACTION_TOGGLE_CRAFTING:
+			if hud_ref: hud_ref.toggle_crafting(not hud_ref.is_crafting_visible())
+		PlayerActionIntent.ACTION_TOGGLE_CHARACTER:
+			if hud_ref: hud_ref.toggle_stat_modal(not hud_ref.is_stat_modal_visible())
+		PlayerActionIntent.ACTION_BUILD_START:
+			start_build_mode(String(intent.target_id))
+		PlayerActionIntent.ACTION_BUILD_PLACE:
+			place_current_building()
+		PlayerActionIntent.ACTION_BUILD_CANCEL:
+			cancel_build_mode()
+		PlayerActionIntent.ACTION_PET_SELECT:
+			swap_active_pet(intent.slot_index)
+		PlayerActionIntent.ACTION_PET_COMMAND:
+			command_pets()
+		PlayerActionIntent.ACTION_PET_SKILL:
+			activate_partner_skill()
+		PlayerActionIntent.ACTION_USE_FOOD:
+			eat_berry()
+		PlayerActionIntent.ACTION_USE_ELIXIR:
+			use_pal_elixir()
+		_:
+			return false
+	return true
 
 func try_combat_roll() -> void:
 	# Determine roll direction from move input or mouse direction
@@ -549,10 +528,8 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	
 	# Primary attack: Left mouse click (only when not in build mode and modal menus closed)
-	var modal_open = (hud_ref != null) and (hud_ref.is_crafting_visible() or hud_ref.is_stat_modal_visible())
-	var can_attack = not is_building and not modal_open and not is_rolling
-	if can_attack and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and attack_cooldown <= 0:
-		perform_attack(aim_dir)
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and attack_cooldown <= 0:
+		dispatch_action_intent(PlayerActionIntent.new(PlayerActionIntent.ACTION_ATTACK, -1, &"", aim_dir))
 	
 	update_hud()
 

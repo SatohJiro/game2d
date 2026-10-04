@@ -39,6 +39,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Sprint chỉ hoạt động khi đang di chuyển và đủ stamina; stamina không âm và hồi theo rule nhất quán.
 - Roll có cooldown, khoảng invulnerability hữu hạn và không đi xuyên collision world.
 - U1.6b: movement input là typed snapshot; roll là atomic command; external recoil/knockback đi vào calculation qua current velocity và roll có precedence khi active.
+- U1.6c: discrete/held action đều qua stable `player.action.*` intent; mapper giữ build precedence và guard attack/roll theo modal.
 - Acceptance: keyboard/gamepad cho cùng kết quả; chuyển hướng không làm animation giật; 60 giây spam roll không kẹt state.
 
 ### G02 — survival
@@ -140,6 +141,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - HUD luôn: HP/stamina/quickbar; dữ liệu ngữ cảnh hiển thị khi cần. Modal giữ focus và có back/cancel.
 - Keyboard, mouse, gamepad; remap input; UI scale; reduced motion/flash/shake; trạng thái không chỉ phân biệt bằng màu.
 - UI đọc ViewModel và phát intent, không gọi mutation gameplay trực tiếp.
+- Boundary U1.6c cho phép UI/InputMap tương lai phát cùng `PlayerActionIntent`; physical-key mapper hiện là compatibility adapter, chưa phải remap system.
 - Acceptance: hoàn tất vòng capture/build/craft không cần chuột; 720p–1440p không cắt UI; đổi device cập nhật prompt.
 
 ### G16 — persistence

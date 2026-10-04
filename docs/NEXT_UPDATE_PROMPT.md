@@ -1,16 +1,16 @@
-﻿# Prompt triển khai package U1.6c
+﻿# Prompt triển khai package U1.7a
 
-Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, roadmap, MODULES, hai contract Player và G01/G15. Chạy `tools/check_project.ps1` trước khi sửa.
+Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, roadmap, MODULES, G05 và các contract combat/player. Chạy `tools/check_project.ps1` trước khi sửa.
 
-U1.1–U1.6b đã VERIFIED. Chỉ thực hiện U1.6c action input router:
+U1.1–U1.6 đã VERIFIED. Chỉ thực hiện U1.7a deterministic capture resolution:
 
-1. Audit toàn bộ nhánh trong `Player._input` và held attack polling: physical key/mouse, modal/build guard, handler, side effect và consume/return behavior.
-2. Tạo typed action intent với stable IDs cho attack, roll, interact, capture throw, craft/stat modal, build/cancel/place, pet swap/command/skill, food và elixir. Display text/key label không được làm identity.
-3. Input adapter có thể phụ thuộc `InputEvent`; mapping/result/router không được mutate inventory, HP, world Node hoặc UI trực tiếp.
-4. Player coordinator nhận intent rồi gọi handler cũ. Giữ nguyên key mapping, modal guard, build-mode precedence và held attack cadence; chưa chuyển sang InputMap nếu không thể giữ tương thích.
-5. Không migrate capture probability, building placement, recipes, progression hoặc HUD presentation trong package này.
-6. Regression: mỗi key/mouse map đúng intent; echo/release bị bỏ; modal/build guard; pet slot payload; unknown event no-op; deterministic mapping; main-scene adapter.
-7. Cập nhật G01/G15, module contract, checkpoint và roadmap. Ghi danh sách handler/domain debt còn lại.
-8. Kết thúc bằng full gate, commit branch riêng và fast-forward `main`. Sau đó prompt kế tiếp phải là U1.7a capture request/result pure trước khi đổi roster/despawn.
+1. Audit `sphere.gd`, `creature.gd:get_catch_chance/attempt_capture/capture_*` và Player throw/roster boundary. Ghi rule order, writer, random call, duplicate guard và animation timing.
+2. Tạo pure `CaptureRequest`, `CaptureResult`, `CaptureResolver`. Request dùng scalar/stable IDs: target/species ID khi có, HP/max HP, sphere modifier, status/back-strike flags và injected roll. Resolver không gọi RNG, Node, SceneTree, animation, HUD hoặc audio.
+3. Result phải có status, base/final chance, roll, success, applied modifiers/tags. Validate invalid HP/max, multiplier/roll range, clamp và already-capturing/invalid-target policy rõ.
+4. Migrate WildCreature để chụp pre-capture state trước khi đổi CAPTURING; sửa sleep bonus unreachable bằng request flag có regression. Resolve outcome đúng một lần trước animation; presentation đọc result và commit success/failure đúng một lần sau animation.
+5. Giữ signature `attempt_capture(player_ref, catch_multiplier, throw_pos)` cho Sphere. Giữ inventory sphere selection/consume, roster trait RNG, party append, despawn và animation ở adapter legacy.
+6. Không migrate PetInstance/roster, sphere inventory transaction, trait RNG, save hay UI redesign trong package này.
+7. Regression: full/low/zero HP chance, clamp min/max, normal/mega/giga multiplier, sleep/back-strike riêng và kết hợp, roll 0/1/equality, invalid request, deterministic repeat, duplicate capture guard và main-scene Creature adapter.
+8. Cập nhật CAPTURE contract, G05, MODULES, roadmap/checkpoint. Prompt kế tiếp U1.7b phải xử lý capture commit/roster ownership và sphere inventory transaction riêng.
 
-Ghi rõ save/data/asset impact, compatibility, manual test còn thiếu và rollback.
+Kết thúc full gate, log sạch, commit branch riêng và fast-forward `main`. Ghi save/data/asset impact, compatibility, manual animation test và rollback.
