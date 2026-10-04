@@ -6,8 +6,13 @@ class_name Player
 
 var max_hp: int = 100
 var hp: int = 100
-var max_stamina: float = 100.0
-var stamina: float = 100.0
+var locomotion_state := PlayerLocomotionState.new()
+var max_stamina: float:
+	get: return locomotion_state.max_stamina
+	set(value): locomotion_state.set_max_stamina(value)
+var stamina: float:
+	get: return locomotion_state.stamina
+	set(value): locomotion_state.set_stamina(value)
 
 var needs_state := PlayerNeedsState.new()
 var max_hunger: float:
@@ -60,7 +65,8 @@ var inventory: Dictionary = {
 
 var attack_cooldown: float = 0.0
 var sphere_cooldown: float = 0.0
-var is_sprinting: bool = false
+var is_sprinting: bool:
+	get: return locomotion_state.is_sprinting
 var shake_amount: float = 0.0
 var anim_time: float = 0.0
 var footstep_timer: float = 0.0
@@ -75,11 +81,17 @@ var pet_party: Array[Dictionary] = []
 var active_pet_node: Node2D = null
 
 # Combat Roll / Dash (Juice & Skill-based action)
-var is_rolling: bool = false
-var is_invulnerable: bool = false
-var roll_timer: float = 0.0
-var roll_direction: Vector2 = Vector2.ZERO
-var roll_speed: float = 380.0
+var is_rolling: bool:
+	get: return locomotion_state.is_rolling
+var is_invulnerable: bool:
+	get: return locomotion_state.is_invulnerable
+var roll_timer: float:
+	get: return locomotion_state.roll_timer
+var roll_direction: Vector2:
+	get: return locomotion_state.roll_direction
+var roll_speed: float:
+	get: return locomotion_state.roll_speed
+	set(value): locomotion_state.roll_speed = maxf(0.0, value)
 var ghost_trail_timer: float = 0.0
 
 # Attack Animation
@@ -390,26 +402,13 @@ func _input(event: InputEvent) -> void:
 			swap_active_pet(2)
 
 func try_combat_roll() -> void:
-	if is_rolling or stamina < 20.0:
-		return
-	
-	stamina -= 20.0
-	is_rolling = true
-	is_invulnerable = true
-	roll_timer = 0.32
-	
 	# Determine roll direction from move input or mouse direction
-	var move_input = Vector2.ZERO
-	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP): move_input.y -= 1
-	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN): move_input.y += 1
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT): move_input.x -= 1
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT): move_input.x += 1
-	
-	if move_input != Vector2.ZERO:
-		roll_direction = move_input.normalized()
-	else:
-		var mouse_pos = get_global_mouse_position()
-		roll_direction = (mouse_pos - global_position).normalized()
+	var movement_input := read_movement_input()
+	var direction := movement_input.move_direction
+	if direction == Vector2.ZERO:
+		direction = (get_global_mouse_position() - global_position).normalized()
+	if not locomotion_state.try_start_roll(direction):
+		return
 	
 	# Audio & Juice: Squash & Stretch Tween
 	if AudioManager:
@@ -421,6 +420,15 @@ func try_combat_roll() -> void:
 	var tween = create_tween()
 	tween.tween_property(visual, "scale", Vector2(1.35, 0.75), 0.12)
 	tween.tween_property(visual, "scale", Vector2(1.0, 1.0), 0.18)
+
+
+func read_movement_input() -> PlayerMovementInput:
+	var move_direction := Vector2.ZERO
+	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP): move_direction.y -= 1.0
+	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN): move_direction.y += 1.0
+	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT): move_direction.x -= 1.0
+	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT): move_direction.x += 1.0
+	return PlayerMovementInput.new(move_direction, Input.is_key_pressed(KEY_SHIFT))
 
 func spawn_ghost_trail() -> void:
 	if not is_inside_tree() or not sprite: return
@@ -454,23 +462,25 @@ func _physics_process(delta: float) -> void:
 			near_heat = true
 	
 	needs_state.tick(delta, is_sprinting, near_heat)
+	var movement_input := read_movement_input()
+	var locomotion_result := locomotion_state.tick(
+		delta,
+		movement_input,
+		velocity,
+		move_speed,
+		sprint_speed,
+		needs_state.get_movement_multiplier(),
+		needs_state.get_stamina_regen_multiplier()
+	)
+	velocity = locomotion_result.velocity
 	
 	# Handle active Combat Roll
-	if is_rolling:
-		roll_timer -= delta
-		velocity = roll_direction * (roll_speed * (roll_timer / 0.32 * 0.7 + 0.3))
+	if locomotion_result.roll_frame:
 		ghost_trail_timer += delta
 		if ghost_trail_timer >= 0.08:
 			ghost_trail_timer = 0.0
 			spawn_ghost_trail()
 		
-		# i-frames expire just before roll ends
-		if roll_timer <= 0.06:
-			is_invulnerable = false
-		if roll_timer <= 0.0:
-			is_rolling = false
-			is_invulnerable = false
-			velocity = Vector2.ZERO
 		move_and_slide()
 		update_hud()
 		return
@@ -491,37 +501,13 @@ func _physics_process(delta: float) -> void:
 	var aim_dir = (mouse_pos - global_position).normalized()
 	weapon_pivot.rotation = aim_dir.angle()
 	
-	# Handle input movement
-	var move_input = Vector2.ZERO
-	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP): move_input.y -= 1
-	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN): move_input.y += 1
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT): move_input.x -= 1
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT): move_input.x += 1
-	
-	move_input = move_input.normalized()
-	
-	# Sprint check
-	is_sprinting = Input.is_key_pressed(KEY_SHIFT) and move_input != Vector2.ZERO and stamina > 5.0
-	var cur_speed = sprint_speed if is_sprinting else move_speed
-	
-	# Survival modifiers on speed
-	cur_speed *= needs_state.get_movement_multiplier()
-	
-	# Stamina recovery (slowed if hungry, boosted if stew buff)
-	var regen_mult := needs_state.get_stamina_regen_multiplier()
+	var move_input := locomotion_result.move_direction
 	if is_sprinting:
-		stamina -= 24.0 * delta
-		stamina = max(0.0, stamina)
-		
 		# Footstep dust particle
 		footstep_timer += delta
 		if footstep_timer >= 0.16:
 			footstep_timer = 0.0
 			spawn_footstep_dust()
-	else:
-		stamina += 18.0 * regen_mult * delta
-		stamina = min(max_stamina, stamina)
-	
 	# Update attack animation timer
 	if attack_anim_timer > 0:
 		attack_anim_timer -= delta
@@ -544,7 +530,6 @@ func _physics_process(delta: float) -> void:
 		if sprite:
 			sprite.frame = atk_row * 4 + facing_col
 	elif move_input != Vector2.ZERO:
-		velocity = velocity.move_toward(move_input * cur_speed, 1200 * delta)
 		anim_time += delta * (10.0 if is_sprinting else 7.0)
 		var walk_frames = [0, 1, 2, 3]
 		var step = int(anim_time) % 4
@@ -554,7 +539,6 @@ func _physics_process(delta: float) -> void:
 		# Gentle bobbing while walking
 		visual.position.y = sin(anim_time * 2.0) * 1.5
 	else:
-		velocity = velocity.move_toward(Vector2.ZERO, 900 * delta)
 		anim_time = 0.0
 		var idle_row = 0 if int(Time.get_ticks_msec() / 600.0) % 2 == 0 else 2
 		if sprite:

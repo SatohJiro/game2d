@@ -14,7 +14,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 
 | ID | Tính năng | Hiện trạng | Mục tiêu | Phase |
 |---|---|---|---|---|
-| G01 | Di chuyển, sprint, roll | Playable, nằm trong player god script | Component + remap/gamepad | U1/U3 |
+| G01 | Di chuyển, sprint, roll | Pure stamina/sprint/roll/velocity state; Player input/collision adapter | Input actions + remap/gamepad | U1/U3 |
 | G02 | Survival needs | Pure needs state/snapshot; Player heat/HUD adapter; balance còn prototype | Tác động có telegraph và counterplay | U1/U5 |
 | G03 | Gathering/loot | Pickup stable transaction; rejected drop giữ lại; chest có finite stack slots | Tool tiers, player capacity, yield table, respawn state | U1/U5 |
 | G04 | Combat | Player/WildCreature dùng deterministic DamageResult; status/pet/building còn legacy | Telegraph, skill loadout, unified faction/status | U1/U5 |
@@ -38,6 +38,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Input: move vector, sprint held, roll pressed; UI focus/pause phải chặn gameplay input đúng policy.
 - Sprint chỉ hoạt động khi đang di chuyển và đủ stamina; stamina không âm và hồi theo rule nhất quán.
 - Roll có cooldown, khoảng invulnerability hữu hạn và không đi xuyên collision world.
+- U1.6b: movement input là typed snapshot; roll là atomic command; external recoil/knockback đi vào calculation qua current velocity và roll có precedence khi active.
 - Acceptance: keyboard/gamepad cho cùng kết quả; chuyển hướng không làm animation giật; 60 giây spam roll không kẹt state.
 
 ### G02 — survival

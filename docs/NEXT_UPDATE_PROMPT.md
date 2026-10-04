@@ -1,16 +1,16 @@
-﻿# Prompt triển khai package U1.6b
+﻿# Prompt triển khai package U1.6c
 
-Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, roadmap, MODULES, `PLAYER_NEEDS_CONTRACT.md` và G01/G02. Chạy `tools/check_project.ps1` trước khi sửa.
+Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, roadmap, MODULES, hai contract Player và G01/G15. Chạy `tools/check_project.ps1` trước khi sửa.
 
-U1.1–U1.6a đã VERIFIED. Chỉ thực hiện U1.6b input/locomotion boundary:
+U1.1–U1.6b đã VERIFIED. Chỉ thực hiện U1.6c action input router:
 
-1. Audit mọi read/write của `stamina`, `max_stamina`, `is_sprinting`, `is_rolling`, `roll_timer`, `roll_direction`, `velocity`, invulnerability và movement input; ghi caller/owner/behavior hiện tại.
-2. Tạo typed movement input snapshot/command. Input adapter có thể đọc Godot Input, nhưng pure locomotion calculation không truy cập Input, SceneTree, HUD, audio, animation hoặc CharacterBody2D.
-3. Pure contract sở hữu stamina/sprint/roll timer và trả desired velocity/speed/state transition. Needs chỉ cung cấp multiplier qua API hiện có; không sao chép needs field vào locomotion store.
-4. Player vẫn áp velocity, `move_and_slide`, collision và presentation. Giữ đúng roll i-frame; combat knockback phải có precedence rõ.
-5. Giữ keyboard behavior qua adapter. Nếu thêm InputMap action, giữ fallback và cập nhật README/G01; gamepad/remap UI thuộc U3.
-6. Không tách attack/capture/build/craft/progression, không đổi balance, animation hoặc HUD.
-7. Regression: idle regen/clamp; sprint eligibility/drain; low stamina; roll start/cost/timer/i-frame/end; zero/large delta; deterministic repeat; needs multiplier; knockback precedence; main-scene adapter.
-8. Đo responsibility/line count, cập nhật contract, G01, roadmap, checkpoint và prompt tiếp theo.
+1. Audit toàn bộ nhánh trong `Player._input` và held attack polling: physical key/mouse, modal/build guard, handler, side effect và consume/return behavior.
+2. Tạo typed action intent với stable IDs cho attack, roll, interact, capture throw, craft/stat modal, build/cancel/place, pet swap/command/skill, food và elixir. Display text/key label không được làm identity.
+3. Input adapter có thể phụ thuộc `InputEvent`; mapping/result/router không được mutate inventory, HP, world Node hoặc UI trực tiếp.
+4. Player coordinator nhận intent rồi gọi handler cũ. Giữ nguyên key mapping, modal guard, build-mode precedence và held attack cadence; chưa chuyển sang InputMap nếu không thể giữ tương thích.
+5. Không migrate capture probability, building placement, recipes, progression hoặc HUD presentation trong package này.
+6. Regression: mỗi key/mouse map đúng intent; echo/release bị bỏ; modal/build guard; pet slot payload; unknown event no-op; deterministic mapping; main-scene adapter.
+7. Cập nhật G01/G15, module contract, checkpoint và roadmap. Ghi danh sách handler/domain debt còn lại.
+8. Kết thúc bằng full gate, commit branch riêng và fast-forward `main`. Sau đó prompt kế tiếp phải là U1.7a capture request/result pure trước khi đổi roster/despawn.
 
-Kết thúc full gate, log sạch, commit branch riêng và fast-forward `main`. Ghi save/data/asset impact, compatibility, direct writer còn lại và rollback.
+Ghi rõ save/data/asset impact, compatibility, manual test còn thiếu và rollback.

@@ -22,7 +22,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 |---|---|---|---|---|
 | CORE | Clock, RNG, command/result, IDs | `ContentId` đã có; clock/RNG/result chưa tách | Kiểu dữ liệu thuần, deterministic, không phụ thuộc scene | U1.1, package sau |
 | DATA | Definition registry | Item/Recipe/Building/Crop typed canary; registry validate duplicate, field và missing reference | Typed Resource, ID ổn định, validator | U1.1–U1.3 |
-| PLAYER | Input, locomotion, needs, progression coordinator | Needs đã là pure state/snapshot; input, locomotion, stamina, progression, craft/build còn trong `player.gd` | Gọi component con; phát snapshot/event | U1.4–U1.6 |
+| PLAYER | Input, locomotion, needs, progression coordinator | Needs và locomotion đã là pure state/result; action input, progression, craft/build còn trong `player.gd` | Gọi component con; phát snapshot/event | U1.4–U1.6 |
 | COMBAT | Damage, status, targeting, hit result | Pure DamageRequest/Result migrated vào Player + WildCreature; caller khác qua adapter | Command → deterministic result; presentation riêng | U1.5 |
 | CAPTURE | Throw, catch chance, capture result | `sphere.gd`, cuối `creature.gd` | CaptureRequest/Result; seeded RNG; ownership update một lần | U1.7 |
 | CREATURE | Wild AI, ecology, locomotion | `creature.gd` 1.054 dòng | Brain/state nodes dùng CreatureDefinition | U1.8–U1.9 |
@@ -57,7 +57,8 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - Nhận input qua command (`Move`, `Attack`, `Interact`, `Build`, `PetCommand`).
 - Locomotion sở hữu velocity/sprint/roll; Needs sở hữu hunger/thirst/temperature; Progression sở hữu level/EXP/stat points.
 - U1.6a thực thi Needs bằng `PlayerNeedsState`; `tick(delta, is_sprinting, near_heat)` trả result/snapshot, stable buff ID dùng namespace `needs.buff.*`. Contract chi tiết ở `PLAYER_NEEDS_CONTRACT.md`.
-- Player còn dò heat source và proxy field legacy; HUD chỉ nhận projection từ snapshot. Stamina vẫn thuộc locomotion và được tách ở U1.6b.
+- U1.6b thực thi locomotion bằng `PlayerLocomotionState`; typed movement input + result quyết định stamina/sprint/roll/desired velocity. Contract chi tiết ở `PLAYER_LOCOMOTION_CONTRACT.md`.
+- Player còn đọc thiết bị, dò heat source, áp collision/visual và proxy field legacy; HUD chỉ nhận projection.
 - Player coordinator không chứa catalog recipe/building/species.
 - Mỗi frame chỉ có một state locomotion có quyền ghi velocity; invulnerability có thời điểm bắt đầu/kết thúc rõ.
 
