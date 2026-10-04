@@ -42,10 +42,12 @@ git restore --source baseline-u0.3 -- scripts/player.gd
 Kiểm tra toàn snapshot trong worktree riêng:
 
 ```powershell
-git worktree add --detach build/restore-check baseline-u0.3
-powershell -NoProfile -ExecutionPolicy Bypass -File build/restore-check/tools/check_project.ps1 -ProjectPath build/restore-check
-git worktree remove build/restore-check
+git worktree add --detach ..\game2d-restore-check baseline-u0.3
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\game2d-restore-check\tools\check_project.ps1 -ProjectPath ..\game2d-restore-check
+git worktree remove ..\game2d-restore-check
 ```
+
+Worktree restore phải nằm ngoài project chính; Godot sẽ cảnh báo và bỏ qua nested `project.godot` nếu đặt nó bên trong `build/` của project.
 
 Không dùng `git reset --hard` làm hướng dẫn phục hồi mặc định. Nếu cần quay toàn bộ project, tạo branch bảo toàn trạng thái hiện tại trước.
 
@@ -61,4 +63,3 @@ Không dùng `git reset --hard` làm hướng dẫn phục hồi mặc định. 
 - `chore:` toolchain/repository maintenance.
 
 Mỗi commit/package phải trỏ được tới checkpoint hoặc work package ID và không trộn migration không liên quan.
-

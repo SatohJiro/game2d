@@ -31,8 +31,10 @@ $referenceText = ($referenceFiles | ForEach-Object {
 $sourceExtensions = @('.png', '.wav', '.ogg')
 $sourceAssets = Get-ChildItem -LiteralPath $ProjectPath -Recurse -File |
     Where-Object {
+        $candidateRelativePath = $_.FullName.Substring($ProjectPath.Length + 1).Replace('\', '/')
+        $candidateTopDirectory = $candidateRelativePath.Split('/')[0]
         $sourceExtensions -contains $_.Extension.ToLowerInvariant() -and
-        $_.FullName -notmatch '[\\/](\.godot|node_modules|dist|build|docs)[\\/]'
+        $candidateTopDirectory -notin @('.godot', 'node_modules', 'dist', 'build', 'docs')
     } |
     Sort-Object FullName
 

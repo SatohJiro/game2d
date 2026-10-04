@@ -30,7 +30,11 @@ foreach ($relativePath in $requiredFiles) {
 }
 
 $markdownFiles = @(Get-ChildItem -LiteralPath $ProjectPath -Recurse -File -Filter '*.md' |
-    Where-Object { $_.FullName -notmatch '[\\/](\.godot|node_modules|dist|build)[\\/]' })
+    Where-Object {
+        $candidateRelativePath = $_.FullName.Substring($ProjectPath.Length + 1).Replace('\', '/')
+        $candidateTopDirectory = $candidateRelativePath.Split('/')[0]
+        $candidateTopDirectory -notin @('.godot', 'node_modules', 'dist', 'build')
+    })
 $linkPattern = [regex]'\[[^\]]+\]\((?<target>[^)]+)\)'
 foreach ($markdown in $markdownFiles) {
     $content = Get-Content -LiteralPath $markdown.FullName -Raw -Encoding UTF8
