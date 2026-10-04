@@ -15,7 +15,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 | ID | Tính năng | Hiện trạng | Mục tiêu | Phase |
 |---|---|---|---|---|
 | G01 | Di chuyển, sprint, roll | Playable, nằm trong player god script | Component + remap/gamepad | U1/U3 |
-| G02 | Survival needs | Hunger/thirst/temp prototype | Tác động có telegraph và counterplay | U1/U5 |
+| G02 | Survival needs | Pure needs state/snapshot; Player heat/HUD adapter; balance còn prototype | Tác động có telegraph và counterplay | U1/U5 |
 | G03 | Gathering/loot | Pickup stable transaction; rejected drop giữ lại; chest có finite stack slots | Tool tiers, player capacity, yield table, respawn state | U1/U5 |
 | G04 | Combat | Player/WildCreature dùng deterministic DamageResult; status/pet/building còn legacy | Telegraph, skill loadout, unified faction/status | U1/U5 |
 | G05 | Capture | Sphere + HP-based chance | Species/status/sphere modifiers, clear feedback | U1/U5 |
@@ -45,6 +45,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Hunger/thirst giảm theo game clock; sprint/work/combat có modifier được data hóa.
 - Threshold phải báo trước bằng HUD/SFX; penalty không xuất hiện trước warning.
 - Nguồn nhiệt, thức ăn và nước tạo effect có duration và stacking rule rõ.
+- U1.6a dùng stable buff ID `needs.buff.*`, một buff active tại một thời điểm; display text chỉ là presentation adapter. Rate và threshold hiện giữ nguyên prototype.
 - Acceptance: pause không drain; save/load giữ giá trị/effect; tất cả stat clamp `[0, max]`.
 
 ### G03 — gathering và loot

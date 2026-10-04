@@ -9,15 +9,28 @@ var hp: int = 100
 var max_stamina: float = 100.0
 var stamina: float = 100.0
 
-var max_hunger: float = 100.0
-var hunger: float = 100.0
-
-var max_thirst: float = 100.0
-var thirst: float = 100.0
-
-var body_temperature: float = 37.0
-var food_buff_name: String = ""
-var food_buff_timer: float = 0.0
+var needs_state := PlayerNeedsState.new()
+var max_hunger: float:
+	get: return needs_state.max_hunger
+	set(value): needs_state.set_max_hunger(value)
+var hunger: float:
+	get: return needs_state.hunger
+	set(value): needs_state.set_hunger(value)
+var max_thirst: float:
+	get: return needs_state.max_thirst
+	set(value): needs_state.set_max_thirst(value)
+var thirst: float:
+	get: return needs_state.thirst
+	set(value): needs_state.set_thirst(value)
+var body_temperature: float:
+	get: return needs_state.body_temperature
+	set(value): needs_state.set_temperature(value)
+var food_buff_name: String:
+	get: return needs_state.get_buff_display_name()
+	set(value): needs_state.set_legacy_buff_name(value)
+var food_buff_timer: float:
+	get: return needs_state.buff_time_remaining
+	set(value): needs_state.set_buff_duration(value)
 
 var level: int = 1
 var exp_val: int = 0
@@ -429,19 +442,8 @@ func _physics_process(delta: float) -> void:
 	if attack_cooldown > 0: attack_cooldown -= delta
 	if sphere_cooldown > 0: sphere_cooldown -= delta
 	
-	# Hunger & Thirst degradation
-	var hunger_rate = 0.14 if food_buff_name == "No Lâu Giảm Đói" else 0.28
-	hunger = max(0.0, hunger - delta * hunger_rate)
-	thirst = max(0.0, thirst - delta * (0.45 if is_sprinting else 0.25))
-	
-	# Food Buff timer
-	if food_buff_timer > 0:
-		food_buff_timer -= delta
-		if food_buff_timer <= 0:
-			food_buff_name = ""
-	
 	# Temperature logic (Warmth from heat sources, Campfire, Furnace, Cooking Pot, or Fire Pet)
-	var near_heat = false
+	var near_heat := false
 	var heat_nodes = get_tree().get_nodes_in_group("heat_sources")
 	for h in heat_nodes:
 		if is_instance_valid(h) and global_position.distance_to(h.global_position) < 110.0:
@@ -451,10 +453,7 @@ func _physics_process(delta: float) -> void:
 		if global_position.distance_to(active_pet_node.global_position) < 80.0:
 			near_heat = true
 	
-	if near_heat or food_buff_name == "Giữ Nhiệt Ấm Áp":
-		body_temperature = move_toward(body_temperature, 37.0, delta * 1.5)
-	else:
-		body_temperature = move_toward(body_temperature, 23.5, delta * 0.15)
+	needs_state.tick(delta, is_sprinting, near_heat)
 	
 	# Handle active Combat Roll
 	if is_rolling:
@@ -506,14 +505,10 @@ func _physics_process(delta: float) -> void:
 	var cur_speed = sprint_speed if is_sprinting else move_speed
 	
 	# Survival modifiers on speed
-	var thirst_penalty = 0.8 if thirst < 20.0 else 1.0
-	var cold_penalty = 0.85 if body_temperature < 25.0 else 1.0
-	var food_speed_buff = 1.15 if food_buff_name == "Tăng Tốc Chạy (+15%)" else 1.0
-	cur_speed *= thirst_penalty * cold_penalty * food_speed_buff
+	cur_speed *= needs_state.get_movement_multiplier()
 	
 	# Stamina recovery (slowed if hungry, boosted if stew buff)
-	var regen_mult = 0.5 if hunger < 20.0 else 1.0
-	var stamina_buff = 1.5 if food_buff_name == "Bồi Bổ Thể Lực (x1.5 hồi)" else 1.0
+	var regen_mult := needs_state.get_stamina_regen_multiplier()
 	if is_sprinting:
 		stamina -= 24.0 * delta
 		stamina = max(0.0, stamina)
@@ -524,7 +519,7 @@ func _physics_process(delta: float) -> void:
 			footstep_timer = 0.0
 			spawn_footstep_dust()
 	else:
-		stamina += 18.0 * regen_mult * stamina_buff * delta
+		stamina += 18.0 * regen_mult * delta
 		stamina = min(max_stamina, stamina)
 	
 	# Update attack animation timer
@@ -894,7 +889,7 @@ func try_interact() -> void:
 	if main_scene and main_scene.has_node("Environment/WaterPond"):
 		var pond = main_scene.get_node("Environment/WaterPond")
 		if global_position.distance_to(pond.global_position) < 85.0:
-			thirst = min(max_thirst, thirst + 45.0)
+			needs_state.restore_thirst(45.0)
 			spawn_floating_text("💧 Vốc nước hồ uống giải khát! (+45 Khát)", Color(0.3, 0.9, 1.0))
 			if AudioManager:
 				AudioManager.play_sound("pickup")
@@ -940,10 +935,9 @@ func consume_food() -> void:
 	if inventory.get("Súp Hầm Sơn Hào", 0) > 0:
 		inventory["Súp Hầm Sơn Hào"] -= 1
 		hp = min(max_hp, hp + 60)
-		hunger = min(max_hunger, hunger + 70.0)
-		thirst = min(max_thirst, thirst + 45.0)
-		food_buff_name = "Bồi Bổ Thể Lực (x1.5 hồi)"
-		food_buff_timer = 180.0
+		needs_state.restore_hunger(70.0)
+		needs_state.restore_thirst(45.0)
+		needs_state.set_buff(PlayerNeedsState.BUFF_STAMINA_REGEN, 180.0)
 		spawn_floating_text("🍲 Thưởng thức Súp Hầm Sơn Hào (+60 HP, +70 No, +45 Khát)!", Color(1.0, 0.85, 0.3))
 		if AudioManager: AudioManager.play_sound("pickup")
 		update_hud()
@@ -952,10 +946,9 @@ func consume_food() -> void:
 	if inventory.get("Thịt Nướng Xông Khói", 0) > 0:
 		inventory["Thịt Nướng Xông Khói"] -= 1
 		hp = min(max_hp, hp + 35)
-		hunger = min(max_hunger, hunger + 50.0)
-		body_temperature = 37.5
-		food_buff_name = "Giữ Nhiệt Ấm Áp"
-		food_buff_timer = 180.0
+		needs_state.restore_hunger(50.0)
+		needs_state.set_temperature(37.5)
+		needs_state.set_buff(PlayerNeedsState.BUFF_WARMTH, 180.0)
 		spawn_floating_text("🍖 Ăn Thịt Nướng Xông Khói (+35 HP, +50 No, Giữ Ấm)!", Color(1.0, 0.7, 0.2))
 		if AudioManager: AudioManager.play_sound("pickup")
 		update_hud()
@@ -963,8 +956,8 @@ func consume_food() -> void:
 	
 	if inventory.get("Nước Tinh Khiết Đun Sôi", 0) > 0:
 		inventory["Nước Tinh Khiết Đun Sôi"] -= 1
-		thirst = min(max_thirst, thirst + 65.0)
-		body_temperature = 37.0
+		needs_state.restore_thirst(65.0)
+		needs_state.set_temperature(37.0)
 		spawn_floating_text("💧 Uống Nước Đun Sôi Tinh Khiết (+65 Khát, Thanh Lọc)!", Color(0.3, 0.9, 1.0))
 		if AudioManager: AudioManager.play_sound("pickup")
 		update_hud()
@@ -972,10 +965,9 @@ func consume_food() -> void:
 	
 	if inventory.get("Mứt Dâu Rừng Dẻo", 0) > 0:
 		inventory["Mứt Dâu Rừng Dẻo"] -= 1
-		hunger = min(max_hunger, hunger + 40.0)
+		needs_state.restore_hunger(40.0)
 		stamina = max_stamina
-		food_buff_name = "Tăng Tốc Chạy (+15%)"
-		food_buff_timer = 120.0
+		needs_state.set_buff(PlayerNeedsState.BUFF_SPEED, 120.0)
 		spawn_floating_text("🍓 Ăn Mứt Dâu Rừng (+40 No, +100% Thể Lực, +Tốc Độ)!", Color(1.0, 0.4, 0.6))
 		if AudioManager: AudioManager.play_sound("pickup")
 		update_hud()
@@ -983,9 +975,8 @@ func consume_food() -> void:
 	
 	if inventory.get("Bánh Mì Lúa Mì Nướng", 0) > 0:
 		inventory["Bánh Mì Lúa Mì Nướng"] -= 1
-		hunger = min(max_hunger, hunger + 55.0)
-		food_buff_name = "No Lâu Giảm Đói"
-		food_buff_timer = 240.0
+		needs_state.restore_hunger(55.0)
+		needs_state.set_buff(PlayerNeedsState.BUFF_SLOW_HUNGER, 240.0)
 		spawn_floating_text("🍞 Ăn Bánh Mì Lúa Mì (+55 No, No Lâu Dài)!", Color(1.0, 0.85, 0.4))
 		if AudioManager: AudioManager.play_sound("pickup")
 		update_hud()
@@ -994,8 +985,8 @@ func consume_food() -> void:
 	if inventory.get("Quả Mọng Hồi Máu", 0) > 0:
 		inventory["Quả Mọng Hồi Máu"] -= 1
 		hp = min(max_hp, hp + 35)
-		hunger = min(max_hunger, hunger + 25.0)
-		thirst = min(max_thirst, thirst + 15.0)
+		needs_state.restore_hunger(25.0)
+		needs_state.restore_thirst(15.0)
 		spawn_floating_text("🫐 Ăn Quả Mọng (+35 Máu, +25 No, +15 Khát)!", Color(0.3, 1.0, 0.4))
 		if AudioManager:
 			AudioManager.play_sound("pickup")
@@ -1032,7 +1023,7 @@ func take_damage(amount: int, hit_origin: Vector2) -> void:
 	if result.defeated:
 		spawn_floating_text("BẠN ĐÃ NGẤT! HỒI SINH TẠI TRẠI...", Color(1.0, 0.2, 0.2))
 		hp = max_hp
-		hunger = 80.0
+		needs_state.set_hunger(80.0)
 		global_position = Vector2.ZERO
 		update_hud()
 
@@ -1110,8 +1101,9 @@ func update_hud() -> void:
 			hud_ref = huds[0]
 	
 	if hud_ref:
-		var buff_text = food_buff_name if food_buff_name != "" else "Khỏe mạnh"
-		hud_ref.update_player_stats(hp, max_hp, stamina, max_stamina, hunger, max_hunger, thirst, max_thirst, body_temperature, level, exp_val, max_exp, buff_text)
+		var needs_snapshot := needs_state.create_snapshot()
+		var buff_text := needs_snapshot.buff_display_name if not needs_snapshot.buff_display_name.is_empty() else "Khỏe mạnh"
+		hud_ref.update_player_stats(hp, max_hp, stamina, max_stamina, needs_snapshot.hunger, needs_snapshot.max_hunger, needs_snapshot.thirst, needs_snapshot.max_thirst, needs_snapshot.body_temperature, level, exp_val, max_exp, buff_text)
 		hud_ref.update_character_sheet(stat_points, stats, "%s (Sát thương %d)" % [weapon_name, weapon_damage + stats["str"] * 3])
 		hud_ref.update_inventory(inventory)
 

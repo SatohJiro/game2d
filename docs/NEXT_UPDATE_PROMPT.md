@@ -1,17 +1,16 @@
-﻿# Prompt triển khai package U1.6a
+﻿# Prompt triển khai package U1.6b
 
-Làm việc tại D:\desktop\VS_WorkSpace\game2d. Đọc AGENTS.md, docs/INDEX.md, docs/CHECKPOINT.md, roadmap, MODULES và G01/G02/G15. Audit toàn bộ hunger, thirst, temperature, stamina và food buff read/write trong player.gd trước khi sửa.
+Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, roadmap, MODULES, `PLAYER_NEEDS_CONTRACT.md` và G01/G02. Chạy `tools/check_project.ps1` trước khi sửa.
 
-U1.1–U1.5 đã VERIFIED. U1.6 phải chia nhỏ vì player.gd chứa input, locomotion, combat, needs, crafting và building.
+U1.1–U1.6a đã VERIFIED. Chỉ thực hiện U1.6b input/locomotion boundary:
 
-Thực hiện U1.6a needs boundary:
+1. Audit mọi read/write của `stamina`, `max_stamina`, `is_sprinting`, `is_rolling`, `roll_timer`, `roll_direction`, `velocity`, invulnerability và movement input; ghi caller/owner/behavior hiện tại.
+2. Tạo typed movement input snapshot/command. Input adapter có thể đọc Godot Input, nhưng pure locomotion calculation không truy cập Input, SceneTree, HUD, audio, animation hoặc CharacterBody2D.
+3. Pure contract sở hữu stamina/sprint/roll timer và trả desired velocity/speed/state transition. Needs chỉ cung cấp multiplier qua API hiện có; không sao chép needs field vào locomotion store.
+4. Player vẫn áp velocity, `move_and_slide`, collision và presentation. Giữ đúng roll i-frame; combat knockback phải có precedence rõ.
+5. Giữ keyboard behavior qua adapter. Nếu thêm InputMap action, giữ fallback và cập nhật README/G01; gamepad/remap UI thuộc U3.
+6. Không tách attack/capture/build/craft/progression, không đổi balance, animation hoặc HUD.
+7. Regression: idle regen/clamp; sprint eligibility/drain; low stamina; roll start/cost/timer/i-frame/end; zero/large delta; deterministic repeat; needs multiplier; knockback precedence; main-scene adapter.
+8. Đo responsibility/line count, cập nhật contract, G01, roadmap, checkpoint và prompt tiếp theo.
 
-1. Ghi rõ owner hiện tại, timer, clamp, pause behavior, HUD fields và direct writer.
-2. Tạo pure PlayerNeedsState hoặc tương đương cho hunger/thirst/temperature và timed food buff; không truy cập Input, SceneTree, HUD, audio.
-3. API tick nhận delta/context và trả snapshot/events; mọi value clamp [0,max]. Pause phải do coordinator không gọi tick hoặc context policy rõ.
-4. Migrate calculation trong Player, giữ public fields/adapter nếu consumer cũ cần. HUD chỉ render snapshot.
-5. Không tách locomotion, build placement, crafting hoặc progression trong cùng package.
-6. Regression: zero/large delta clamp, pause/no tick, buff expiry một lần, deterministic same state/input và adapter main scene.
-7. Đo line/responsibility thay đổi thật; không tuyên bố Player hoàn tất.
-
-Kết thúc full gate, docs/checkpoint, commit/fast-forward. Ghi compatibility, save/asset impact, direct writer còn lại và scope U1.6b locomotion/input.
+Kết thúc full gate, log sạch, commit branch riêng và fast-forward `main`. Ghi save/data/asset impact, compatibility, direct writer còn lại và rollback.

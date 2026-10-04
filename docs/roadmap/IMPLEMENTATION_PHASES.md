@@ -20,7 +20,7 @@ U0 chỉ hoàn tất khi baseline có thể khôi phục và asset mới không 
 3. **U1.3 Recipe/Building/Crop definitions — VERIFIED:** typed canary sphere/workbench/berry và deterministic missing-reference validation; runtime giữ adapter/dictionary/enum cũ.
 4. **U1.4 Inventory transaction — VERIFIED:** pure transaction/Player/drop; chest finite capacity + atomic mapped batch. Direct writers khác migrate theo domain package.
 5. **U1.5 Combat result — VERIFIED:** pure deterministic resolver; migrate Player + WildCreature, giữ caller adapter.
-6. **U1.6 Player components:** input/locomotion/needs/build coordinator; giảm player từng phần.
+6. **U1.6 Player components — IN PROGRESS:** U1.6a needs state/snapshot VERIFIED; U1.6b tiếp tục input/locomotion và stamina/roll boundary. Build/craft/progression tách ở package sau.
 7. **U1.7 Capture service:** deterministic request/result; roster state tách Node.
 8. **U1.8 Creature perception/FSM:** không scan group mỗi frame.
 9. **U1.9 Creature skills/drop:** definition-driven.

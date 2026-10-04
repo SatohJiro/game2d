@@ -14,10 +14,11 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 7. `docs/architecture/INVENTORY_TRANSACTIONS.md`: transaction/result, capacity policy và direct-writer audit.
 8. `docs/architecture/DOMAIN_DEFINITIONS.md`: schema recipe/building/crop, cross-reference và runtime boundary.
 9. `docs/architecture/COMBAT_CONTRACT.md`: damage request/result, adapter và legacy caller audit.
-10. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
-11. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
-12. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
-13. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
+10. `docs/architecture/PLAYER_NEEDS_CONTRACT.md`: state, snapshot, buff ID và Player adapter của survival needs.
+11. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
+12. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
+13. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+14. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 
@@ -45,6 +46,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.4a inventory transaction | Hoàn tất | Pure add/remove/transfer + Player/drop regression và full gate xanh |
 | U1.4b chest capacity | Hoàn tất | Finite stack slots + atomic chest batch regression và full gate xanh |
 | U1.5 combat result | Hoàn tất | Pure resolver + Player/Creature adapter regression và full gate xanh |
+| U1.6a player needs | Hoàn tất | Pure needs state/snapshot + Player/HUD compatibility adapter và full gate xanh |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |
