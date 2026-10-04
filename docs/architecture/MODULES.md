@@ -21,14 +21,14 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | ID | Module mục tiêu | Hiện trạng/owner | Contract mục tiêu | Work package |
 |---|---|---|---|---|
 | CORE | Clock, RNG, command/result, IDs | `ContentId` đã có; clock/RNG/result chưa tách | Kiểu dữ liệu thuần, deterministic, không phụ thuộc scene | U1.1, package sau |
-| DATA | Definition registry | Base/ItemDefinition + registry + `item.wood` canary đã có; runtime còn dictionary legacy | Typed Resource, ID ổn định, validator | U1.1–U1.3 |
+| DATA | Definition registry | Base/ItemDefinition + registry + `item.wood`; U1.2 có adapter stable-ID/legacy cho gỗ | Typed Resource, ID ổn định, validator | U1.1–U1.3 |
 | PLAYER | Input, locomotion, needs, progression coordinator | `player.gd` 1.087 dòng | Gọi component con; phát snapshot/event | U1.4–U1.6 |
 | COMBAT | Damage, status, targeting, hit result | Player/creature/pet/slash/turret | Command → deterministic result; presentation riêng | U1.5 |
 | CAPTURE | Throw, catch chance, capture result | `sphere.gd`, cuối `creature.gd` | CaptureRequest/Result; seeded RNG; ownership update một lần | U1.7 |
 | CREATURE | Wild AI, ecology, locomotion | `creature.gd` 1.054 dòng | Brain/state nodes dùng CreatureDefinition | U1.8–U1.9 |
 | PET | Party, command, combat assist | `pet.gd`, `player.gd` | PetInstance state + PetCommand; không giữ Node trong save | U1.10 |
 | JOBS | Pet work/reservation | Scan group trong `pet.gd`, từng building | Job board, reservation, capability, result | U5.2 |
-| INVENTORY | Stack, transfer, equipment, loot | Dictionary tiếng Việt trong player/chest | ID-based transaction atomic | U1.4 |
+| INVENTORY | Stack, transfer, equipment, loot | Dictionary tiếng Việt; gỗ có `add/read by ID` qua adapter, chưa có capacity/transaction | ID-based transaction atomic | U1.2, U1.4 |
 | CRAFT | Recipe/cooking/smelting/compost | Player + 3 building scripts | RecipeDefinition + CraftOrder state machine | U1.3, U5.4 |
 | FARM | Soil/crop/water/fertilizer/harvest | `resource_node.gd` gộp resource và plot | FarmPlot state thuần + CropDefinition | U1.3, U5.3 |
 | BUILD | Placement, cost, structure health | Player + building scripts | PlacementRequest/Result, occupancy grid | U1.6, U5.5 |
@@ -75,6 +75,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 ### INVENTORY, CRAFT, FARM và BUILD
 
 - Mọi mutation inventory là transaction: kiểm tra đủ → commit toàn bộ → phát một event; thất bại không trừ dở dang.
+- Boundary chuyển tiếp U1.2 được mô tả trong `INVENTORY_MIGRATION.md`: `item.wood` route về key `Gỗ`, không tạo store song song; pickup chỉ biến mất khi add trả thành công.
 - Recipe chỉ tham chiếu item ID và số lượng dương. CraftOrder có pending/running/completed/cancelled.
 - Farm plot lưu crop ID, planted time/progress, moisture và fertilizer effect; visual stage là projection của state.
 - Placement xác nhận cost, bounds, collision, terrain và authority trước khi tạo building; hủy build không mất item.

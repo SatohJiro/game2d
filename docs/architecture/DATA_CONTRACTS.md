@@ -2,7 +2,7 @@
 
 ## Mục tiêu
 
-Gameplay và save tham chiếu content bằng ID ổn định; text hiển thị, scene path và asset path có thể đổi mà không phá state. U1.1 chỉ tạo nền móng và canary `item.wood`; runtime inventory vẫn dùng key legacy `Gỗ` cho tới package migration riêng.
+Gameplay và save tham chiếu content bằng ID ổn định; text hiển thị, scene path và asset path có thể đổi mà không phá state. U1.1 tạo nền móng và canary `item.wood`; U1.2 đã nối stable ID vào luồng pickup gỗ trong khi dictionary runtime vẫn dùng key legacy `Gỗ` làm nguồn sự thật duy nhất.
 
 ## Content ID
 
@@ -68,11 +68,11 @@ U1.1 chưa autoload registry. Bootstrap/service lifetime chỉ được chốt k
 
 | Legacy runtime key | Stable ID | Definition | Runtime migrated |
 |---|---|---|---|
-| `Gỗ` | `item.wood` | `data/definitions/items/wood.tres` | Chưa |
+| `Gỗ` | `item.wood` | `data/definitions/items/wood.tres` | Pickup/player boundary; storage còn legacy |
 
 Canary dùng asset `assets/items/wood.png`, hiện vẫn `QUARANTINE/UNKNOWN`. Definition không thay đổi license status của asset.
 
-Trong U1.2, adapter phải cho phép đọc key legacy và xuất `item.wood`; không đổi toàn bộ inventory/recipe/chest/drop trong một commit. Khi save v1 xuất hiện, save chỉ ghi stable ID. Mapping legacy phải tồn tại trong migration cho tới khi không còn save/data cũ cần hỗ trợ.
+`LegacyItemAdapter` cho phép đọc/ghi gỗ bằng `item.wood` nhưng chỉ mutate `inventory["Gỗ"]`. Chi tiết data flow, API và failure policy nằm trong `INVENTORY_MIGRATION.md`. Không mở rộng mapping bằng text tùy ý: mỗi mapping cần definition và regression. Khi save v1 xuất hiện, save chỉ ghi stable ID. Mapping legacy phải tồn tại trong migration cho tới khi không còn save/data cũ cần hỗ trợ.
 
 ## Localization
 

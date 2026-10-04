@@ -1057,9 +1057,30 @@ func gain_exp(amount: int) -> void:
 	
 	update_hud()
 
-func add_item(item_name: String, count: int) -> void:
-	inventory[item_name] = inventory.get(item_name, 0) + count
-	if AudioManager:
+func add_item(item_name: String, count: int) -> bool:
+	var content_id := LegacyItemAdapter.to_content_id(item_name)
+	if LegacyItemAdapter.is_mapped(content_id):
+		return add_item_by_id(content_id, count)
+	if item_name.is_empty() or count <= 0:
+		return false
+	inventory[item_name] = maxi(0, int(inventory.get(item_name, 0))) + count
+	_on_inventory_changed()
+	return true
+
+
+func add_item_by_id(item_id: StringName, count: int) -> bool:
+	if not LegacyItemAdapter.add(inventory, item_id, count):
+		return false
+	_on_inventory_changed()
+	return true
+
+
+func get_item_count_by_id(item_id: StringName) -> int:
+	return LegacyItemAdapter.get_count(inventory, item_id)
+
+
+func _on_inventory_changed() -> void:
+	if is_inside_tree() and AudioManager:
 		AudioManager.play_sound("pickup")
 	update_hud()
 	if base_manager_ref:

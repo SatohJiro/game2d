@@ -195,6 +195,7 @@ func spawn_dropped_item(item_name: String, count: int) -> void:
 	if not is_inside_tree(): return
 	var item = DROPPED_ITEM_SCENE.instantiate()
 	item.item_name = item_name
+	item.item_id = LegacyItemAdapter.to_content_id(item_name)
 	item.count = count
 	item.global_position = global_position + Vector2(randf_range(-8, 8), 0)
 	get_parent().call_deferred("add_child", item)

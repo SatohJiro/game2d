@@ -2,6 +2,7 @@ extends Node2D
 class_name DroppedItem
 
 @export var item_name: String = "Gỗ"
+@export var item_id: StringName = &""
 @export var count: int = 1
 @export var texture_override: Texture2D = null
 
@@ -39,7 +40,11 @@ func setup_visual() -> void:
 		sprite.texture = texture_override
 		return
 	
-	match item_name:
+	var visual_key := String(get_resolved_item_id())
+	if visual_key.is_empty():
+		visual_key = item_name
+	match visual_key:
+		"item.wood": sprite.texture = preload("res://assets/items/wood.png")
 		"Gỗ": sprite.texture = preload("res://assets/items/wood.png")
 		"Đá": sprite.texture = preload("res://assets/items/stone.png")
 		"Quặng Pal": sprite.texture = preload("res://assets/items/pal_ore.png")
@@ -77,7 +82,22 @@ func _process(delta: float) -> void:
 			is_attracted = false
 
 func collect() -> void:
-	if is_instance_valid(target_player) and target_player.has_method("add_item"):
-		target_player.add_item(item_name, count)
+	if not is_instance_valid(target_player):
+		return
+
+	var collected := false
+	var resolved_item_id := get_resolved_item_id()
+	if not resolved_item_id.is_empty() and target_player.has_method("add_item_by_id"):
+		collected = bool(target_player.call("add_item_by_id", resolved_item_id, count))
+	elif target_player.has_method("add_item"):
+		collected = bool(target_player.call("add_item", item_name, count))
+
+	if collected:
 		target_player.spawn_floating_text("+%d %s" % [count, item_name], Color(0.4, 1.0, 0.6))
-	queue_free()
+		queue_free()
+
+
+func get_resolved_item_id() -> StringName:
+	if ContentId.is_valid(item_id):
+		return item_id
+	return LegacyItemAdapter.to_content_id(item_name)

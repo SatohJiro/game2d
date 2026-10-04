@@ -16,7 +16,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 |---|---|---|---|---|
 | G01 | Di chuyển, sprint, roll | Playable, nằm trong player god script | Component + remap/gamepad | U1/U3 |
 | G02 | Survival needs | Hunger/thirst/temp prototype | Tác động có telegraph và counterplay | U1/U5 |
-| G03 | Gathering/loot | Tree/rock/drop prototype; `item.wood` typed canary, runtime vẫn dùng `Gỗ` | Tool tiers, yield table, respawn state | U1/U5 |
+| G03 | Gathering/loot | Tree/rock/drop prototype; pickup gỗ dùng `item.wood` tại boundary và lưu vào key legacy `Gỗ` | Tool tiers, yield table, respawn state | U1/U5 |
 | G04 | Combat | Melee/projectile/status prototype | Deterministic result, telegraph, skill loadout | U1/U5 |
 | G05 | Capture | Sphere + HP-based chance | Species/status/sphere modifiers, clear feedback | U1/U5 |
 | G06 | Pet party/command | Một active pet, stance đơn giản | Roster, command wheel, roles, synergy | U1/U5 |
@@ -52,7 +52,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Resource nhận tool/damage tag hợp lệ, giảm durability/health và phát yield khi depleted đúng một lần.
 - Drop dùng item ID, stack count dương; pickup vào inventory theo transaction.
 - Resource world có persistent state/cooldown khi chunk unload.
-- Migration data bắt đầu bằng mapping legacy `Gỗ` → `item.wood`; package U1.1 chưa đổi inventory/drop runtime.
+- Mapping `Gỗ` → `item.wood` đã chạy trong ResourceNode/drop/Player; các item và consumer khác vẫn theo legacy adapter plan.
 - Acceptance: hai hit cùng frame không nhân đôi loot; inventory đầy để item còn ở world; pet/player dùng chung yield rule.
 
 ### G04 — combat

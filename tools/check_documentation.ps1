@@ -12,6 +12,7 @@ $requiredFiles = @(
     'docs/ASSET_PLAN.md',
     'docs/architecture/MODULES.md',
     'docs/architecture/DATA_CONTRACTS.md',
+    'docs/architecture/INVENTORY_MIGRATION.md',
     'docs/gameplay/FEATURES.md',
     'docs/roadmap/IMPLEMENTATION_PHASES.md',
     'docs/process/DOCUMENTATION_STANDARD.md',
