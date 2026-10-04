@@ -1,0 +1,45 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/building_compost_bin.gd" id="1_comp"]
+[ext_resource type="Texture2D" path="res://assets/buildings/compost_bin.png" id="2_comp_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_comp"]
+size = Vector2(24, 22)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_act"]
+radius = 45.0
+
+[node name="BuildingCompostBin" type="StaticBody2D"]
+z_index = 8
+collision_layer = 4
+collision_mask = 7
+script = ExtResource("1_comp")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 3)
+shape = SubResource("RectangleShape2D_comp")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="Visual"]
+position = Vector2(0, -3)
+scale = Vector2(1.15, 1.15)
+texture = ExtResource("2_comp_tex")
+
+[node name="InteractionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+shape = SubResource("CircleShape2D_act")
+
+[node name="Label" type="Label" parent="."]
+offset_left = -90.0
+offset_top = -40.0
+offset_right = 90.0
+offset_bottom = -16.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 9
+text = "Thùng Ủ Phân Hữu Cơ"
+horizontal_alignment = 1

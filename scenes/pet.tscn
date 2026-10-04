@@ -1,0 +1,83 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/pet.gd" id="1_pet"]
+[ext_resource type="Texture2D" path="res://assets/monsters/flam_sheet.png" id="2_flam"]
+[ext_resource type="Texture2D" path="res://assets/fx/shadow.png" id="3_shad"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_pet"]
+radius = 12.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pet_bg"]
+bg_color = Color(0.12, 0.12, 0.14, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pet_fill"]
+bg_color = Color(0.2, 0.9, 0.4, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="Pet" type="CharacterBody2D"]
+z_index = 12
+collision_layer = 16
+collision_mask = 4
+script = ExtResource("1_pet")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 4)
+shape = SubResource("CircleShape2D_pet")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, 11)
+scale = Vector2(1.1, 0.8)
+texture = ExtResource("3_shad")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="Visual"]
+position = Vector2(0, -2)
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("2_flam")
+hframes = 4
+vframes = 4
+frame = 0
+
+[node name="Crown" type="Label" parent="Visual"]
+offset_left = -12.0
+offset_top = -24.0
+offset_right = 12.0
+offset_bottom = -8.0
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 10
+text = "👑"
+horizontal_alignment = 1
+
+[node name="Overhead" type="Node2D" parent="."]
+position = Vector2(0, -32)
+
+[node name="NameLabel" type="Label" parent="Overhead"]
+offset_left = -40.0
+offset_top = -14.0
+offset_right = 40.0
+offset_bottom = 0.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 9
+text = "★ Lv.1 Pet"
+horizontal_alignment = 1
+
+[node name="HpBar" type="ProgressBar" parent="Overhead"]
+offset_left = -20.0
+offset_top = 0.0
+offset_right = 20.0
+offset_bottom = 6.0
+theme_override_styles/background = SubResource("StyleBoxFlat_pet_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_pet_fill")
+value = 100.0
+show_percentage = false

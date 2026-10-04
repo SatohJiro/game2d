@@ -1,0 +1,924 @@
+[gd_scene load_steps=22 format=3]
+
+[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" path="res://assets/hunter/hunter_faceset.png" id="2_faceset"]
+[ext_resource type="Texture2D" path="res://assets/fx/energy_ball.png" id="3_sphere"]
+[ext_resource type="Texture2D" path="res://assets/items/wood.png" id="4_wood"]
+[ext_resource type="Texture2D" path="res://assets/items/stone.png" id="5_stone"]
+[ext_resource type="Texture2D" path="res://assets/items/pal_ore.png" id="6_ore"]
+[ext_resource type="Texture2D" path="res://assets/items/iron_ingot.png" id="7_iron"]
+[ext_resource type="Texture2D" path="res://assets/items/berry.png" id="8_berry"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.07, 0.09, 0.14, 0.88)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.45, 0.7, 0.8)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_quest"]
+bg_color = Color(0.06, 0.1, 0.18, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.75, 0.25, 0.9)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_portrait"]
+bg_color = Color(0.12, 0.16, 0.22, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.9, 0.75, 0.35, 0.9)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_bg"]
+bg_color = Color(0.12, 0.14, 0.18, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.2, 0.85, 0.4, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sp_fill"]
+bg_color = Color(0.2, 0.7, 1, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hunger_fill"]
+bg_color = Color(1, 0.6, 0.2, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_thirst_fill"]
+bg_color = Color(0.18, 0.78, 1, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_exp_fill"]
+bg_color = Color(1, 0.8, 0.2, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_item"]
+bg_color = Color(0.1, 0.13, 0.2, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.55, 0.8, 0.7)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_craft_bg"]
+bg_color = Color(0.06, 0.08, 0.13, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.7, 1, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stat_bg"]
+bg_color = Color(0.08, 0.1, 0.16, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.8, 0.3, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_banner"]
+bg_color = Color(0.08, 0.15, 0.25, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.85, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="TopLeft" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 18.0
+offset_top = 16.0
+offset_right = 350.0
+offset_bottom = 126.0
+
+[node name="PlayerCard" type="PanelContainer" parent="TopLeft"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="TopLeft/PlayerCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="HBox" type="HBoxContainer" parent="TopLeft/PlayerCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PortraitFrame" type="PanelContainer" parent="TopLeft/PlayerCard/Margin/HBox"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_portrait")
+
+[node name="Portrait" type="TextureRect" parent="TopLeft/PlayerCard/Margin/HBox/PortraitFrame"]
+layout_mode = 2
+texture = ExtResource("2_faceset")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="TopLeft/PlayerCard/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 3
+
+[node name="LevelLabel" type="Label" parent="TopLeft/PlayerCard/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 12
+text = "Nhà Thám Hiểm ★ Cấp 1"
+
+[node name="HpBar" type="ProgressBar" parent="TopLeft/PlayerCard/Margin/HBox/VBox"]
+custom_minimum_size = Vector2(0, 9)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
+value = 100.0
+show_percentage = false
+
+[node name="StaminaBar" type="ProgressBar" parent="TopLeft/PlayerCard/Margin/HBox/VBox"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_sp_fill")
+value = 100.0
+show_percentage = false
+
+[node name="HungerBar" type="ProgressBar" parent="TopLeft/PlayerCard/Margin/HBox/VBox"]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hunger_fill")
+value = 100.0
+show_percentage = false
+
+[node name="ThirstBar" type="ProgressBar" parent="TopLeft/PlayerCard/Margin/HBox/VBox"]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_thirst_fill")
+value = 100.0
+show_percentage = false
+
+[node name="ExpBar" type="ProgressBar" parent="TopLeft/PlayerCard/Margin/HBox/VBox"]
+custom_minimum_size = Vector2(0, 3)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_exp_fill")
+value = 0.0
+show_percentage = false
+
+[node name="StatusHBox" type="HBoxContainer" parent="TopLeft/PlayerCard/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TempLabel" type="Label" parent="TopLeft/PlayerCard/Margin/HBox/VBox/StatusHBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+text = "🌡️ 37.0°C"
+
+[node name="BuffLabel" type="Label" parent="TopLeft/PlayerCard/Margin/HBox/VBox/StatusHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+theme_override_colors/font_color = Color(0.4, 1, 0.6, 1)
+text = "✨ Khỏe mạnh"
+
+[node name="TopCenter" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -170.0
+offset_top = 16.0
+offset_right = 190.0
+offset_bottom = 85.0
+grow_horizontal = 2
+
+[node name="QuestPanel" type="PanelContainer" parent="TopCenter"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_quest")
+
+[node name="Margin" type="MarginContainer" parent="TopCenter/QuestPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="VBox" type="VBoxContainer" parent="TopCenter/QuestPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="QuestTitle" type="Label" parent="TopCenter/QuestPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.25, 1)
+theme_override_font_sizes/font_size = 11
+text = "🏛️ CĂN CỨ CẤP 1 | Giai Đoạn 1: Sơ Khai & Sinh Tồn"
+
+[node name="QuestDesc" type="Label" parent="TopCenter/QuestPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "Mục tiêu: Đốn 10 Gỗ, 6 Đá và bắt 1 Pet đồng hành"
+
+[node name="QuestProgress" type="Label" parent="TopCenter/QuestPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.95, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "Tiến độ: Gỗ: 0/10 | Đá: 0/6 | Pet: 0/1"
+
+[node name="TopRight" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -280.0
+offset_top = 16.0
+offset_right = -18.0
+offset_bottom = 96.0
+grow_horizontal = 0
+
+[node name="PetCard" type="PanelContainer" parent="TopRight"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="TopRight/PetCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="TopRight/PetCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="PetNameLabel" type="Label" parent="TopRight/PetCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "🐾 Foxfire (Lv.1)"
+
+[node name="PetHpBar" type="ProgressBar" parent="TopRight/PetCard/Margin/VBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
+value = 100.0
+show_percentage = false
+
+[node name="PetStanceLabel" type="Label" parent="TopRight/PetCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.85, 0.9, 1)
+theme_override_font_sizes/font_size = 11
+text = "[R] Lệnh: Tự do Tấn công"
+
+[node name="ControlsGuide" type="PanelContainer" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = -185.0
+offset_right = 320.0
+offset_bottom = -16.0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="ControlsGuide"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="VBox" type="VBoxContainer" parent="ControlsGuide/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Title" type="Label" parent="ControlsGuide/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 12
+text = "🎮 HƯỚNG DẪN ĐIỀU KHIỂN"
+
+[node name="Hint1" type="Label" parent="ControlsGuide/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "• [WASD]: Đi lại | [Space]: Lướt né đòn (Roll) | [Chuột Trái]: Đánh"
+
+[node name="Hint2" type="Label" parent="ControlsGuide/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "• [Chuột Phải / Q]: Ném Cầu Thu Phục (Pal)"
+
+[node name="Hint3" type="Label" parent="ControlsGuide/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "• [P]: BẢNG CHỈ SỐ NHÂN VẬT (CỘNG ĐIỂM)"
+
+[node name="Hint4" type="Label" parent="ControlsGuide/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "• [C]: MỞ MENU BÀN CHẾ TẠO CÔNG NGHỆ"
+
+[node name="Hint5" type="Label" parent="ControlsGuide/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "• [1,2,3]: Đổi Pet | [E]: Tương tác | [F]: Ăn quả"
+
+[node name="BottomBar" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -340.0
+offset_top = -68.0
+offset_right = 340.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="HBox" type="HBoxContainer" parent="BottomBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="SphereItem" type="PanelContainer" parent="BottomBar/HBox"]
+custom_minimum_size = Vector2(98, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_item")
+
+[node name="Margin" type="MarginContainer" parent="BottomBar/HBox/SphereItem"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="HBox" type="HBoxContainer" parent="BottomBar/HBox/SphereItem/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="BottomBar/HBox/SphereItem/Margin/HBox"]
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("3_sphere")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="BottomBar/HBox/SphereItem/Margin/HBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="Name" type="Label" parent="BottomBar/HBox/SphereItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 9
+text = "Cầu Pal"
+
+[node name="CountLabel" type="Label" parent="BottomBar/HBox/SphereItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "x10"
+
+[node name="WoodItem" type="PanelContainer" parent="BottomBar/HBox"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_item")
+
+[node name="Margin" type="MarginContainer" parent="BottomBar/HBox/WoodItem"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="HBox" type="HBoxContainer" parent="BottomBar/HBox/WoodItem/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="BottomBar/HBox/WoodItem/Margin/HBox"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("4_wood")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="BottomBar/HBox/WoodItem/Margin/HBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="Name" type="Label" parent="BottomBar/HBox/WoodItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.65, 0.35, 1)
+theme_override_font_sizes/font_size = 9
+text = "Gỗ Rừng"
+
+[node name="CountLabel" type="Label" parent="BottomBar/HBox/WoodItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "x0"
+
+[node name="StoneItem" type="PanelContainer" parent="BottomBar/HBox"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_item")
+
+[node name="Margin" type="MarginContainer" parent="BottomBar/HBox/StoneItem"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="HBox" type="HBoxContainer" parent="BottomBar/HBox/StoneItem/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="BottomBar/HBox/StoneItem/Margin/HBox"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("5_stone")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="BottomBar/HBox/StoneItem/Margin/HBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="Name" type="Label" parent="BottomBar/HBox/StoneItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.8, 0.85, 1)
+theme_override_font_sizes/font_size = 9
+text = "Đá Tảng"
+
+[node name="CountLabel" type="Label" parent="BottomBar/HBox/StoneItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "x0"
+
+[node name="OreItem" type="PanelContainer" parent="BottomBar/HBox"]
+custom_minimum_size = Vector2(95, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_item")
+
+[node name="Margin" type="MarginContainer" parent="BottomBar/HBox/OreItem"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="HBox" type="HBoxContainer" parent="BottomBar/HBox/OreItem/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="BottomBar/HBox/OreItem/Margin/HBox"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("6_ore")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="BottomBar/HBox/OreItem/Margin/HBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="Name" type="Label" parent="BottomBar/HBox/OreItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 9
+text = "Quặng Pal"
+
+[node name="CountLabel" type="Label" parent="BottomBar/HBox/OreItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "x0"
+
+[node name="IronItem" type="PanelContainer" parent="BottomBar/HBox"]
+custom_minimum_size = Vector2(95, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_item")
+
+[node name="Margin" type="MarginContainer" parent="BottomBar/HBox/IronItem"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="HBox" type="HBoxContainer" parent="BottomBar/HBox/IronItem/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="BottomBar/HBox/IronItem/Margin/HBox"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("7_iron")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="BottomBar/HBox/IronItem/Margin/HBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="Name" type="Label" parent="BottomBar/HBox/IronItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 9
+text = "Thỏi Sắt"
+
+[node name="CountLabel" type="Label" parent="BottomBar/HBox/IronItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "x0"
+
+[node name="BerryItem" type="PanelContainer" parent="BottomBar/HBox"]
+custom_minimum_size = Vector2(95, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_item")
+
+[node name="Margin" type="MarginContainer" parent="BottomBar/HBox/BerryItem"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="HBox" type="HBoxContainer" parent="BottomBar/HBox/BerryItem/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="BottomBar/HBox/BerryItem/Margin/HBox"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("8_berry")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="BottomBar/HBox/BerryItem/Margin/HBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="Name" type="Label" parent="BottomBar/HBox/BerryItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.35, 0.45, 1)
+theme_override_font_sizes/font_size = 9
+text = "Quả Mọng"
+
+[node name="CountLabel" type="Label" parent="BottomBar/HBox/BerryItem/Margin/HBox/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "x0"
+
+[node name="CraftingModal" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -220.0
+offset_right = 300.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_craft_bg")
+
+[node name="Margin" type="MarginContainer" parent="CraftingModal"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="VBox" type="VBoxContainer" parent="CraftingModal/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="CraftingModal/Margin/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CraftingModal/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.4, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "🛠️ BÀN CHẾ TẠO CÔNG NGHỆ CĂN CỨ"
+
+[node name="CloseBtn" type="Button" parent="CraftingModal/Margin/VBox/Header"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+text = "✕"
+
+[node name="Scroll" type="ScrollContainer" parent="CraftingModal/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RecipeGrid" type="GridContainer" parent="CraftingModal/Margin/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="StatModal" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -180.0
+offset_right = 220.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_stat_bg")
+
+[node name="Margin" type="MarginContainer" parent="StatModal"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="VBox" type="VBoxContainer" parent="StatModal/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="StatModal/Margin/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="StatModal/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 14
+text = "⚔️ ĐIỂM TIỀM NĂNG NHÂN VẬT"
+
+[node name="CloseBtn" type="Button" parent="StatModal/Margin/VBox/Header"]
+custom_minimum_size = Vector2(28, 24)
+layout_mode = 2
+text = "✕"
+
+[node name="StatPointsLabel" type="Label" parent="StatModal/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 12
+text = "✨ Điểm Tiềm Năng Chưa Dùng: 0 điểm"
+
+[node name="Grid" type="GridContainer" parent="StatModal/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 8
+columns = 3
+
+[node name="StrName" type="Label" parent="StatModal/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Sức Mạnh (STR)"
+
+[node name="StrVal" type="Label" parent="StatModal/Margin/VBox/Grid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.7, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "0 (+0 Dmg)"
+
+[node name="StrBtn" type="Button" parent="StatModal/Margin/VBox/Grid"]
+custom_minimum_size = Vector2(30, 24)
+layout_mode = 2
+text = "+"
+
+[node name="VitName" type="Label" parent="StatModal/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Sinh Lực (VIT)"
+
+[node name="VitVal" type="Label" parent="StatModal/Margin/VBox/Grid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3, 1, 0.5, 1)
+theme_override_font_sizes/font_size = 11
+text = "0 (+0 HP)"
+
+[node name="VitBtn" type="Button" parent="StatModal/Margin/VBox/Grid"]
+custom_minimum_size = Vector2(30, 24)
+layout_mode = 2
+text = "+"
+
+[node name="StaName" type="Label" parent="StatModal/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Thể Lực (STA)"
+
+[node name="StaVal" type="Label" parent="StatModal/Margin/VBox/Grid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "0 (+0 Sta)"
+
+[node name="StaBtn" type="Button" parent="StatModal/Margin/VBox/Grid"]
+custom_minimum_size = Vector2(30, 24)
+layout_mode = 2
+text = "+"
+
+[node name="AgiName" type="Label" parent="StatModal/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Nhanh Nhẹn (AGI)"
+
+[node name="AgiVal" type="Label" parent="StatModal/Margin/VBox/Grid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.8, 0.6, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "0 (+0 Tốc độ)"
+
+[node name="AgiBtn" type="Button" parent="StatModal/Margin/VBox/Grid"]
+custom_minimum_size = Vector2(30, 24)
+layout_mode = 2
+text = "+"
+
+[node name="GearInfo" type="Label" parent="StatModal/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.85, 0.9, 1)
+theme_override_font_sizes/font_size = 11
+text = "Trang bị: Kiếm Gỗ Sơ Cấp"
+
+[node name="Banner" type="PanelContainer" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -260.0
+offset_top = 95.0
+offset_right = 260.0
+offset_bottom = 145.0
+grow_horizontal = 2
+pivot_offset = Vector2(260, 25)
+theme_override_styles/panel = SubResource("StyleBoxFlat_banner")
+
+[node name="MarginContainer" type="MarginContainer" parent="Banner"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_right = 14
+
+[node name="BannerLabel" type="Label" parent="Banner/MarginContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.6, 1)
+theme_override_font_sizes/font_size = 13
+text = "Chào mừng tới Thế Giới Paloria!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CookingModal" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -210.0
+offset_right = 280.0
+offset_bottom = 210.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_craft_bg")
+
+[node name="Margin" type="MarginContainer" parent="CookingModal"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="VBox" type="VBoxContainer" parent="CookingModal/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="CookingModal/Margin/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CookingModal/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.65, 0.2, 1)
+theme_override_font_sizes/font_size = 15
+text = "🍲 BẾP NẤU ĂN DÃ NGOẠI & SINH TỒN"
+
+[node name="CloseBtn" type="Button" parent="CookingModal/Margin/VBox/Header"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+text = "✕"
+
+[node name="Scroll" type="ScrollContainer" parent="CookingModal/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RecipeGrid" type="GridContainer" parent="CookingModal/Margin/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+columns = 1

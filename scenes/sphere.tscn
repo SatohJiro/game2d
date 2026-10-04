@@ -1,0 +1,29 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/sphere.gd" id="1_sphere"]
+[ext_resource type="Texture2D" path="res://assets/fx/shadow.png" id="2_shad"]
+[ext_resource type="Texture2D" path="res://assets/items/mega_sphere.png" id="3_mega"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_sphere"]
+radius = 14.0
+
+[node name="Sphere" type="Area2D"]
+z_index = 25
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_sphere")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, 0)
+scale = Vector2(0.8, 0.5)
+modulate = Color(0, 0, 0, 0.45)
+texture = ExtResource("2_shad")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_sphere")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="Visual"]
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("3_mega")

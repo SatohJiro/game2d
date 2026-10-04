@@ -1,0 +1,42 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/building_furnace.gd" id="1_fn"]
+[ext_resource type="Texture2D" path="res://assets/buildings/furnace_stove.png" id="2_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fn"]
+size = Vector2(28, 26)
+
+[node name="BuildingFurnace" type="StaticBody2D"]
+z_index = 8
+collision_layer = 1
+collision_mask = 7
+script = ExtResource("1_fn")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 3)
+shape = SubResource("RectangleShape2D_fn")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -2)
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("2_tex")
+
+[node name="Flame" type="ColorRect" parent="."]
+visible = false
+offset_left = -6.0
+offset_top = -14.0
+offset_right = 6.0
+offset_bottom = -6.0
+pivot_offset = Vector2(6, 8)
+color = Color(1, 0.6, 0.1, 0.9)
+
+[node name="Label" type="Label" parent="."]
+offset_left = -80.0
+offset_top = -42.0
+offset_right = 80.0
+offset_bottom = -16.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 9
+text = "Lò Luyện Kim"
+horizontal_alignment = 1

@@ -1,0 +1,179 @@
+[gd_scene load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/resource_node.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="4_hud"]
+[ext_resource type="PackedScene" path="res://scenes/building_workbench.tscn" id="5_wb"]
+[ext_resource type="Texture2D" uid="uid://cud6hd8yx7vhy" path="res://assets/tilesets/world_grass_tiled.png" id="6_grass"]
+[ext_resource type="Texture2D" uid="uid://cjsta05fp18jy" path="res://assets/tilesets/camp_cobblestone.png" id="7_stone"]
+[ext_resource type="Texture2D" uid="uid://to1layo6g1cw" path="res://assets/tilesets/nature_campfire.png" id="8_campfire"]
+[ext_resource type="Texture2D" uid="uid://2end7rjgiotv" path="res://assets/fx/light_radial.png" id="9_light"]
+[ext_resource type="Texture2D" uid="uid://60ymo34g7wto" path="res://assets/tilesets/nature_flowers.png" id="10_flowers"]
+[ext_resource type="Texture2D" uid="uid://8vaq2c0fogju" path="res://assets/tilesets/nature_bush.png" id="11_bush"]
+[ext_resource type="Texture2D" uid="uid://cxd2xrxoouuxn" path="res://assets/tilesets/nature_mushrooms.png" id="12_mushrooms"]
+[ext_resource type="Texture2D" uid="uid://drxjyv0odwolh" path="res://assets/tilesets/nature_stump.png" id="13_stump"]
+[ext_resource type="Texture2D" uid="uid://cvcmufi0g5i23" path="res://assets/tilesets/floor_water.png" id="14_water"]
+[ext_resource type="PackedScene" path="res://scenes/building_ranch.tscn" id="15_ranch"]
+[ext_resource type="PackedScene" path="res://scenes/building_cooking_pot.tscn" id="16_pot"]
+[ext_resource type="PackedScene" path="res://scenes/building_compost_bin.tscn" id="17_comp"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Environment" type="Node2D" parent="."]
+
+[node name="GroundGrass" type="TextureRect" parent="Environment"]
+z_index = -10
+texture_repeat = 2
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 1600.0
+offset_bottom = 1600.0
+texture = ExtResource("6_grass")
+stretch_mode = 1
+
+[node name="WaterPond" type="Node2D" parent="Environment"]
+position = Vector2(-280, 240)
+
+[node name="WaterTile" type="TextureRect" parent="Environment/WaterPond"]
+z_index = -8
+texture_repeat = 2
+offset_left = -80.0
+offset_top = -60.0
+offset_right = 80.0
+offset_bottom = 60.0
+texture = ExtResource("14_water")
+stretch_mode = 1
+
+[node name="BaseCamp" type="Node2D" parent="Environment"]
+position = Vector2(0, 0)
+
+[node name="Campfire" type="Sprite2D" parent="Environment/BaseCamp"]
+position = Vector2(0, -30)
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("8_campfire")
+
+[node name="FlameLight" type="PointLight2D" parent="Environment/BaseCamp/Campfire"]
+position = Vector2(0, -4)
+scale = Vector2(2.4, 2.4)
+color = Color(1, 0.72, 0.35, 1)
+energy = 1.35
+texture = ExtResource("9_light")
+
+[node name="StarterWorkbench" parent="Environment/BaseCamp" instance=ExtResource("5_wb")]
+position = Vector2(-60, -20)
+
+[node name="StarterRanch" parent="Environment/BaseCamp" instance=ExtResource("15_ranch")]
+position = Vector2(85, -20)
+
+[node name="StarterCookingPot" parent="Environment/BaseCamp" instance=ExtResource("16_pot")]
+position = Vector2(-28, -50)
+
+[node name="StarterCompostBin" parent="Environment/BaseCamp" instance=ExtResource("17_comp")]
+position = Vector2(85, 45)
+
+[node name="StarterFarmPlot" parent="Environment/BaseCamp" instance=ExtResource("3_res")]
+position = Vector2(-60, 45)
+node_type = 2
+
+[node name="Decorations" type="Node2D" parent="Environment"]
+
+[node name="Flowers1" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(-150, -40)
+texture = ExtResource("10_flowers")
+
+[node name="Flowers2" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(160, -30)
+texture = ExtResource("10_flowers")
+
+[node name="Flowers3" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(80, -160)
+texture = ExtResource("10_flowers")
+
+[node name="Flowers4" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(-80, 180)
+texture = ExtResource("10_flowers")
+
+[node name="Bush1" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(-120, -180)
+texture = ExtResource("11_bush")
+
+[node name="Bush2" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(180, 120)
+texture = ExtResource("11_bush")
+
+[node name="Bush3" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(240, -180)
+texture = ExtResource("11_bush")
+
+[node name="Mushrooms1" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(-220, -140)
+texture = ExtResource("12_mushrooms")
+
+[node name="Mushrooms2" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(140, 210)
+texture = ExtResource("12_mushrooms")
+
+[node name="Stump1" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(-70, -150)
+texture = ExtResource("13_stump")
+
+[node name="Stump2" type="Sprite2D" parent="Environment/Decorations"]
+position = Vector2(160, -120)
+texture = ExtResource("13_stump")
+
+[node name="Resources" type="Node2D" parent="Environment"]
+
+[node name="Tree1" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(-210, -70)
+
+[node name="Tree2" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(-230, 60)
+
+[node name="Tree3" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(220, -80)
+
+[node name="Tree4" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(260, 70)
+
+[node name="Tree5" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(130, -220)
+
+[node name="Tree6" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(-160, -240)
+
+[node name="Rock1" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(-190, 160)
+node_type = 1
+
+[node name="Rock2" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(200, 170)
+node_type = 1
+
+[node name="Rock3" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(310, -140)
+node_type = 1
+
+[node name="Rock4" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(-300, -170)
+node_type = 1
+
+[node name="FarmPlot1" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(-70, 50)
+node_type = 2
+
+[node name="FarmPlot2" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(0, 50)
+node_type = 2
+
+[node name="FarmPlot3" parent="Environment/Resources" instance=ExtResource("3_res")]
+position = Vector2(70, 50)
+node_type = 2
+
+[node name="Creatures" type="Node2D" parent="."]
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(0, -5)
+
+[node name="HUD" parent="." instance=ExtResource("4_hud")]

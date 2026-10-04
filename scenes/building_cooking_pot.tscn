@@ -1,0 +1,69 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/building_cooking_pot.gd" id="1_pot"]
+[ext_resource type="Texture2D" path="res://assets/buildings/cooking_pot.png" id="2_pot_tex"]
+[ext_resource type="Texture2D" path="res://assets/fx/spark.png" id="3_spark"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pot"]
+size = Vector2(26, 22)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_act"]
+radius = 48.0
+
+[node name="BuildingCookingPot" type="StaticBody2D"]
+z_index = 8
+collision_layer = 4
+collision_mask = 7
+script = ExtResource("1_pot")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 4)
+shape = SubResource("RectangleShape2D_pot")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="Visual"]
+position = Vector2(0, -2)
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("2_pot_tex")
+
+[node name="FireLight" type="PointLight2D" parent="Visual"]
+position = Vector2(0, 6)
+color = Color(1, 0.65, 0.25, 1)
+energy = 1.1
+texture = ExtResource("3_spark")
+texture_scale = 1.8
+
+[node name="SmokeParticles" type="CPUParticles2D" parent="Visual"]
+position = Vector2(0, -8)
+emitting = false
+amount = 8
+lifetime = 0.8
+speed_scale = 0.9
+texture = ExtResource("3_spark")
+direction = Vector2(0, -1)
+spread = 25.0
+gravity = Vector2(0, -20)
+initial_velocity_min = 15.0
+initial_velocity_max = 28.0
+scale_amount_min = 0.4
+scale_amount_max = 0.8
+color = Color(0.9, 0.9, 0.9, 0.45)
+
+[node name="InteractionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+shape = SubResource("CircleShape2D_act")
+
+[node name="Label" type="Label" parent="."]
+offset_left = -90.0
+offset_top = -42.0
+offset_right = 90.0
+offset_bottom = -18.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 9
+text = "[E] Bếp Nấu Ăn Dã Ngoại"
+horizontal_alignment = 1

@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/slash_effect.gd" id="1_slash"]
+[ext_resource type="Texture2D" path="res://assets/fx/slash_sheet.png" id="2_sheet"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_slash"]
+radius = 28.0
+
+[node name="SlashEffect" type="Area2D"]
+z_index = 30
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_slash")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(18, 0)
+shape = SubResource("CircleShape2D_slash")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(18, 0)
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("2_sheet")
+hframes = 4
+frame = 0
