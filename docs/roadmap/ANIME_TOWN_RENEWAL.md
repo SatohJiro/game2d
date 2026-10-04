@@ -203,4 +203,4 @@ Blocker hiện tại: game-dev CLI chưa có trong PATH ngày 2026-10-04. Chưa 
 
 - Chưa download/admit asset hoặc mua package.
 - Chưa thay main.tscn, player, pet hay audio runtime.
-- Không đổi thứ tự U1.7c–U1.11; initiative bắt đầu khi U2 world contract đủ ổn định.
+- U1.7 đã hoàn tất; không đổi thứ tự U1.8–U1.11. Initiative bắt đầu khi U2 world contract đủ ổn định.

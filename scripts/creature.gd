@@ -67,6 +67,8 @@ var max_hp: int = 80
 var hp: int = 80
 var defeat_committed: bool = false
 var capture_attempt_active: bool = false
+var capture_ownership_committed: bool = false
+var capture_ownership_token: StringName = &""
 var move_speed: float = 90.0
 var attack_power: int = 12
 var anim_timer: float = 0.0
@@ -147,7 +149,7 @@ func _ready() -> void:
 
 func setup_species() -> void:
 	species_index = species_index % species_data.size()
-	cur_data = species_data[species_index]
+	cur_data = LegacySpeciesAdapter.create_stable_snapshot(species_index, species_data[species_index])
 	
 	# 18% chance to become an Elite monster (or 100% if night raider or dragon)
 	if is_night_raider or species_index == 4 or randf() < 0.18:
@@ -1058,15 +1060,69 @@ func commit_capture_result(result: CaptureResult, player_ref: Node2D) -> void:
 	else:
 		capture_failed(player_ref)
 
-func capture_succeeded(player_ref: Node2D) -> void:
+func capture_succeeded(player_ref: Node2D) -> CaptureOwnershipResult:
+	var ownership_token := get_capture_ownership_token()
+	var species_id := StringName(cur_data.get("id", ""))
+	if capture_ownership_committed:
+		return CaptureOwnershipResult.new(
+			CaptureOwnershipResult.Status.DUPLICATE,
+			ownership_token,
+			species_id
+		)
+
+	var ownership_result := CaptureOwnershipResult.new(
+		CaptureOwnershipResult.Status.INVALID_REQUEST,
+		ownership_token,
+		species_id
+	)
+	if is_instance_valid(player_ref) and player_ref.has_method("on_pet_captured"):
+		ownership_result = player_ref.call(
+			"on_pet_captured",
+			cur_data,
+			level,
+			ownership_token,
+			randf(),
+			randf()
+		) as CaptureOwnershipResult
+		if ownership_result == null:
+			ownership_result = CaptureOwnershipResult.new(
+				CaptureOwnershipResult.Status.INVALID_REQUEST,
+				ownership_token,
+				species_id
+			)
+
+	if not ownership_result.is_accepted():
+		restore_after_capture_ownership_rejection(player_ref)
+		return ownership_result
+
+	capture_ownership_committed = true
 	spawn_floating_text("★ THU PHỤC HOÀN TOÀN! ★", Color(0.2, 1.0, 0.4))
 	if AudioManager:
 		AudioManager.play_sound("success")
-	
-	if player_ref and player_ref.has_method("on_pet_captured"):
-		player_ref.on_pet_captured(cur_data, level)
-	
 	queue_free()
+	return ownership_result
+
+
+func get_capture_ownership_token() -> StringName:
+	if capture_ownership_token.is_empty():
+		capture_ownership_token = StringName("wild_capture_%d" % get_instance_id())
+	return capture_ownership_token
+
+
+func restore_after_capture_ownership_rejection(player_ref: Node2D) -> void:
+	capture_attempt_active = false
+	visual.visible = true
+	visual.rotation = 0.0
+	visual.scale = Vector2.ONE
+	visual.modulate = Color.WHITE
+	if is_instance_valid(player_ref):
+		state = State.CHASE
+		target = player_ref
+	else:
+		state = State.IDLE
+		target = null
+	spawn_floating_text("Không thể chuyển Pet vào đội hình.", Color(1.0, 0.45, 0.25))
+
 
 func capture_failed(player_ref: Node2D) -> void:
 	visual.visible = true

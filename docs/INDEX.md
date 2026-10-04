@@ -7,22 +7,23 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 1. `AGENTS.md`: quy tắc bắt buộc và lệnh kiểm tra.
 2. `docs/CHECKPOINT.md`: work package gần nhất, thay đổi thật và phần còn lại.
 3. `docs/roadmap/IMPLEMENTATION_PHASES.md`: thứ tự package và gate.
-   Kế hoạch chi tiết package kế tiếp: `docs/roadmap/U1_4_INVENTORY_PLAN.md`.
+   Prompt package kế tiếp: `docs/NEXT_UPDATE_PROMPT.md`.
 4. `docs/architecture/MODULES.md`: ownership, contract và ranh giới module.
 5. `docs/architecture/DATA_CONTRACTS.md`: grammar ID, typed Resource, registry và migration legacy.
 6. `docs/architecture/INVENTORY_MIGRATION.md`: boundary stable ID, adapter và single source of truth hiện tại.
 7. `docs/architecture/INVENTORY_TRANSACTIONS.md`: transaction/result, capacity policy và direct-writer audit.
 8. `docs/architecture/DOMAIN_DEFINITIONS.md`: schema recipe/building/crop, cross-reference và runtime boundary.
 9. `docs/architecture/COMBAT_CONTRACT.md`: damage request/result, adapter và legacy caller audit.
-10. `docs/architecture/CAPTURE_CONTRACT.md`: chance request/result, injected roll và Creature adapter.
-11. `docs/architecture/PLAYER_NEEDS_CONTRACT.md`: state, snapshot, buff ID và Player adapter của survival needs.
-12. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
-13. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
-14. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
-15. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
-16. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
-17. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
-18. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
+10. `docs/architecture/CAPTURE_CONTRACT.md`: chance request/result, sphere transaction và Creature adapter.
+11. `docs/architecture/CAPTURE_OWNERSHIP_CONTRACT.md`: stable species, rarity/trait và atomic roster ownership.
+12. `docs/architecture/PLAYER_NEEDS_CONTRACT.md`: state, snapshot, buff ID và Player adapter của survival needs.
+13. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
+14. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
+15. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
+16. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
+17. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
+18. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+19. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 
@@ -55,6 +56,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.6c player actions | Hoàn tất | Stable action intent + deterministic mapper/policy/dispatch regression |
 | U1.7a capture result | Hoàn tất | Pure chance/result + injected roll, sleep bug regression và Creature adapter |
 | U1.7b sphere transaction | Hoàn tất | Stable basic/mega/giga selection, atomic spend/launch và missed-drop adapter |
+| U1.7c roster ownership | Hoàn tất | Stable species mapping, pure rarity/trait và atomic append/reward/despawn |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

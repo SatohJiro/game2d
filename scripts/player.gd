@@ -78,6 +78,7 @@ var has_armor: bool = false
 
 # Pet Party (Slots 1, 2, 3)
 var pet_party: Array[Dictionary] = []
+var committed_capture_tokens: Dictionary = {}
 var active_pet_node: Node2D = null
 
 # Combat Roll / Dash (Juice & Skill-based action)
@@ -796,51 +797,60 @@ func swap_active_pet(idx: int) -> void:
 		var display_name = "[%s] %s (%s)" % [badge, data["species_data"]["name"], trait_str]
 		hud_ref.update_pet_stats(display_name, data["level"], pet_inst.hp, pet_inst.max_hp, "Tự do Tấn công")
 
-func on_pet_captured(pet_data: Dictionary, pet_level: int) -> void:
-	gain_exp(75)
-	shake_camera(4.5)
-	
-	# Determine Pet Rarity & Traits
-	var roll = randf()
-	var rarity_badge = "★"
-	var trait_name = "Chăm Chỉ"
-	var stat_multiplier = 1.0
-	
-	if roll < 0.05:
-		rarity_badge = "★★★★ Thần Thoại"
-		trait_name = "Thần Long Hộ Mệnh"
-		stat_multiplier = 1.5
-	elif roll < 0.20:
-		rarity_badge = "★★★ Sử Thi"
-		trait_name = ["Chiến Tướng", "Thần Tốc", "Hộ Vệ"][randi() % 3]
-		stat_multiplier = 1.3
-	elif roll < 0.45:
-		rarity_badge = "★★ Hiếm"
-		trait_name = ["Dũng Cảm", "Nhanh Nhẹn"][randi() % 2]
-		stat_multiplier = 1.15
-	else:
-		rarity_badge = "★ Thường"
-		trait_name = "Bình Thường"
-		stat_multiplier = 1.0
-	
-	var boosted_data = pet_data.duplicate()
-	boosted_data["power"] = int(boosted_data.get("power", 16) * stat_multiplier)
-	boosted_data["max_hp"] = int(boosted_data.get("max_hp", 100) * stat_multiplier)
-	
-	var party_entry = {
-		"species_data": boosted_data,
-		"level": pet_level,
-		"rarity_badge": rarity_badge,
-		"trait": trait_name
-	}
+func on_pet_captured(
+	pet_data: Dictionary,
+	pet_level: int,
+	capture_token: StringName = &"",
+	rarity_roll: float = -1.0,
+	trait_roll: float = -1.0
+) -> CaptureOwnershipResult:
+	var request := CaptureOwnershipRequest.new(
+		capture_token,
+		StringName(pet_data.get("id", "")),
+		pet_data,
+		pet_level,
+		rarity_roll,
+		trait_roll
+	)
+	return commit_capture_ownership(request)
+
+
+func commit_capture_ownership(request: CaptureOwnershipRequest) -> CaptureOwnershipResult:
+	if request != null:
+		request.already_committed = committed_capture_tokens.has(request.capture_token)
+	var result := CaptureOwnershipResolver.resolve(request)
+	if not result.is_accepted():
+		return result
+
+	var party_entry := result.party_entry.duplicate(true)
 	pet_party.append(party_entry)
-	
+	committed_capture_tokens[result.capture_token] = true
+	gain_exp(result.reward_exp)
+	shake_camera(4.5)
+
+	var pet_data: Dictionary = party_entry["species_data"]
+	var pet_level := int(party_entry["level"])
 	if hud_ref:
-		hud_ref.show_banner("THU PHỤC THÀNH CÔNG!\n[%s] %s (Nội Tại: %s)!" % [rarity_badge, pet_data["name"], trait_name], 4.5)
-		hud_ref.update_pet_stats("[%s] %s" % [rarity_badge, pet_data["name"]], pet_level, boosted_data["max_hp"], boosted_data["max_hp"], "Tự do Tấn công")
-	
+		hud_ref.show_banner(
+			"THU PHỤC THÀNH CÔNG!\n[%s] %s (Nội Tại: %s)!" % [
+				result.rarity_badge,
+				pet_data["name"],
+				result.trait_name,
+			],
+			4.5
+		)
+		hud_ref.update_pet_stats(
+			"[%s] %s" % [result.rarity_badge, pet_data["name"]],
+			pet_level,
+			int(pet_data["max_hp"]),
+			int(pet_data["max_hp"]),
+			"Tự do Tấn công"
+		)
+
 	if base_manager_ref:
 		base_manager_ref.check_quest_progress(self)
+	return result
+
 
 func try_interact() -> void:
 	var overlapping = interact_detector.get_overlapping_bodies()

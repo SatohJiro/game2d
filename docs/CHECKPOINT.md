@@ -1,87 +1,60 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.7b — stable sphere selection và inventory/spawn transaction
+## U1.7c — stable species và atomic roster ownership
 
-Trạng thái: `VERIFIED` ngày 2026-10-04; package branch `work/u1.7b-sphere-transaction`.
+Trạng thái: `VERIFIED` ngày 2026-10-04; package branch `work/u1.7c-roster-ownership`.
 
 ### Mục tiêu và invariant
 
-- Chọn sphere bằng stable item ID với thứ tự cố định Giga → Mega → Basic.
-- Validate toàn bộ điều kiện có thể thất bại trước khi trừ inventory.
-- Một lần launch hợp lệ chỉ trừ đúng một sphere đã chọn; cooldown/build/unknown ID không làm đổi inventory.
-- Projectile và missed drop giữ stable item ID; localized/legacy name chỉ là compatibility adapter.
-- Không tạo inventory backing store thứ hai và không đổi deterministic capture resolver của U1.7a.
+- Stable species ID đi xuyên capture request, ownership result và party entry.
+- Rarity/trait được resolve thuần từ hai roll đã inject; resolver không gọi RNG hay Node.
+- Accepted append/reward/quest đúng một lần; invalid/unknown/duplicate không mutation.
+- Wild creature chỉ despawn sau accepted ownership; rejection phục hồi actor trong world.
+- Giữ party dictionary và summon adapter hiện hữu; chưa tạo persistent PetInstance hay save schema.
 
 ### Kết quả đã triển khai
 
-- Thêm pure `CaptureSphereSelector` và `CaptureSphereSelectionResult` với ba ID:
-  - `item.pal_sphere.basic` — multiplier `1.0`.
-  - `item.pal_sphere.mega` — multiplier `2.0`.
-  - `item.pal_sphere.giga` — multiplier `4.0`.
-- Bổ sung typed `ItemDefinition` cho Mega/Giga; content registry hiện có 10 definition.
-- Mở rộng `LegacyItemAdapter` để ba stable ID vẫn đọc/ghi cùng dictionary inventory legacy.
-- `Player.throw_pal_sphere()` thực hiện select → validate scene/configuration → atomic remove → add/launch → feedback và trả `bool`.
-- `Sphere` được cấu hình bằng stable ID, từ chối ID/multiplier không khớp, và truyền ID đó sang missed `DroppedItem`.
-- `DroppedItem` chọn visual cho cả ba sphere bằng stable ID.
-- Contract/data/module/gameplay/roadmap đã được cập nhật theo implementation.
+- `LegacySpeciesAdapter` map cố định 5 species legacy sang `creature.*` ID và deep-copy stable snapshot.
+- `CaptureOwnershipRequest`, `CaptureOwnershipResult`, `CaptureOwnershipResolver` tạo boundary thuần, deterministic.
+- Giữ đúng rarity threshold 0.05/0.20/0.45, multiplier 1.5/1.3/1.15/1.0 và reward 75 EXP.
+- Player commit party entry có top-level `species_id`, chống token lặp trong phiên và chỉ chạy side effect sau accepted.
+- WildCreature tạo token theo instance, lấy đúng hai roll cho ownership và chỉ `queue_free()` sau accepted.
+- Rejection clear capture attempt, khôi phục visual và chuyển CHASE/IDLE an toàn.
+
+Contract chi tiết: `architecture/CAPTURE_OWNERSHIP_CONTRACT.md`.
 
 ### File và API chính
 
-- `systems/capture/capture_sphere_selector.gd`: pure priority/multiplier lookup.
-- `systems/capture/capture_sphere_selection_result.gd`: result `OK | NONE_AVAILABLE`.
-- `scripts/player.gd`: `throw_pal_sphere() -> bool`, `select_capture_sphere()`, `spend_capture_sphere(selection)`.
-- `scripts/sphere.gd`: `configure_capture_sphere(item_id, multiplier) -> bool`, `create_missed_drop()`.
-- `data/definitions/items/pal_sphere_{basic,mega,giga}.tres` và `data/legacy_item_adapter.gd`.
-- Regression mở rộng trong `tools/validate_capture.gd`, `validate_content.gd`, `validate_item_migration.gd`.
+- `data/legacy_species_adapter.gd`: mapping index ↔ stable ID và `create_stable_snapshot()`.
+- `systems/capture/capture_ownership_request.gd`: immutable-by-convention input snapshot.
+- `systems/capture/capture_ownership_result.gd`: `ACCEPTED | INVALID_REQUEST | UNKNOWN_SPECIES | DUPLICATE`.
+- `systems/capture/capture_ownership_resolver.gd`: validation, rarity/trait, stat boost và party projection.
+- `scripts/player.gd`: `on_pet_captured(...) -> CaptureOwnershipResult`, `commit_capture_ownership()`.
+- `scripts/creature.gd`: `capture_succeeded(...) -> CaptureOwnershipResult`, rejection restore và duplicate guard.
+- `tools/validate_capture.gd`: pure boundary và lifecycle regression.
 
-Contract đầy đủ: `architecture/CAPTURE_CONTRACT.md` và `architecture/INVENTORY_TRANSACTIONS.md`.
+### Validation hiện tại
 
-### Validation
-
-`tools/check_project.ps1` đạt ngày 2026-10-04:
-
-- Documentation: 26 required file, 28 Markdown file.
-- Asset gate: 166/166 asset được phân loại; provenance/action không đổi.
-- Headless editor load, content, inventory migration, combat, needs, locomotion, Player action, capture và main-scene smoke đều đạt.
-- Capture regression gồm deterministic resolver U1.7a và selection/transaction/projectile/drop stable ID U1.7b.
-- Capture được lặp 15 lần sau khi cô lập headless audio; không còn `ObjectDB`/resource leak.
-- Log: `build/checks/capture-validation.log` và `build/checks/headless-smoke.log`.
+- Focused capture regression đạt: deterministic chance, sphere transaction và atomic roster ownership.
+- Full `tools/check_project.ps1` đạt: 26 required file, 30 Markdown file; 166 asset inventory/action; editor import/load, content, inventory, combat, needs, locomotion, action, capture và main-scene smoke đều xanh.
+- Log scan không có script error, parse error, missing dependency, runtime error hoặc resource leak.
 
 ### Compatibility, save, asset và giới hạn
 
-- Save/data breaking change: none. Dictionary inventory legacy vẫn là backing store duy nhất; adapter ánh xạ stable ID hai chiều.
-- Asset/provenance: không thêm asset; typed definition chỉ tham chiếu asset hiện có.
-- Add projectile là thao tác đồng bộ ngay sau inventory commit. Các failure point dự kiến đều đã được validate trước commit; chưa có rollback cho exception engine ngoài contract.
-- Craft output vẫn ghi legacy key trực tiếp, nhưng stable reader quan sát cùng backing store qua adapter.
-- Manual editor test còn cần cho quỹ đạo ném, hit/miss, visual của ba sphere và pickup lại missed drop.
-- `player.gd` tăng từ 1076 lên 1090 dòng do compatibility boundary; việc tách roster/summon tiếp tục ở các package sau.
-- Rollback: revert commit U1.7b; save cũ không cần migration.
+- Save/data breaking change: none. Dự án chưa lưu roster; party dictionary chỉ thêm `species_id`.
+- Token `wild_capture_<instance_id>` và committed-token set chỉ tồn tại trong session, không phải persistent identity.
+- Caller cũ chỉ truyền pet data/level giờ fail closed vì thiếu token/roll; runtime chính đã migrate.
+- Asset/provenance: không thêm hoặc sửa asset; inventory 166 asset giữ nguyên.
+- Manual editor test còn cần cho HUD/audio/timing reject-resume và summon party entry mới.
+- Party chưa có capacity/storage policy; persistent PetInstance thuộc U1.10, save roster thuộc U1.11.
+- Rollback: revert commit U1.7c; không cần migration.
 
 ### Gói tiếp theo
 
-U1.7c chỉ xử lý roster ownership commit:
+U1.8a chỉ tách creature perception cadence/query boundary và regression; không viết lại toàn bộ AI. Đọc `NEXT_UPDATE_PROMPT.md`, chạy full gate baseline, audit `_physics_process`, group scans và target acquisition trước khi sửa.
 
-- Stable species identity tại capture boundary.
-- Pure ownership/admission request-result và deterministic trait/rarity input.
-- Player commit trả kết quả; WildCreature chỉ despawn khi ownership được chấp nhận.
-- Duplicate/re-entry guard và regression reject-without-despawn.
-- Không làm summon Node lifecycle, command UI hoặc save roster; các phần đó thuộc U1.10/G06.
+## Hướng sản phẩm phải giữ
 
-Lệnh đầu tiên: chạy `tools/check_project.ps1`, sau đó audit `Player.on_pet_captured`, `WildCreature.capture_succeeded`, `pet_party` và `swap_active_pet` trước khi thiết kế contract.
-
-## Lịch sử
-
-- U1.7a: deterministic capture request/result và injected roll.
-- U1.6: Player needs, locomotion và action input boundaries.
-- U1.5: deterministic combat request/result.
-- U1.4: inventory transaction + chest capacity.
-- U1.3: typed domain definitions.
-- U1.2: stable wood adapter.
-- U1.1: stable IDs/registry.
-## Roadmap note sau U1.7b
-
-- Người dùng chọn Paloria Luminous Town làm ưu tiên hình ảnh lớn cho giai đoạn world/art/audio.
-- Kế hoạch AT0–AT7 đã ghi tại docs/roadmap/ANIME_TOWN_RENEWAL.md.
-- Chưa tải asset, chưa đổi runtime/save/data. game-dev CLI vẫn thiếu nên admission bị chặn.
-- Full tools/check_project.ps1 đạt: 29 Markdown file, 166 asset inventory/action, mọi Godot regression và main smoke xanh.
-- U1.7c vẫn là package code kế tiếp; initiative town bắt đầu sau khi U2 chunk/persistence contract ổn định.
+- Paloria Luminous Town là initiative hình ảnh/world/audio ưu tiên sau khi U2 chunk/persistence contract ổn định.
+- Kế hoạch AT0–AT7 ở `roadmap/ANIME_TOWN_RENEWAL.md`; dùng thiết kế nguyên bản, không sao chép map/sprite/nhạc của Your Name.
+- Asset admission mới vẫn bị chặn vì `game-dev` CLI chưa có trong PATH.

@@ -21,7 +21,7 @@ U0 chỉ hoàn tất khi baseline có thể khôi phục và asset mới không 
 4. **U1.4 Inventory transaction — VERIFIED:** pure transaction/Player/drop; chest finite capacity + atomic mapped batch. Direct writers khác migrate theo domain package.
 5. **U1.5 Combat result — VERIFIED:** pure deterministic resolver; migrate Player + WildCreature, giữ caller adapter.
 6. **U1.6 Player components — VERIFIED:** needs, locomotion và stable action input boundary có pure regression; Player còn làm coordinator/presentation adapter. Build/craft/progression tiếp tục theo domain package, không quay lại gom vào Player.
-7. **U1.7 Capture service — IN PROGRESS:** U1.7a deterministic result và U1.7b stable sphere spend/launch VERIFIED; U1.7c roster ownership/commit còn lại.
+7. **U1.7 Capture service — VERIFIED:** U1.7a deterministic result, U1.7b stable sphere transaction và U1.7c atomic roster ownership có regression; persistent PetInstance/save thuộc U1.10–U1.11.
 8. **U1.8 Creature perception/FSM:** không scan group mỗi frame.
 9. **U1.9 Creature skills/drop:** definition-driven.
 10. **U1.10 Pet roster/command:** persistent ID và summon lifecycle.

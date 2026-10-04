@@ -1,31 +1,52 @@
-﻿# Prompt triển khai package U1.7c
+# Prompt cho model tiếp theo — U1.8a Creature perception boundary
 
-Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `.agents/rules/game_development.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, roadmap, `CAPTURE_CONTRACT.md`, `DATA_CONTRACTS.md`, `DOMAIN_DEFINITIONS.md`, `MODULES.md` và gameplay G03/G06. Chạy `tools/check_project.ps1` trước khi sửa.
+Bạn đang tiếp tục Godot 4.7.2 project Paloria 3.0. Làm đúng một work package nhỏ: U1.8a. Đọc `AGENTS.md`, `.agents/rules/game_development.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, `docs/architecture/MODULES.md`, `docs/gameplay/FEATURES.md`, `docs/roadmap/IMPLEMENTATION_PHASES.md` và `docs/roadmap/ANIME_TOWN_RENEWAL.md` trước khi sửa.
 
-U1.7a deterministic capture và U1.7b sphere transaction đã VERIFIED. Chỉ thực hiện U1.7c roster ownership commit:
+## Mục tiêu
 
-1. Audit có bằng chứng các path `Player.on_pet_captured`, `WildCreature.capture_succeeded`, `pet_party`, `active_pet`, `swap_active_pet` và dữ liệu species legacy. Ghi rõ current ownership và lifecycle trước khi đổi.
-2. Chuẩn hóa stable species ID ở capture boundary. Nếu chưa thể tạo full typed `CreatureDefinition`, dùng mapping compatibility có kiểm thử cho species hiện hữu; không dùng display name, index, asset path hoặc scene path làm identity mới.
-3. Tạo pure request/result cho roster admission/ownership. Input tối thiểu gồm stable species ID, snapshot stat/level và các roll đã inject; result phải phân biệt accepted/rejected/invalid/duplicate đủ để caller quyết định despawn.
-4. Tách RNG khỏi commit: Player/caller lấy rarity roll và trait-choice input đúng một lần, pure resolver tính rarity/multiplier/trait. Tween, notification và Node lifecycle không quyết định kết quả.
-5. `Player.on_pet_captured` phải trả typed result hoặc trạng thái rõ. Append party, reward EXP và quest progress chỉ xảy ra một lần trong accepted commit; reject/duplicate không cấp reward và không đổi roster.
-6. `WildCreature.capture_succeeded` chỉ `queue_free()` sau accepted ownership commit. Khi reject, thoát trạng thái capture theo contract an toàn và giữ creature trong world. Thêm re-entry/duplicate guard để callback lặp không sở hữu hay thưởng hai lần.
-7. Giữ `pet_party` legacy dictionary và summon Node adapter nếu cần tương thích. Không triển khai full persistent `PetInstance`, save migration, party capacity, command UI, worker jobs hay refactor summon trong package này; các phần đó thuộc U1.10/G06.
-8. Regression bắt buộc: mapping species known/unknown; deterministic rarity/trait với boundary rolls; accepted append/reward đúng một lần; invalid/duplicate/rejected không mutation; reject không despawn; accepted despawn; callback lặp không double reward; main-scene adapter.
-9. Cập nhật `CAPTURE_CONTRACT.md`, data/module docs, G03/G06, roadmap, INDEX, CHECKPOINT và prompt package kế tiếp. Ghi rõ save compatibility, adapter, rollback và manual capture/summon checks.
+Tách quyết định perception/target acquisition của WildCreature khỏi vòng physics dày đặc, có cadence rõ và logic thuần có thể test. Package này chuẩn bị cho FSM U1.8b; không viết lại toàn bộ `creature.gd` trong một lượt.
 
-Giữ một work package nhỏ. Kết thúc bằng full `tools/check_project.ps1`, quét log không có `SCRIPT ERROR`, `ERROR`, parse/missing dependency/leak, chạy `git diff --check`, commit branch riêng và fast-forward `main` nếu mọi gate xanh.
+## Phạm vi bắt buộc
 
-## Hiện trạng cần biết
+1. Chạy `tools/check_project.ps1` để xác nhận baseline, rồi audit có bằng chứng:
+   - mọi `_physics_process`, `_process`, timer và state branch trong `scripts/creature.gd`;
+   - `get_nodes_in_group`, Area2D overlap, distance scan và target assignment;
+   - ai ghi `state`, `target`, `velocity`, attack/capture/sleep/defeat guard;
+   - call path từ `main.tscn`/spawner tới creature setup.
+2. Ghi current-state table: state, perception cần thiết, transition owner, locomotion owner và side effect. Không đổi behavior khi chưa có bảng.
+3. Tạo boundary nhỏ trong `systems/creature/`:
+   - typed/ref-counted perception input snapshot;
+   - deterministic target/transition decision result;
+   - pure policy không truy cập SceneTree/Node/RNG.
+4. Node adapter chỉ thu thập candidate ở cadence hữu hạn hoặc từ Area2D/event, chuyển dữ liệu tối thiểu vào policy. Không scan toàn bộ group mỗi physics frame.
+5. Giữ nguyên combat/capture contract U1.5/U1.7, stable species snapshot và ownership lifecycle. CAPTURING, SLEEP, STUN và defeated không được bị perception ghi đè.
+6. Chỉ một owner ghi target/state trong phần đã migrate. Nếu chưa thể migrate mọi state, tạo compatibility adapter rõ và liệt kê path còn legacy.
+7. Regression tối thiểu:
+   - cadence không query trước hạn và query đúng khi đến hạn;
+   - candidate sorting/tie-break deterministic;
+   - out-of-range/invalid candidate bị loại;
+   - protected states không đổi target/state;
+   - target lost/acquired behavior giữ tương thích;
+   - capture rejection vẫn resume an toàn;
+   - main scene load/smoke xanh.
+8. Cập nhật tài liệu module, gameplay, roadmap, checkpoint và prompt U1.8b. Ghi metric trước/sau: số group scan hoặc perception query trong một khoảng simulation cố định.
 
-- `Player.pet_party` hiện là `Array[Dictionary]`; `active_pet` là Node.
-- `on_pet_captured(pet_data, level)` hiện tự roll rarity/trait, nhân stat, append party, thưởng EXP/quest và không trả kết quả ownership.
-- `WildCreature.capture_succeeded` hiện gọi Player rồi despawn bất kể roster commit có thành công hay không.
-- `swap_active_pet` hủy/tạo lại companion từ dictionary; chưa có persistent pet instance ID.
-- Không có party capacity contract. Không tự thêm giới hạn trong U1.7c.
-- U1.7b giữ inventory bằng legacy dictionary với stable adapter; không tạo backing store mới.
-## Hướng sản phẩm phải bảo toàn về sau
+## Giới hạn
 
-Người dùng ưu tiên mạnh sáng kiến Paloria Luminous Town. Đọc docs/roadmap/ANIME_TOWN_RENEWAL.md và không làm mất hướng này khi refactor U1. Chưa triển khai map/art/audio trong U1.7c; phải giữ stable IDs, chunk-ready DTO và ranh giới presentation để AT0–AT7 có thể bắt đầu sau U2 world contract.
+- Không triển khai skill/drop U1.9, PetInstance U1.10, save U1.11, chunk streaming U2 hoặc map/art/audio.
+- Không đổi balance, sprite, animation, collision layer hoặc scene hierarchy nếu không cần cho boundary.
+- Không tạo service/global singleton lớn và không thêm logic mới vào `player.gd`.
+- Không dùng display name, array index, asset path hoặc scene path làm identity.
+- Không tuyên bố performance tốt hơn nếu chưa có metric tái lập.
 
-“Your Name” chỉ là mood reference. Map, player, pet và nhạc phải là thiết kế/nguyên liệu hợp pháp, nguyên bản; không tải soundtrack hoặc sprite của phim.
+## Definition of Done
+
+- Pure perception policy và adapter có static typing, không có parse/runtime warning.
+- Focused regression chứng minh cadence, determinism, state guards và behavior adapter.
+- Full `tools/check_project.ps1` xanh; quét mọi `build/checks/*.log` không có script/parse/missing dependency/error/leak.
+- `git diff --check` xanh; tài liệu ghi save/data compatibility, asset impact, rollback, manual gaps.
+- Commit trên branch riêng rồi fast-forward `main` khi gate xanh.
+
+## Hướng sản phẩm phải bảo toàn
+
+Paloria Luminous Town vẫn là initiative nổi bật cho U2–U4. Kiến trúc perception phải phù hợp world chunk admission/unload sau này: không giữ Node ngoài chunk như dữ liệu bền vững và không phụ thuộc scan toàn world. Your Name chỉ là mood reference; content phát hành phải nguyên bản và có license/provenance hợp lệ.

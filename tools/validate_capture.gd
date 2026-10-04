@@ -16,11 +16,13 @@ func _run() -> void:
 	_test_determinism()
 	_test_sphere_selection()
 	_test_sphere_scene_adapter()
+	_test_species_mapping_and_ownership_resolver()
 	await _test_creature_adapter()
 	await _test_player_sphere_adapter()
+	await _test_ownership_lifecycle_adapter()
 	await _clean_tree()
 	if _failures.is_empty():
-		print("Capture validation passed: deterministic resolution, stable sphere selection, atomic spend/launch and scene adapters are valid.")
+		print("Capture validation passed: deterministic resolution, stable sphere transaction and atomic roster ownership are valid.")
 		quit.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -128,6 +130,84 @@ func _test_sphere_scene_adapter() -> void:
 	sphere.free()
 
 
+func _test_species_mapping_and_ownership_resolver() -> void:
+	_expect(LegacySpeciesAdapter.to_content_id(0) == LegacySpeciesAdapter.FLAM_ID, "Flam stable species mapping mismatch")
+	_expect(LegacySpeciesAdapter.to_content_id(4) == LegacySpeciesAdapter.DRAGON_ID, "Dragon stable species mapping mismatch")
+	_expect(LegacySpeciesAdapter.to_content_id(5).is_empty(), "unknown legacy species index must fail closed")
+	_expect(LegacySpeciesAdapter.to_legacy_index(LegacySpeciesAdapter.MUSHROOM_ID) == 2, "stable species reverse mapping mismatch")
+	_expect(not LegacySpeciesAdapter.is_supported(&"creature.unknown"), "unknown species ID must fail closed")
+
+	var source := {
+		"id": LegacySpeciesAdapter.FLAM_ID,
+		"name": "Flam",
+		"element": "Lửa",
+		"power": 20,
+		"max_hp": 100,
+		"speed": 100.0,
+	}
+	var legendary_request := CaptureOwnershipRequest.new(
+		&"capture.legendary",
+		LegacySpeciesAdapter.FLAM_ID,
+		source,
+		3,
+		0.0,
+		1.0
+	)
+	var legendary := CaptureOwnershipResolver.resolve(legendary_request)
+	_expect(legendary.is_accepted(), "valid legendary ownership request must be accepted")
+	_expect(legendary.rarity_badge == CaptureOwnershipResolver.LEGENDARY_BADGE, "legendary boundary mismatch")
+	_expect(legendary.trait_name == CaptureOwnershipResolver.LEGENDARY_TRAIT, "legendary trait mismatch")
+	_expect(int(legendary.party_entry["species_data"]["power"]) == 30, "legendary power multiplier mismatch")
+	_expect(int(legendary.party_entry["species_data"]["max_hp"]) == 150, "legendary HP multiplier mismatch")
+	_expect(int(source["power"]) == 20 and int(source["max_hp"]) == 100, "ownership resolver must not mutate source snapshot")
+	_expect(legendary.party_entry["species_id"] == LegacySpeciesAdapter.FLAM_ID, "party entry must carry stable species ID")
+	_expect(legendary.reward_exp == CaptureOwnershipResolver.CAPTURE_REWARD_EXP, "capture reward EXP mismatch")
+
+	var epic := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(
+		&"capture.epic",
+		LegacySpeciesAdapter.FLAM_ID,
+		source,
+		1,
+		0.05,
+		1.0
+	))
+	_expect(epic.rarity_badge == CaptureOwnershipResolver.EPIC_BADGE, "epic lower boundary mismatch")
+	_expect(epic.trait_name == CaptureOwnershipResolver.EPIC_TRAITS[2], "epic trait upper roll mismatch")
+	var rare := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(
+		&"capture.rare",
+		LegacySpeciesAdapter.FLAM_ID,
+		source,
+		1,
+		0.20,
+		0.0
+	))
+	_expect(rare.rarity_badge == CaptureOwnershipResolver.RARE_BADGE, "rare lower boundary mismatch")
+	_expect(rare.trait_name == CaptureOwnershipResolver.RARE_TRAITS[0], "rare trait lower roll mismatch")
+	var common := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(
+		&"capture.common",
+		LegacySpeciesAdapter.FLAM_ID,
+		source,
+		1,
+		0.45,
+		0.5
+	))
+	_expect(common.rarity_badge == CaptureOwnershipResolver.COMMON_BADGE, "common lower boundary mismatch")
+
+	var duplicate_request := CaptureOwnershipRequest.new(&"capture.duplicate", LegacySpeciesAdapter.FLAM_ID, source, 1, 0.5, 0.5)
+	duplicate_request.already_committed = true
+	_expect(CaptureOwnershipResolver.resolve(duplicate_request).status == CaptureOwnershipResult.Status.DUPLICATE, "duplicate ownership status mismatch")
+	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"", LegacySpeciesAdapter.FLAM_ID, source, 1, 0.5, 0.5)).status == CaptureOwnershipResult.Status.INVALID_REQUEST, "empty capture token must be invalid")
+	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.unknown", &"creature.unknown", source, 1, 0.5, 0.5)).status == CaptureOwnershipResult.Status.UNKNOWN_SPECIES, "unknown species ownership status mismatch")
+	var mismatched := source.duplicate(true)
+	mismatched["id"] = LegacySpeciesAdapter.SLIME_ID
+	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.mismatch", LegacySpeciesAdapter.FLAM_ID, mismatched, 1, 0.5, 0.5)).status == CaptureOwnershipResult.Status.INVALID_REQUEST, "mismatched snapshot species ID must be invalid")
+	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.bad_roll", LegacySpeciesAdapter.FLAM_ID, source, 1, 1.1, 0.5)).status == CaptureOwnershipResult.Status.INVALID_REQUEST, "out-of-range rarity roll must be invalid")
+
+	var first := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.repeat", LegacySpeciesAdapter.FLAM_ID, source, 2, 0.19, 0.75))
+	var second := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.repeat", LegacySpeciesAdapter.FLAM_ID, source, 2, 0.19, 0.75))
+	_expect(first.rarity_badge == second.rarity_badge and first.trait_name == second.trait_name, "ownership resolver must be deterministic")
+	_expect(first.party_entry == second.party_entry, "same ownership request must produce the same party entry")
+
 func _test_creature_adapter() -> void:
 	var packed_main := load(MAIN_SCENE_PATH) as PackedScene
 	if packed_main == null:
@@ -150,6 +230,7 @@ func _test_creature_adapter() -> void:
 	creature.set("facing_row", 0)
 	var throw_position: Vector2 = creature.global_position + Vector2.UP * 10.0
 	var request: CaptureRequest = creature.call("create_capture_request", 1.0, 0.0, throw_position)
+	_expect(request.species_id == LegacySpeciesAdapter.to_content_id(int(creature.get("species_index"))), "Creature adapter must attach stable species ID")
 	_expect(request.is_asleep, "Creature adapter must snapshot sleep before CAPTURING transition")
 	_expect(request.is_back_strike, "Creature adapter back-strike projection mismatch")
 	var result: CaptureResult = creature.call("resolve_capture_request", request)
@@ -231,6 +312,117 @@ func _test_player_sphere_adapter() -> void:
 		player_parent.remove_child(spawned_child)
 		spawned_child.free()
 
+
+func _test_ownership_lifecycle_adapter() -> void:
+	var packed_player := load("res://scenes/player.tscn") as PackedScene
+	var packed_creature := load("res://scenes/creature.tscn") as PackedScene
+	if packed_player == null or packed_creature == null:
+		_failures.append("unable to load Player/Creature scenes for ownership lifecycle")
+		return
+
+	var fixture := Node2D.new()
+	root.add_child(fixture)
+	var player := packed_player.instantiate()
+	fixture.add_child(player)
+	await process_frame
+	player.set("hud_ref", null)
+	player.set("base_manager_ref", null)
+	var party: Array[Dictionary] = player.get("pet_party")
+	var committed_tokens: Dictionary = player.get("committed_capture_tokens")
+	party.clear()
+	committed_tokens.clear()
+	player.set("exp_val", 0)
+	player.set("max_exp", 100)
+
+	var stable_source := LegacySpeciesAdapter.create_stable_snapshot(0, {
+		"name": "Flam",
+		"element": "Lửa",
+		"power": 20,
+		"max_hp": 100,
+		"speed": 100.0,
+	})
+	var accepted: CaptureOwnershipResult = player.call(
+		"on_pet_captured",
+		stable_source,
+		2,
+		&"capture.player_adapter",
+		0.45,
+		0.5
+	)
+	_expect(accepted.is_accepted(), "Player ownership adapter must accept valid request")
+	_expect(party.size() == 1 and int(player.get("exp_val")) == 75, "accepted ownership must append and reward exactly once")
+	_expect(party[0]["species_id"] == LegacySpeciesAdapter.FLAM_ID, "Player party entry must expose stable species ID")
+	var duplicate: CaptureOwnershipResult = player.call(
+		"on_pet_captured",
+		stable_source,
+		2,
+		&"capture.player_adapter",
+		0.0,
+		0.0
+	)
+	_expect(duplicate.status == CaptureOwnershipResult.Status.DUPLICATE, "Player must reject duplicate capture token")
+	_expect(party.size() == 1 and int(player.get("exp_val")) == 75, "duplicate ownership must not append or reward")
+	var invalid_before := party.size()
+	var invalid: CaptureOwnershipResult = player.call(
+		"on_pet_captured",
+		stable_source,
+		2,
+		&"capture.player_invalid",
+		-0.1,
+		0.5
+	)
+	_expect(invalid.status == CaptureOwnershipResult.Status.INVALID_REQUEST, "Player must reject invalid ownership input")
+	_expect(party.size() == invalid_before and int(player.get("exp_val")) == 75, "invalid ownership must not mutate roster/reward")
+
+	var audio_manager := root.get_node_or_null("AudioManager")
+	var sounds: Dictionary = audio_manager.get("sounds") if audio_manager != null else {}
+	var success_sound: AudioStream = sounds.get("success")
+	sounds.erase("success")
+
+	player.set("level", 1)
+	player.set("exp_val", 0)
+	player.set("max_exp", 1000)
+	var accepted_creature := packed_creature.instantiate()
+	accepted_creature.set("species_index", 1)
+	fixture.add_child(accepted_creature)
+	await process_frame
+	var party_before_creature := party.size()
+	var exp_before_creature := int(player.get("exp_val"))
+	var creature_result: CaptureOwnershipResult = accepted_creature.call("capture_succeeded", player)
+	_expect(creature_result.is_accepted(), "WildCreature must accept valid ownership commit")
+	_expect(bool(accepted_creature.get("capture_ownership_committed")), "WildCreature accepted ownership flag mismatch")
+	_expect(accepted_creature.is_queued_for_deletion(), "accepted WildCreature must queue despawn")
+	var repeated_result: CaptureOwnershipResult = accepted_creature.call("capture_succeeded", player)
+	_expect(repeated_result.status == CaptureOwnershipResult.Status.DUPLICATE, "WildCreature repeated success callback must be duplicate")
+	_expect(party.size() == party_before_creature + 1, "WildCreature repeated callback must append exactly once")
+	_expect(int(player.get("exp_val")) == exp_before_creature + 75, "WildCreature repeated callback must reward exactly once")
+	await process_frame
+	_expect(not is_instance_valid(accepted_creature), "accepted WildCreature must despawn after commit")
+
+	var rejected_creature := packed_creature.instantiate()
+	rejected_creature.set("species_index", 2)
+	fixture.add_child(rejected_creature)
+	await process_frame
+	var rejected_data: Dictionary = rejected_creature.get("cur_data")
+	rejected_data["id"] = &"creature.unknown"
+	rejected_creature.set("capture_attempt_active", true)
+	var party_before_reject := party.size()
+	var exp_before_reject := int(player.get("exp_val"))
+	var rejected_result: CaptureOwnershipResult = rejected_creature.call("capture_succeeded", player)
+	_expect(rejected_result.status == CaptureOwnershipResult.Status.UNKNOWN_SPECIES, "unknown species commit must be rejected")
+	_expect(not rejected_creature.is_queued_for_deletion(), "rejected WildCreature must remain in world")
+	_expect(not bool(rejected_creature.get("capture_attempt_active")), "rejected ownership must clear capture attempt")
+	_expect(party.size() == party_before_reject and int(player.get("exp_val")) == exp_before_reject, "rejected ownership must not mutate roster/reward")
+
+	if success_sound != null:
+		sounds["success"] = success_sound
+	fixture.remove_child(rejected_creature)
+	rejected_creature.free()
+	fixture.remove_child(player)
+	player.free()
+	root.remove_child(fixture)
+	fixture.free()
+	await process_frame
 
 func _clean_tree() -> void:
 	var audio_manager := root.get_node_or_null("AudioManager")

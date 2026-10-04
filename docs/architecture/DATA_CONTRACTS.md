@@ -32,6 +32,8 @@ Domain đã dành trước:
 
 Runtime capture sphere IDs đã được admit ở U1.7b: `item.pal_sphere.basic`, `item.pal_sphere.mega`, `item.pal_sphere.giga`. Cả ba map vào backing dictionary legacy qua `LegacyItemAdapter`; stable ID là identity cho selection/projectile/drop, text cũ chỉ là compatibility storage/display.
 
+U1.7c dành năm stable species ID `creature.flam`, `creature.slime`, `creature.mushroom`, `creature.beast`, `creature.dragon`. `LegacySpeciesAdapter` map index hiện hữu sang ID và deep-copy snapshot tại capture boundary. Đây là compatibility mapping; chưa có typed `CreatureDefinition` hoặc registry entry.
+
 `ContentId` tại `core/content_id.gd` là API duy nhất để validate, tạo và tách domain/local name. Không tự ghép hoặc parse ID trong gameplay system.
 
 ## Definition contract
