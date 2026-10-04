@@ -20,8 +20,9 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 13. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
 14. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
 15. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
-16. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
-17. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
+16. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
+17. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+18. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 

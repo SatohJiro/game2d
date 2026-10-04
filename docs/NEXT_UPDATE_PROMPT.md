@@ -24,3 +24,8 @@ Giữ một work package nhỏ. Kết thúc bằng full `tools/check_project.ps1
 - `swap_active_pet` hủy/tạo lại companion từ dictionary; chưa có persistent pet instance ID.
 - Không có party capacity contract. Không tự thêm giới hạn trong U1.7c.
 - U1.7b giữ inventory bằng legacy dictionary với stable adapter; không tạo backing store mới.
+## Hướng sản phẩm phải bảo toàn về sau
+
+Người dùng ưu tiên mạnh sáng kiến Paloria Luminous Town. Đọc docs/roadmap/ANIME_TOWN_RENEWAL.md và không làm mất hướng này khi refactor U1. Chưa triển khai map/art/audio trong U1.7c; phải giữ stable IDs, chunk-ready DTO và ranh giới presentation để AT0–AT7 có thể bắt đầu sau U2 world contract.
+
+“Your Name” chỉ là mood reference. Map, player, pet và nhạc phải là thiết kế/nguyên liệu hợp pháp, nguyên bản; không tải soundtrack hoặc sprite của phim.

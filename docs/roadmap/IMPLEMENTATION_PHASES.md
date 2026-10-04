@@ -62,6 +62,19 @@ Gate U3: thao tác core loop bằng keyboard/gamepad; focus/pause đúng; 720p�
 
 Gate U4: asset runtime đều VERIFIED hoặc original; animation không điều khiển kết quả domain; frame pacing và visual review đạt checklist.
 
+## Featured initiative AT — town/art/audio renewal
+
+Sáng kiến AT không chen vào U1. Nó bắt đầu sau khi U2.1–U2.3 chốt chunk identity, streaming và persistent delta:
+
+1. AT0 art direction/reference board nguyên bản.
+2. AT1 greybox ga → phố dốc → đền trên 3×3 chunk.
+3. AT2 một package terrain/prop được admit và normalize.
+4. AT3 day/dusk/night/rain lighting-weather pass.
+5. AT4 thay player và một pet hero đủ animation coverage.
+6. AT5 MusicContext/AudioDirector và town ambience.
+7. AT6 mở rộng từng quận; AT7 polish/cinematic/accessibility.
+
+Không dùng asset hoặc soundtrack từ “Your Name”; tên phim chỉ mô tả mood người dùng mong muốn. Gate chi tiết ở docs/roadmap/ANIME_TOWN_RENEWAL.md.
 ## U5 — chiều sâu gameplay
 
 1. Skill loadout, element/status và encounter roles.

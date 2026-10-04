@@ -78,3 +78,10 @@ Lệnh đầu tiên: chạy `tools/check_project.ps1`, sau đó audit `Player.on
 - U1.3: typed domain definitions.
 - U1.2: stable wood adapter.
 - U1.1: stable IDs/registry.
+## Roadmap note sau U1.7b
+
+- Người dùng chọn Paloria Luminous Town làm ưu tiên hình ảnh lớn cho giai đoạn world/art/audio.
+- Kế hoạch AT0–AT7 đã ghi tại docs/roadmap/ANIME_TOWN_RENEWAL.md.
+- Chưa tải asset, chưa đổi runtime/save/data. game-dev CLI vẫn thiếu nên admission bị chặn.
+- Full tools/check_project.ps1 đạt: 29 Markdown file, 166 asset inventory/action, mọi Godot regression và main smoke xanh.
+- U1.7c vẫn là package code kế tiếp; initiative town bắt đầu sau khi U2 chunk/persistence contract ổn định.

@@ -95,6 +95,17 @@ Gate: keyboard/mouse và gamepad hoàn thành capture → assign work → collec
 
 Gate: không popping khi chuyển locomotion/action; hit frame khớp damage; 20 actor on-screen giữ target frame budget; có option giảm motion.
 
+## Featured initiative AT — Paloria Luminous Town
+
+Sau khi U2 có chunk/persistence contract ổn định, triển khai sáng kiến thị trấn anime nguyên bản xuyên U2–U4:
+
+- Thị trấn Nhật Bản hư cấu gồm ga/phố chợ, khu dân cư sườn dốc, đền/đài quan sát, bờ nước, nông trại và rừng/mỏ.
+- Lấy cảm giác bầu trời, hoàng hôn, mưa và khoảng lặng anime điện ảnh làm mood; không sao chép địa điểm, frame, nhân vật, soundtrack hoặc sprite của “Your Name”.
+- Greybox 3×3 chunk và gameplay anchor trước; sau đó mới admit asset, lighting/weather, thay player/pet, audio state và mở rộng toàn town.
+- Player/pet production dùng art gốc theo art bible; asset mạng chỉ vào project qua license/provenance/hash gate.
+- Nhạc CC0 chỉ dùng prototype; release cần soundtrack gốc hoặc bộ track đã xác minh và credits thống nhất.
+
+Kế hoạch, district layout, candidate và gate: docs/roadmap/ANIME_TOWN_RENEWAL.md.
 ## Milestone U5 — gameplay pet/base sâu hơn (8–14 ngày)
 
 - Pet: trait, work suitability, stamina, hunger, mood, bond; stance Follow/Guard/Focus/Work/Recall; command queue có lý do thất bại rõ.

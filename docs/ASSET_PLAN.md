@@ -50,3 +50,10 @@ U0.4 đã phân loại đủ 166/166 file trong `docs/assets/asset_actions.csv`:
 Mỗi package: `package_id`, `title`, `version`, `source_page`, `download_url`, `author`, `license_spdx`, `downloaded_at`, `archive_sha256`, `files_sha256`, `art_grid`, `intended_use`, `validation`, `derived_from`, `notes`.
 
 Asset hiện hữu chưa có provenance phải đánh `UNKNOWN/QUARANTINE` cho tới khi đối chiếu. Không phát hành commercial với asset UNKNOWN.
+## Candidate cho Paloria Luminous Town
+
+Research ngày 2026-10-04 đã ghi candidate CC0: PixelKensei Feudal Japan Props Vol.2, Kenney Tiny Town, JRPG Pack 2 Towns, Emotional Piano và Sunset Plains. Sakura Shrine Village chỉ là lựa chọn trả phí/custom terms, có AI-assisted disclosure và cần người dùng mua/chấp nhận riêng.
+
+Chưa có file nào được tải. game-dev CLI vẫn không có trong PATH nên package admission đang bị chặn. Danh sách URL, fit/risk, district plan, player/pet replacement, audio contract và thứ tự AT0–AT7 nằm trong roadmap/ANIME_TOWN_RENEWAL.md.
+
+Quy tắc IP: “Your Name” chỉ là mood reference. Không tải hoặc tái tạo soundtrack, sprite, nhân vật, logo, địa điểm hay frame nhận diện được từ phim. Production ưu tiên map/character/pet nguyên bản và asset có provenance rõ.
