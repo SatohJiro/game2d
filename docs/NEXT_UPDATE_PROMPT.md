@@ -1,17 +1,17 @@
-﻿# Prompt triển khai package U1.4b
+﻿# Prompt triển khai package U1.5
 
-Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, `docs/roadmap/U1_4_INVENTORY_PLAN.md`, `docs/architecture/INVENTORY_TRANSACTIONS.md`, `INVENTORY_MIGRATION.md`, `DOMAIN_DEFINITIONS.md` và module/gameplay docs. Chạy baseline gate trước khi sửa.
+Làm việc tại D:\desktop\VS_WorkSpace\game2d. Đọc AGENTS.md, docs/INDEX.md, docs/CHECKPOINT.md, roadmap, docs/architecture/MODULES.md và G04 trong docs/gameplay/FEATURES.md. Audit player.gd, creature.gd, melee/slash/projectile trước khi thiết kế. Chạy baseline gate.
 
-U1.4a đã VERIFIED: pure transaction trên một legacy backing dictionary, Player stable add/read/remove, rejected pickup retention. Capacity hiện explicit `UNLIMITED`; chest còn direct mutation.
+U1.1–U1.4 đã VERIFIED. Inventory foundation không phải scope combat; không mở rộng chest/crafting trong U1.5.
 
-Thực hiện U1.4b:
+Thực hiện một package U1.5 nhỏ:
 
-1. Chọn finite slot policy: slot usage = tổng `ceil(count/max_stack)`; max stack lấy từ injected item catalog/lookup, không load resource trong domain service.
-2. Bổ sung capacity dependency/policy sao cho test có thể inject max-stack deterministic. Missing definition phải fail closed.
-3. Mở legacy mapping chỉ cho typed item thực sự được chest migrate: wood, pal ore, berry trước; các key chest chưa có definition giữ legacy path hoặc nằm ngoài batch.
-4. Migrate `BuildingChest` deposit/withdraw cho mapped items qua atomic transaction. Không sửa Player/chest dictionary trực tiếp trong path đã migrate.
-5. Batch deposit phải plan toàn bộ trước commit hoặc ghi rõ partial policy. Ưu tiên all-or-nothing để UI có kết quả rõ; failure không mất/duplicate item.
-6. Regression: exact max stack, mở stack hiện có, hết slot, missing definition, successful transfer conservation, source insufficient và target capacity rollback.
-7. Notification/audio/HUD chỉ sau commit. Giữ consumer crafting/farm khác legacy.
+1. Ghi inventory các đường gây/nhận damage hiện có, faction filtering, reward/death side effect và duplicate-hit risk.
+2. Tạo pure DamageRequest/DamageResult và CombatResolver deterministic. Input tối thiểu: source/target ID hoặc faction, base damage, defense/modifier, tags, hit position/knockback. Result: applied damage, remaining HP, defeated, knockback/status flags.
+3. Không dùng Node/animation/audio trong resolver; clamp HP/damage và reject friendly/invalid request rõ ràng.
+4. Migrate đúng Player + một wild Creature damage boundary. Giữ method adapter cũ cho caller chưa migrate.
+5. Presentation chỉ chạy sau result và không sửa damage.
+6. Regression: zero/negative, defense clamp, lethal exactly once, friendly filter, deterministic same input, HP không âm, adapter compatibility.
+7. Không refactor creature FSM/skills/capture cùng package.
 
-Kết thúc bằng full gate, docs/checkpoint, commit branch package và fast-forward main. Ghi capacity formula, chest item scope, consumer còn legacy, save/asset impact, rollback và bước đầu U1.5.
+Kết thúc full gate, docs/checkpoint, commit branch và fast-forward main. Ghi API, migrated callers, legacy paths, save/asset impact, rollback và bước đầu U1.6.

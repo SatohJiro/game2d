@@ -7,6 +7,7 @@ enum Status {
 	INVALID_AMOUNT,
 	INSUFFICIENT_ITEMS,
 	CAPACITY_EXCEEDED,
+	MISSING_DEFINITION,
 }
 
 var status: Status

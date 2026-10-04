@@ -42,6 +42,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.2 wood inventory adapter | Hoàn tất | `item.wood` chạy qua drop/player API; legacy dictionary vẫn là nguồn sự thật |
 | U1.3 domain definitions | Hoàn tất | 8 typed canary; field/domain/missing-reference validator và full gate xanh |
 | U1.4a inventory transaction | Hoàn tất | Pure add/remove/transfer + Player/drop regression và full gate xanh |
+| U1.4b chest capacity | Hoàn tất | Finite stack slots + atomic chest batch regression và full gate xanh |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

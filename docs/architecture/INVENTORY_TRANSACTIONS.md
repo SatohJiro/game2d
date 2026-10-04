@@ -1,8 +1,8 @@
 # U1.4 — Inventory transaction contract
 
-## Trạng thái U1.4a
+## Trạng thái U1.4
 
-U1.4a tạo transaction thuần theo stable ID trên dictionary legacy được inject. Transaction không giữ bản sao; `Player.inventory["Gỗ"]` vẫn là nguồn sự thật duy nhất. Capacity policy hiện là `UNLIMITED`; finite slots/max-stack thuộc U1.4b.
+U1.4a tạo transaction thuần theo stable ID trên dictionary legacy được inject. U1.4b bổ sung finite stack slots và chest batch atomic. Transaction không giữ bản sao; dictionary legacy vẫn là nguồn sự thật duy nhất.
 
 ## Public types
 
@@ -14,7 +14,8 @@ Status:
 - `INVALID_ITEM`: ID sai grammar hoặc chưa có legacy mapping.
 - `INVALID_AMOUNT`: amount không dương.
 - `INSUFFICIENT_ITEMS`: source không đủ; không trừ một phần.
-- `CAPACITY_EXCEEDED`: dành cho finite policy U1.4b, chưa phát sinh với `UNLIMITED`.
+- `CAPACITY_EXCEEDED`: batch/add làm vượt số slot.
+- `MISSING_DEFINITION`: finite policy thiếu max-stack được inject cho item.
 
 Result mang `item_id`, `requested_amount`, `applied_amount`; `is_success()` chỉ true với `OK`.
 
@@ -23,7 +24,9 @@ Result mang `item_id`, `requested_amount`, `applied_amount`; `is_success()` ch�
 - Constructor nhận backing `Dictionary` và capacity policy; không truy cập SceneTree, registry, HUD hoặc audio.
 - `get_count`, `can_add`, `add`, `can_remove`, `remove` dùng stable ID.
 - `transfer_to` validate source và target trước commit. Nếu target write bất ngờ thất bại, source được restore về giá trị trước transaction.
-- U1.4a chỉ có `CapacityPolicy.UNLIMITED`, được expose rõ qua `get_capacity_policy()`.
+- `UNLIMITED` dùng cho Player trong giai đoạn chuyển tiếp; `STACK_SLOTS` dùng cho chest.
+- Finite usage là tổng `ceil(count / max_stack)` trên item đã map. Max-stack lookup và max slots do owner inject; domain service không load Resource.
+- `transfer_batch_to` mô phỏng toàn batch trên shadow stores trước commit; failure không chuyển một phần.
 
 ## Player/drop integration
 
@@ -37,7 +40,7 @@ Result mang `item_id`, `requested_amount`, `applied_amount`; `is_success()` ch�
 
 | Owner | Mutation | Package xử lý |
 |---|---|---|
-| `building_chest.gd` | deposit/withdraw trực tiếp Player + chest dictionary | U1.4b |
+| `building_chest.gd` | wood/pal ore/berry đã atomic; stone/ingot còn legacy, không tham gia quick batch | package catalog/storage sau |
 | `player.gd` crafting/capture/food | sphere, recipe input/output, consumable | U1.5+ hoặc package craft/needs riêng |
 | `building_furnace.gd` | ore/wood consume, ingot output | U5 processing boundary |
 | `building_cooking_pot.gd` | recipe cost/output | U5 processing boundary |
@@ -52,9 +55,9 @@ Không tạo stable dictionary song song và không đồng bộ state bằng `_
 
 ## Mapping và capacity
 
-U1.4a chỉ support `item.wood` ↔ `Gỗ`. Các definition U1.3 chưa được map vì chưa có runtime consumer trong scope. `LegacyItemAdapter.set_count` cho phép transaction commit/rollback và reject count âm.
+Mapping runtime hiện support `item.wood`, `item.pal_ore`, `item.berry`. Chest inject max-stack từ ba `ItemDefinition` preload và có 12 slot mặc định. Stone/iron/pal ingot chưa có definition nên không được batch mới mutate.
 
-Unlimited capacity là lựa chọn có chủ ý để U1.4a không bootstrap registry/global service vội. Vì vậy acceptance “inventory đầy” của G03 chưa đạt và phải được test trong U1.4b trước khi đánh dấu inventory transaction hoàn chỉnh.
+Player vẫn unlimited để không thay balance. Chest finite capacity đã có regression exact stack, mở stack, full slots và missing definition fail-closed.
 
 ## Invariant và regression
 
@@ -72,6 +75,6 @@ Unlimited capacity là lựa chọn có chủ ý để U1.4a không bootstrap re
 
 Không có save schema và không thêm/sửa asset. Rollback là revert commit U1.4a; backing dictionary không đổi định dạng.
 
-## U1.4b
+## Sau U1.4
 
-Migrate chest bằng transaction atomic, mở mapping đúng item chest có typed definition, và chọn finite slot/max-stack policy được inject từ catalog. Nếu bootstrap registry cần owner mới, ghi contract lifetime rõ và test missing definition/capacity rollback.
+Các direct writer còn lại được migrate cùng domain owner tương ứng. Stable backing store chỉ thay legacy dictionary sau khi crafting/farming/needs không còn direct write và save migration đã có.

@@ -13,12 +13,13 @@ func _initialize() -> void:
 func _run() -> void:
 	_test_legacy_adapter()
 	_test_inventory_transactions()
+	_test_finite_capacity_and_batch()
 	_test_dropped_item_resolution()
 	await _test_live_player_inventory_boundary()
 	await _clean_tree()
 
 	if _failures.is_empty():
-		print("Item migration validation passed: U1.4a inventory transactions and wood compatibility are valid.")
+		print("Item migration validation passed: U1.4b capacity, batch transfer and chest compatibility are valid.")
 		_finish.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -78,6 +79,43 @@ func _test_inventory_transactions() -> void:
 	_expect(int(target_store["Gỗ"]) == target_before_failure, "failed transfer must preserve target")
 
 
+func _test_finite_capacity_and_batch() -> void:
+	var max_stacks := {&"item.wood": 5, &"item.pal_ore": 2, &"item.berry": 10}
+	var finite_store := {"Gỗ": 5, "Quặng Pal": 2, "Quả Mọng Hồi Máu": 0}
+	var finite := InventoryTransaction.new(
+		finite_store, InventoryTransaction.CapacityPolicy.STACK_SLOTS, 3, max_stacks
+	)
+	_expect(finite.get_used_slots() == 2, "finite capacity initial slot count mismatch")
+	_expect(finite.add(&"item.wood", 1).is_success(), "finite capacity should open a second wood stack")
+	_expect(finite.get_used_slots() == 3, "finite capacity slot count after add mismatch")
+	var full_result := finite.add(&"item.berry", 1)
+	_expect(full_result.status == InventoryTransactionResult.Status.CAPACITY_EXCEEDED, "full inventory status mismatch")
+	_expect(finite_store["Quả Mọng Hồi Máu"] == 0, "capacity failure must not mutate")
+
+	var missing_definition := InventoryTransaction.new(
+		{"Gỗ": 0, "Quặng Pal": 0},
+		InventoryTransaction.CapacityPolicy.STACK_SLOTS,
+		2,
+		{&"item.wood": 5}
+	).add(&"item.pal_ore", 1)
+	_expect(missing_definition.status == InventoryTransactionResult.Status.MISSING_DEFINITION, "missing max-stack definition must fail closed")
+
+	var source_store := {"Gỗ": 2, "Quặng Pal": 2, "Quả Mọng Hồi Máu": 0}
+	var target_store := {"Gỗ": 4, "Quặng Pal": 0, "Quả Mọng Hồi Máu": 0}
+	var source := InventoryTransaction.new(source_store)
+	var target := InventoryTransaction.new(target_store, InventoryTransaction.CapacityPolicy.STACK_SLOTS, 2, max_stacks)
+	var failed_batch := source.transfer_batch_to(target, {&"item.wood": 2, &"item.pal_ore": 2})
+	_expect(failed_batch.status == InventoryTransactionResult.Status.CAPACITY_EXCEEDED, "batch capacity failure status mismatch")
+	_expect(source_store["Gỗ"] == 2 and source_store["Quặng Pal"] == 2, "failed batch must preserve source")
+	_expect(target_store["Gỗ"] == 4 and target_store["Quặng Pal"] == 0, "failed batch must preserve target")
+
+	var roomy_target := InventoryTransaction.new(target_store, InventoryTransaction.CapacityPolicy.STACK_SLOTS, 3, max_stacks)
+	var successful_batch := source.transfer_batch_to(roomy_target, {&"item.wood": 2, &"item.pal_ore": 2})
+	_expect(successful_batch.is_success() and successful_batch.applied_amount == 4, "valid batch should commit all items")
+	_expect(source_store["Gỗ"] == 0 and source_store["Quặng Pal"] == 0, "successful batch source mismatch")
+	_expect(target_store["Gỗ"] == 6 and target_store["Quặng Pal"] == 2, "successful batch target mismatch")
+
+
 func _test_dropped_item_resolution() -> void:
 	var packed_drop: PackedScene = load(DROPPED_ITEM_SCENE_PATH) as PackedScene
 	if packed_drop == null:
@@ -110,6 +148,7 @@ func _test_live_player_inventory_boundary() -> void:
 	if player == null:
 		_failures.append("main scene did not register a player")
 		return
+	_test_chest_transfer_boundary()
 	await _test_rejected_drop_stays_in_world(main_scene, player)
 	var player_parent := player.get_parent()
 	player_parent.remove_child(player)
@@ -132,6 +171,28 @@ func _test_live_player_inventory_boundary() -> void:
 	player = null
 	main_scene = null
 	packed_main = null
+
+
+func _test_chest_transfer_boundary() -> void:
+	var packed_chest := load("res://scenes/building_chest.tscn") as PackedScene
+	if packed_chest == null:
+		_failures.append("unable to load chest scene")
+		return
+	var chest := packed_chest.instantiate()
+	chest.set("inventory_slots", 3)
+	var source := {"Gỗ": 2, "Quặng Pal": 1, "Quả Mọng Hồi Máu": 1, "Đá": 5}
+	var deposit: InventoryTransactionResult = chest.call("deposit_mapped_from", source)
+	_expect(deposit.is_success() and deposit.applied_amount == 4, "chest mapped deposit should commit atomically")
+	_expect(source["Gỗ"] == 0 and source["Quặng Pal"] == 0 and source["Quả Mọng Hồi Máu"] == 0, "chest deposit source mismatch")
+	_expect(source["Đá"] == 5, "chest transaction must not touch unmigrated stone")
+	var stored: Dictionary = chest.get("stored_items")
+	_expect(stored["Gỗ"] == 2 and stored["Quặng Pal"] == 1 and stored["Quả Mọng Hồi Máu"] == 1, "chest deposit target mismatch")
+
+	var withdrawal_target := {"Gỗ": 0, "Quặng Pal": 0, "Quả Mọng Hồi Máu": 0}
+	var withdrawal: InventoryTransactionResult = chest.call("withdraw_mapped_to", withdrawal_target, 1)
+	_expect(withdrawal.is_success() and withdrawal.applied_amount == 3, "chest withdrawal should transfer capped batch")
+	_expect(withdrawal_target["Gỗ"] == 1 and withdrawal_target["Quặng Pal"] == 1 and withdrawal_target["Quả Mọng Hồi Máu"] == 1, "chest withdrawal target mismatch")
+	chest.free()
 
 
 func _test_rejected_drop_stays_in_world(main_scene: Node, player: Node) -> void:

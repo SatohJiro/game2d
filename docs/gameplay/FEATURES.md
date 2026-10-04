@@ -16,7 +16,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 |---|---|---|---|---|
 | G01 | Di chuyển, sprint, roll | Playable, nằm trong player god script | Component + remap/gamepad | U1/U3 |
 | G02 | Survival needs | Hunger/thirst/temp prototype | Tác động có telegraph và counterplay | U1/U5 |
-| G03 | Gathering/loot | Pickup gỗ dùng stable transaction; rejected pickup ở lại world; capacity vẫn unlimited | Tool tiers, finite capacity, yield table, respawn state | U1/U5 |
+| G03 | Gathering/loot | Pickup stable transaction; rejected drop giữ lại; chest có finite stack slots | Tool tiers, player capacity, yield table, respawn state | U1/U5 |
 | G04 | Combat | Melee/projectile/status prototype | Deterministic result, telegraph, skill loadout | U1/U5 |
 | G05 | Capture | Sphere + HP-based chance | Species/status/sphere modifiers, clear feedback | U1/U5 |
 | G06 | Pet party/command | Một active pet, stance đơn giản | Roster, command wheel, roles, synergy | U1/U5 |
@@ -24,7 +24,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 | G08 | Farming | Plot/crop stages trong resource node; `crop.berry` typed mirror chưa nối runtime | Soil/moisture/crop definitions/season-lite | U1/U5 |
 | G09 | Ranch | Assigned pet dictionary, timed output | Welfare, breeding/produce traits sau MVP | U5 |
 | G10 | Craft/processing | Recipe dictionaries; `recipe.pal_sphere.basic` typed mirror chưa nối runtime | Queue, station capability, cancel/refund rules | U1/U5 |
-| G11 | Building/base | Placement và 8 building prototype; `building.workbench` typed mirror | Grid/socket, repair, storage/logistics | U1/U5 |
+| G11 | Building/base | Chest atomic batch cho wood/ore/berry; workbench typed mirror; placement prototype | Grid/socket, repair, storage/logistics | U1/U5 |
 | G12 | Progression/quests | Level, stats, 5 base levels prototype | Data-driven unlock graph/objectives | U5 |
 | G13 | Day/night/raid/boss | Main-script timers | World clock, schedules, encounter director | U2/U5 |
 | G14 | World/biomes | Scene tĩnh 3.200×3.200 | Chunked biomes, discovery, fast travel | U2 |
