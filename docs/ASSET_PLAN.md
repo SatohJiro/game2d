@@ -40,6 +40,11 @@ U0.2 đã ghi 166 asset nguồn vào `docs/assets/asset_manifest.csv` và bản 
 - `tools/check_asset_inventory.ps1` đối chiếu set file, byte size và SHA-256; nó được gọi bởi `tools/check_project.ps1`.
 - `docs/.gdignore` ngăn Godot import nhầm CSV/JSON tài liệu thành runtime resource.
 
+U0.4 đã phân loại đủ 166/166 file trong `docs/assets/asset_actions.csv`: 69 runtime asset là `VERIFY_OR_REPLACE/P0`; 27 file `HOLD_FOR_REVIEW/P2`; 1 duplicate `DEDUP_AFTER_REFERENCE_AUDIT/P2`; 69 scratch/preview/intermediate là `REMOVE_AFTER_REFERENCE_AUDIT/P3`. Chi tiết owner và thứ tự thay thế nằm trong `docs/assets/REPLACEMENT_PLAN.md`. Chưa file nào bị xóa hoặc di chuyển.
+
+- Thay quyết định curated trong `asset_action_overrides.csv`, sau đó chạy `tools/generate_asset_triage.ps1`.
+- `tools/check_asset_actions.ps1` bắt buộc mọi manifest row có action/priority/owner/rationale và mọi runtime asset chưa verified vẫn P0.
+
 ## Manifest tối thiểu
 
 Mỗi package: `package_id`, `title`, `version`, `source_page`, `download_url`, `author`, `license_spdx`, `downloaded_at`, `archive_sha256`, `files_sha256`, `art_grid`, `intended_use`, `validation`, `derived_from`, `notes`.

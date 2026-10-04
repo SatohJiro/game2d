@@ -41,7 +41,7 @@ Quy tắc phụ thuộc: actor gọi component con; component phát signal lên 
 
 ## Milestone U0 — ổn định baseline (1–2 ngày)
 
-Tiến độ: U0.1 (baseline/test), U0.2 (asset inventory/docs) và U0.3 (Git restore point) đã hoàn tất. Xác minh/thay thế provenance vẫn chưa thực hiện.
+Tiến độ: U0.1–U0.4 đã hoàn tất: baseline/test, asset inventory/docs, Git restore point và action/priority cho 166 asset. Xác minh/thay thế provenance vẫn là công việc xuyên suốt U1–U4.
 
 1. Khởi tạo Git và tag/snapshot baseline sau khi người dùng xác nhận; bỏ `.godot/` khỏi version control.
 2. Sửa lỗi `is_sprinting`, chạy import headless và smoke main scene. Ghi warnings/errors thật.

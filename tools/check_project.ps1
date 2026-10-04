@@ -20,6 +20,7 @@ $failurePattern = 'SCRIPT ERROR|Parse Error|Failed to load script|Cannot open fi
 
 & (Join-Path $PSScriptRoot 'check_documentation.ps1') -ProjectPath $ProjectPath
 & (Join-Path $PSScriptRoot 'check_asset_inventory.ps1') -ProjectPath $ProjectPath
+& (Join-Path $PSScriptRoot 'check_asset_actions.ps1') -ProjectPath $ProjectPath
 
 function Invoke-GodotCheck {
     param([string[]]$Arguments, [string]$LogPath, [string]$Name)

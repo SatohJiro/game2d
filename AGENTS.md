@@ -32,6 +32,7 @@
 - Mọi asset ngoài phải có provenance + SHA-256 + license/SPDX + intended use. Source bất biến ở `assets/vendor/<package>`; derivative ở `assets/game`; không ghi đè source.
 - Candidate search không phải admission. Phải review style/animation coverage, import headless và human visual review trước khi scene production tham chiếu.
 - `game-dev` CLI là quy trình ưu tiên cho package/vendoring. Nếu thiếu CLI, dừng bước download/admission và ghi blocker; không copy loose file để lách kiểm tra.
+- Tra action của asset trong `docs/assets/asset_actions.csv`. Asset runtime P0 phải được xác minh hoặc thay thế trước phát hành; thay action qua `asset_action_overrides.csv` rồi chạy lại generator, không sửa file generated trực tiếp.
 
 ## Kỹ năng agent cần áp dụng
 

@@ -19,7 +19,10 @@ $requiredFiles = @(
     'docs/assets/INVENTORY.md',
     'docs/assets/asset_manifest.csv',
     'docs/assets/asset_manifest.json',
-    'docs/assets/provenance_overrides.csv'
+    'docs/assets/provenance_overrides.csv',
+    'docs/assets/asset_actions.csv',
+    'docs/assets/asset_action_overrides.csv',
+    'docs/assets/REPLACEMENT_PLAN.md'
 )
 
 $errors = [System.Collections.Generic.List[string]]::new()

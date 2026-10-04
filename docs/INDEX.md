@@ -32,6 +32,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U0.1 baseline | Hoàn tất | Godot editor-load và main-scene smoke xanh |
 | U0.2 asset inventory | Hoàn tất | Manifest/hash gate xanh; 166/166 asset chưa xác minh provenance |
 | Git snapshot | Hoàn tất | Branch `main`, root commit `2c243e1`, tag `baseline-u0.3` |
+| U0.4 asset triage | Hoàn tất | 166/166 có action; 69 runtime asset ở P0 |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |
