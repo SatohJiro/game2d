@@ -7,7 +7,7 @@
 script = ExtResource("1_item")
 content_id = &"item.pal_sphere.basic"
 display_name_key = &"item.pal_sphere.basic.name"
-developer_notes = "U1.3 recipe output canary for the existing regular sphere prototype. Runtime storage is not migrated."
+developer_notes = "U1.7b stable runtime identity mapped to the existing Cầu Thu Phục inventory key."
 max_stack = 99
 icon = ExtResource("2_icon")
 tags = PackedStringArray("capture_tool", "sphere", "basic")

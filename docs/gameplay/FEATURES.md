@@ -16,9 +16,9 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 |---|---|---|---|---|
 | G01 | Di chuyển, sprint, roll | Pure stamina/sprint/roll/velocity state; Player input/collision adapter | Input actions + remap/gamepad | U1/U3 |
 | G02 | Survival needs | Pure needs state/snapshot; Player heat/HUD adapter; balance còn prototype | Tác động có telegraph và counterplay | U1/U5 |
-| G03 | Gathering/loot | Pickup stable transaction; rejected drop giữ lại; chest có finite stack slots | Tool tiers, player capacity, yield table, respawn state | U1/U5 |
+| G03 | Gathering/loot | Pickup stable transaction; sphere miss-drop giữ stable ID; chest finite stack slots | Tool tiers, player capacity, yield table, respawn state | U1/U5 |
 | G04 | Combat | Player/WildCreature dùng deterministic DamageResult; status/pet/building còn legacy | Telegraph, skill loadout, unified faction/status | U1/U5 |
-| G05 | Capture | Deterministic HP/sphere/status/back-strike result; inventory/roster còn legacy | Species definition, atomic spend/ownership, clear feedback | U1/U5 |
+| G05 | Capture | Deterministic result + stable sphere selection/atomic spend; roster còn legacy | Species definition, atomic ownership, clear feedback | U1/U5 |
 | G06 | Pet party/command | Một active pet, stance đơn giản | Roster, command wheel, roles, synergy | U1/U5 |
 | G07 | Pet work | Scan group và auto work | Job board, reservation, suitability, needs | U5 |
 | G08 | Farming | Plot/crop stages trong resource node; `crop.berry` typed mirror chưa nối runtime | Soil/moisture/crop definitions/season-lite | U1/U5 |
@@ -71,6 +71,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Chỉ wild creature hợp lệ mới nhận CaptureRequest. Chance phụ thuộc species difficulty, HP ratio, status và sphere modifier.
 - UI hiển thị chance/quality theo rule thực; RNG có seed/log phục vụ test.
 - U1.7a resolve một injected roll trước animation; sleep/back-strike được snapshot trước state transition và result chứa chance/tags cho presentation.
+- U1.7b ưu tiên sphere Giga → Mega → Basic, chỉ trừ một item sau khi projectile đã validate; miss trả drop cùng stable item ID.
 - Success tạo PetInstance và cập nhật roster trước khi wild node biến mất. Party đầy chuyển về storage/base theo policy tương lai.
 - Acceptance: roll biên 0/1 xác định; thất bại không duplicate sphere/reward; save/load giữ captured pet.
 

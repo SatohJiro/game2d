@@ -10,7 +10,7 @@ U1.3 tạo catalog typed cho ba canary đang tồn tại trong prototype mà kh�
 | Building | `building.workbench` | `building_workbench.tscn/.gd`, 200 HP, mở crafting menu | Typed mirror; scene/script vẫn authoritative |
 | Crop | `crop.berry` | `ResourceNode.CropType.BERRY`, grow ready ở 10 giây, yield 3–5 | Typed mirror; enum và logic ResourceNode vẫn authoritative |
 
-Các item hỗ trợ `item.pal_ore`, `item.pal_sphere.basic`, `item.berry_seed`, `item.berry` được thêm để cross-reference resolve được. Chúng chưa được thêm vào `LegacyItemAdapter`; inventory vẫn dùng `Quặng Pal`, `Cầu Thu Phục`, `Hạt Giống Cây`, `Quả Mọng Hồi Máu`.
+Các item hỗ trợ `item.pal_ore`, `item.pal_sphere.basic`, `item.berry_seed`, `item.berry` được thêm để cross-reference resolve được. U1.7b bổ sung `item.pal_sphere.mega/giga`; ba sphere ID đã map qua `LegacyItemAdapter` vào key cũ, còn backing inventory vẫn là dictionary legacy duy nhất. Các item khác tiếp tục migrate dần theo domain package.
 
 ## Schema
 

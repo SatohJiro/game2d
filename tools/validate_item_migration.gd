@@ -40,6 +40,13 @@ func _test_legacy_adapter() -> void:
 	_expect(LegacyItemAdapter.set_count(inventory, &"item.wood", 1), "mapped count set should succeed")
 	_expect(inventory["Gỗ"] == 1, "count set must update the legacy source of truth")
 	_expect(not LegacyItemAdapter.set_count(inventory, &"item.wood", -1), "negative count set must be rejected")
+	var sphere_inventory := {"Cầu Thu Phục": 2, "Mega Sphere": 1, "Giga Sphere": 1}
+	var sphere_transaction := InventoryTransaction.new(sphere_inventory)
+	_expect(sphere_transaction.get_count(&"item.pal_sphere.basic") == 2, "basic sphere stable read mismatch")
+	_expect(sphere_transaction.remove(&"item.pal_sphere.mega", 1).is_success(), "mega sphere stable remove failed")
+	_expect(sphere_inventory["Mega Sphere"] == 0, "mega sphere remove must mutate legacy backing store")
+	_expect(sphere_transaction.add(&"item.pal_sphere.giga", 1).is_success(), "giga sphere stable add failed")
+	_expect(sphere_inventory["Giga Sphere"] == 2, "giga sphere add must mutate legacy backing store")
 
 
 func _test_inventory_transactions() -> void:

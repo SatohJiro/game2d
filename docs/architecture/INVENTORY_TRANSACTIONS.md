@@ -41,7 +41,7 @@ Result mang `item_id`, `requested_amount`, `applied_amount`; `is_success()` ch�
 | Owner | Mutation | Package xử lý |
 |---|---|---|
 | `building_chest.gd` | wood/pal ore/berry đã atomic; stone/ingot còn legacy, không tham gia quick batch | package catalog/storage sau |
-| `player.gd` crafting/capture/food | sphere, recipe input/output, consumable | U1.5+ hoặc package craft/needs riêng |
+| `player.gd` crafting/food | recipe input/output và consumable còn direct; capture sphere spend đã atomic theo stable ID | package craft/consumable riêng |
 | `building_furnace.gd` | ore/wood consume, ingot output | U5 processing boundary |
 | `building_cooking_pot.gd` | recipe cost/output | U5 processing boundary |
 | `building_compost_bin.gd` | feedstock consume/fertilizer output | U5 processing boundary |
@@ -55,7 +55,9 @@ Không tạo stable dictionary song song và không đồng bộ state bằng `_
 
 ## Mapping và capacity
 
-Mapping runtime hiện support `item.wood`, `item.pal_ore`, `item.berry`. Chest inject max-stack từ ba `ItemDefinition` preload và có 12 slot mặc định. Stone/iron/pal ingot chưa có definition nên không được batch mới mutate.
+Mapping runtime hiện support `item.wood`, `item.pal_ore`, `item.berry` và ba `item.pal_sphere.*`. Chest chỉ quản lý wood/ore/berry và inject max-stack từ ba definition tương ứng; sphere mapping không tự thêm sphere vào chest batch. Stone/iron/pal ingot chưa có definition nên không được batch mới mutate.
+
+U1.7b Player capture flow dùng `InventoryTransaction.remove(stable_sphere_id, 1)` sau khi projectile scene/configuration/parent đã validate. Cooldown/build/no-item/unknown-ID failure không mutate; successful launch giảm đúng một key legacy. Craft output vẫn direct-write legacy nhưng stable read thấy cùng backing store.
 
 Player vẫn unlimited để không thay balance. Chest finite capacity đã có regression exact stack, mở stack, full slots và missing definition fail-closed.
 

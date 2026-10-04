@@ -45,6 +45,9 @@ func setup_visual() -> void:
 		visual_key = item_name
 	match visual_key:
 		"item.wood": sprite.texture = preload("res://assets/items/wood.png")
+		"item.pal_sphere.basic": sprite.texture = preload("res://assets/fx/energy_ball.png")
+		"item.pal_sphere.mega": sprite.texture = preload("res://assets/items/mega_sphere.png")
+		"item.pal_sphere.giga": sprite.texture = preload("res://assets/items/giga_sphere.png")
 		"Gỗ": sprite.texture = preload("res://assets/items/wood.png")
 		"Đá": sprite.texture = preload("res://assets/items/stone.png")
 		"Quặng Pal": sprite.texture = preload("res://assets/items/pal_ore.png")

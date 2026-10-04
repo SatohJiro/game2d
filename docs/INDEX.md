@@ -53,6 +53,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.6b player locomotion | Hoàn tất | Typed input + pure stamina/sprint/roll/velocity result và full gate xanh |
 | U1.6c player actions | Hoàn tất | Stable action intent + deterministic mapper/policy/dispatch regression |
 | U1.7a capture result | Hoàn tất | Pure chance/result + injected roll, sleep bug regression và Creature adapter |
+| U1.7b sphere transaction | Hoàn tất | Stable basic/mega/giga selection, atomic spend/launch và missed-drop adapter |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

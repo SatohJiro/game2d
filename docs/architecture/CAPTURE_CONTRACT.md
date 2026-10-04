@@ -8,7 +8,7 @@ Actor/presentation adapter: `scripts/creature.gd`
 
 U1.7a tách chance calculation và outcome roll khỏi animation capture. Resolver không gọi RNG, Node, SceneTree, timer, tween, HUD hoặc audio. Adapter tạo request với một injected roll trước animation; presentation nhiều nhịp chỉ đọc result; outcome được commit tối đa một lần cho attempt đang active.
 
-Ngoài phạm vi: chọn/trừ sphere trong inventory, projectile flight, PetInstance/roster, rarity/trait RNG, stable species catalog, save và despawn ownership.
+U1.7b bổ sung sphere selection/spend/flight/drop adapter theo stable item ID. Ngoài phạm vi còn lại: PetInstance/roster, rarity/trait RNG, stable species catalog, save và despawn ownership.
 
 Invariant:
 
@@ -57,6 +57,8 @@ U1.7a sửa lỗi cũ: code từng đặt state thành `CAPTURING` trước `if 
 ## Compatibility, save, asset và rollback
 
 - Sphere vẫn gọi signature cũ; Player inventory/roster và creature success/failure handler không đổi.
+- U1.7b stable sphere IDs: `item.pal_sphere.basic` (×1), `item.pal_sphere.mega` (×2), `item.pal_sphere.giga` (×4). Pure selector ưu tiên Giga → Mega → Basic.
+- Player validate scene/parent/configuration trước atomic remove; Sphere và missed DroppedItem mang stable ID, legacy name chỉ qua adapter.
 - Save/data breaking change: none. Request/result và active animation attempt là transient.
 - Asset/provenance: none; capture visual vẫn dùng asset quarantine hiện tại.
 - Rollback: revert commit U1.7a.

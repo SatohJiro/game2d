@@ -5,12 +5,18 @@ const LEGACY_TO_CONTENT_ID: Dictionary = {
 	"Gỗ": &"item.wood",
 	"Quặng Pal": &"item.pal_ore",
 	"Quả Mọng Hồi Máu": &"item.berry",
+	"Cầu Thu Phục": &"item.pal_sphere.basic",
+	"Mega Sphere": &"item.pal_sphere.mega",
+	"Giga Sphere": &"item.pal_sphere.giga",
 }
 
 const CONTENT_ID_TO_LEGACY: Dictionary = {
 	&"item.wood": "Gỗ",
 	&"item.pal_ore": "Quặng Pal",
 	&"item.berry": "Quả Mọng Hồi Máu",
+	&"item.pal_sphere.basic": "Cầu Thu Phục",
+	&"item.pal_sphere.mega": "Mega Sphere",
+	&"item.pal_sphere.giga": "Giga Sphere",
 }
 
 

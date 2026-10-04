@@ -22,7 +22,7 @@ func _run() -> void:
 	await process_frame
 
 	if _failures.is_empty():
-		print("Content validation passed: U1.3 item/recipe/building/crop catalog and registry references are valid.")
+		print("Content validation passed: item/recipe/building/crop catalog through U1.7b and registry references are valid.")
 		_finish.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -129,10 +129,12 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 8, "registry must contain the eight U1.3 canary definitions")
+	_expect(registry.size() == 10, "registry must contain the ten definitions through U1.7b")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
+	_expect(registry.has(&"item.pal_sphere.mega"), "registry is missing item.pal_sphere.mega")
+	_expect(registry.has(&"item.pal_sphere.giga"), "registry is missing item.pal_sphere.giga")
 	_expect(registry.has(&"item.berry_seed"), "registry is missing item.berry_seed")
 	_expect(registry.has(&"item.berry"), "registry is missing item.berry")
 	_expect(registry.has(&"recipe.pal_sphere.basic"), "registry is missing recipe.pal_sphere.basic")
@@ -143,6 +145,10 @@ func _validate_project_content() -> void:
 	if wood != null:
 		_expect(wood.max_stack == 999, "item.wood max_stack mismatch")
 		_expect(wood.icon != null, "item.wood icon should resolve")
+	var mega_sphere := registry.get_definition(&"item.pal_sphere.mega") as ItemDefinition
+	var giga_sphere := registry.get_definition(&"item.pal_sphere.giga") as ItemDefinition
+	_expect(mega_sphere != null and mega_sphere.icon != null and mega_sphere.tags.has("mega"), "mega sphere definition mismatch")
+	_expect(giga_sphere != null and giga_sphere.icon != null and giga_sphere.tags.has("giga"), "giga sphere definition mismatch")
 	var recipe := registry.get_definition(&"recipe.pal_sphere.basic") as RecipeDefinition
 	_expect(recipe != null, "recipe.pal_sphere.basic must load as RecipeDefinition")
 	if recipe != null:

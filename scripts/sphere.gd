@@ -8,7 +8,8 @@ var elapsed_time: float = 0.0
 
 var player_ref: Node2D = null
 var catch_multiplier: float = 1.0
-var sphere_name: String = "Cầu Pal"
+var item_id: StringName = CaptureSphereSelector.BASIC_ID
+var sphere_name: String = "Cầu Thu Phục"
 var has_hit: bool = false
 
 @onready var visual: Node2D = $Visual
@@ -23,10 +24,22 @@ func _ready() -> void:
 	
 	# Match visual sprite to sphere type
 	if sprite:
-		match sphere_name:
-			"Giga Sphere": sprite.texture = preload("res://assets/items/giga_sphere.png")
-			"Mega Sphere": sprite.texture = preload("res://assets/items/mega_sphere.png")
+		match item_id:
+			CaptureSphereSelector.GIGA_ID: sprite.texture = preload("res://assets/items/giga_sphere.png")
+			CaptureSphereSelector.MEGA_ID: sprite.texture = preload("res://assets/items/mega_sphere.png")
 			_: sprite.texture = preload("res://assets/fx/energy_ball.png")
+
+
+func configure_capture_sphere(new_item_id: StringName, new_catch_multiplier: float) -> bool:
+	if not CaptureSphereSelector.is_supported(new_item_id):
+		return false
+	var expected_multiplier := CaptureSphereSelector.get_multiplier(new_item_id)
+	if not is_equal_approx(new_catch_multiplier, expected_multiplier):
+		return false
+	item_id = new_item_id
+	sphere_name = LegacyItemAdapter.to_legacy_key(item_id)
+	catch_multiplier = expected_multiplier
+	return not sphere_name.is_empty()
 
 func launch(from_pos: Vector2, to_pos: Vector2) -> void:
 	start_pos = from_pos
@@ -73,13 +86,19 @@ func on_ground_impact() -> void:
 	spawn_landing_dust()
 	
 	# If missed, drop as collectible item on the ground
-	var drop = DROPPED_ITEM_SCENE.instantiate()
-	drop.item_name = sphere_name if sphere_name != "" else "Cầu Thu Phục"
-	drop.count = 1
+	var drop := create_missed_drop()
 	drop.global_position = global_position
 	get_parent().call_deferred("add_child", drop)
 	
 	queue_free()
+
+
+func create_missed_drop() -> Node2D:
+	var drop := DROPPED_ITEM_SCENE.instantiate() as Node2D
+	drop.set("item_id", item_id)
+	drop.set("item_name", sphere_name)
+	drop.set("count", 1)
+	return drop
 
 func spawn_landing_dust() -> void:
 	if not is_inside_tree(): return

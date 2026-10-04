@@ -577,50 +577,64 @@ func perform_attack(aim_dir: Vector2) -> void:
 func shake_camera(amount: float) -> void:
 	shake_amount = max(shake_amount, amount)
 
-func throw_pal_sphere() -> void:
+func throw_pal_sphere() -> bool:
 	if sphere_cooldown > 0 or is_building:
-		return
-	
-	# Select best available sphere
-	var sphere_type = ""
-	var multiplier = 1.0
-	
-	if inventory.get("Giga Sphere", 0) > 0:
-		sphere_type = "Giga Sphere"
-		multiplier = 4.0
-	elif inventory.get("Mega Sphere", 0) > 0:
-		sphere_type = "Mega Sphere"
-		multiplier = 2.0
-	elif inventory.get("Cầu Thu Phục", 0) > 0:
-		sphere_type = "Cầu Thu Phục"
-		multiplier = 1.0
-	else:
+		return false
+
+	var selection := select_capture_sphere()
+	if not selection.is_selected():
 		spawn_floating_text("Hết Cầu Thu Phục! (Bấm [C] chế tạo)", Color(1.0, 0.4, 0.4))
-		return
-	
-	sphere_cooldown = 0.50
-	inventory[sphere_type] -= 1
-	update_hud()
-	
-	var mouse_pos = get_global_mouse_position()
-	
+		return false
+	if not is_inside_tree() or get_parent() == null:
+		return false
 	var sphere = SPHERE_SCENE.instantiate()
-	sphere.sphere_name = sphere_type
+	if sphere == null or not sphere.has_method("configure_capture_sphere"):
+		if sphere != null:
+			sphere.free()
+		return false
+	if not bool(sphere.call("configure_capture_sphere", selection.item_id, selection.catch_multiplier)):
+		sphere.free()
+		return false
+	if not spend_capture_sphere(selection):
+		sphere.free()
+		return false
+
+	var mouse_pos := get_global_mouse_position()
 	sphere.player_ref = self
-	sphere.catch_multiplier = multiplier
 	get_parent().add_child(sphere)
 	sphere.launch(global_position + Vector2(0, -6), mouse_pos)
-	
+	sphere_cooldown = 0.50
+
 	# Throw recoil animation
-	var throw_dir = (mouse_pos - global_position).normalized()
+	var throw_dir := (mouse_pos - global_position).normalized()
 	velocity -= throw_dir * 45.0
 	var tween = create_tween()
 	tween.tween_property(visual, "scale", Vector2(0.85, 1.2), 0.08)
 	tween.tween_property(visual, "scale", Vector2.ONE, 0.12)
-	
-	spawn_floating_text("Ném %s (x%.1f tỉ lệ)!" % [sphere_type, multiplier], Color(0.3, 0.9, 1.0))
+
+	var sphere_name := LegacyItemAdapter.to_legacy_key(selection.item_id)
+	spawn_floating_text("Ném %s (x%.1f tỉ lệ)!" % [sphere_name, selection.catch_multiplier], Color(0.3, 0.9, 1.0))
 	if AudioManager:
 		AudioManager.play_sound("sphere_throw")
+	return true
+
+
+func select_capture_sphere() -> CaptureSphereSelectionResult:
+	var transaction := InventoryTransaction.new(inventory)
+	var available_counts := {}
+	for item_id in CaptureSphereSelector.PRIORITY:
+		available_counts[item_id] = transaction.get_count(item_id)
+	return CaptureSphereSelector.select(available_counts)
+
+
+func spend_capture_sphere(selection: CaptureSphereSelectionResult) -> bool:
+	if selection == null or not selection.is_selected() or not CaptureSphereSelector.is_supported(selection.item_id):
+		return false
+	var result := InventoryTransaction.new(inventory).remove(selection.item_id, 1)
+	if not result.is_success():
+		return false
+	update_hud()
+	return true
 
 func craft_recipe(recipe_id: String) -> void:
 	var rec: Dictionary = {}
