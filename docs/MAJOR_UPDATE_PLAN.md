@@ -9,7 +9,7 @@ Ngày lập: 2026-10-04. Project: Godot 4.7.2, top-down 2D, pet/căn cứ/nông 
 - `hud.tscn` 924 dòng; UI có nhiều style inline, khó tái sử dụng và đổi giao diện đồng bộ.
 - World hiện là `main.tscn` tĩnh với nền khoảng 3.200×3.200; chưa thấy TileMapLayer chunk streaming, navigation region, save/load hay input map.
 - 166 file ảnh/âm thanh, khoảng 3,48 MiB đã có manifest SHA-256/reference; 0 file có provenance được xác minh nên tất cả vẫn quarantine. Có 3 nhóm trùng byte (18 file) và nhiều file `test_*` chưa dùng.
-- Project chưa là Git repository. Trước refactor lớn cần một snapshot/version-control có thể quay lại.
+- Project đã có Git repository cục bộ, branch `main`, root commit `2c243e1`; tag `baseline-u0.3` là restore point trước refactor. Chưa cấu hình remote.
 
 Không xóa gameplay hiện có trong một lần. Mỗi milestone là một vertical slice chạy được, có migration tạm nếu data format đổi.
 
@@ -41,7 +41,7 @@ Quy tắc phụ thuộc: actor gọi component con; component phát signal lên 
 
 ## Milestone U0 — ổn định baseline (1–2 ngày)
 
-Tiến độ: U0.1 (sửa baseline + test harness) và U0.2 (asset inventory/hash/docs) đã hoàn tất. Snapshot Git và xác minh/thay thế provenance vẫn chưa thực hiện.
+Tiến độ: U0.1 (baseline/test), U0.2 (asset inventory/docs) và U0.3 (Git restore point) đã hoàn tất. Xác minh/thay thế provenance vẫn chưa thực hiện.
 
 1. Khởi tạo Git và tag/snapshot baseline sau khi người dùng xác nhận; bỏ `.godot/` khỏi version control.
 2. Sửa lỗi `is_sprinting`, chạy import headless và smoke main scene. Ghi warnings/errors thật.

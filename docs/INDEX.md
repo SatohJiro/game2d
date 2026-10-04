@@ -11,6 +11,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 5. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
 6. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
 7. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+8. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 
@@ -30,7 +31,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 |---|---|---|
 | U0.1 baseline | Hoàn tất | Godot editor-load và main-scene smoke xanh |
 | U0.2 asset inventory | Hoàn tất | Manifest/hash gate xanh; 166/166 asset chưa xác minh provenance |
-| Git snapshot | Chưa làm | Thư mục chưa là Git repository |
+| Git snapshot | Hoàn tất | Branch `main`, root commit `2c243e1`, tag `baseline-u0.3` |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

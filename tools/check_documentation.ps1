@@ -15,6 +15,7 @@ $requiredFiles = @(
     'docs/roadmap/IMPLEMENTATION_PHASES.md',
     'docs/process/DOCUMENTATION_STANDARD.md',
     'docs/process/WORK_PACKAGE_TEMPLATE.md',
+    'docs/process/VERSION_CONTROL.md',
     'docs/assets/INVENTORY.md',
     'docs/assets/asset_manifest.csv',
     'docs/assets/asset_manifest.json',

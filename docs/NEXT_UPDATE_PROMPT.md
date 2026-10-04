@@ -2,7 +2,7 @@
 
 Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md` và tài liệu module/feature liên quan trước. Kiểm tra code thực tế, không suy trạng thái chỉ từ tài liệu.
 
-Luôn làm một work package nhỏ 0,5–2 ngày. U0.2 đã kiểm chứng; gói kế tiếp là U0.3 tạo Git snapshot/restore point trước refactor, hoặc U0.4 lập replacement priority nếu chưa được phép tạo repository. Không xóa hoặc di chuyển asset khi chưa có snapshot.
+Luôn làm một work package nhỏ 0,5–2 ngày. U0.3 đã kiểm chứng và có tag `baseline-u0.3`; gói kế tiếp là U0.4 lập quarantine/replacement priority cho 166 asset. Chưa xóa hoặc di chuyển asset ở U0.4.
 
 Sau U0, tách lần lượt data Resources và boundary nhỏ; không rewrite `player.gd`, `creature.gd`, HUD và world cùng lúc. Giữ vertical slice chơi được sau mỗi gói. Không thêm feature mới vào god scripts nếu boundary liên quan chưa được tách.
 

@@ -8,7 +8,7 @@ Mỗi package kéo dài khoảng 0,5–2 ngày, giữ game chạy được và c
 |---|---|---|---|
 | U0.1 | Sửa parse, audio lifecycle, headless editor/smoke | `tools/check_project.ps1` xanh | VERIFIED |
 | U0.2 | Asset manifest/hash/reference/duplicate + docs hệ thống | Validator manifest và Godot gate xanh | VERIFIED |
-| U0.3 | Git repository/snapshot/tag | Có restore test; `.godot` không tracked | PLANNED |
+| U0.3 | Git repository/snapshot/tag | Có restore test; `.godot` không tracked | VERIFIED |
 | U0.4 | Quarantine mapping và replacement priority | Mọi runtime asset có owner/action | PLANNED |
 
 U0 chỉ hoàn tất khi baseline có thể khôi phục và asset mới không đi vào runtime nếu thiếu receipt/license.

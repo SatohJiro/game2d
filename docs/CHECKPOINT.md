@@ -1,52 +1,43 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U0.2 — asset inventory và documentation baseline
+## U0.3 — Git baseline và restore point
 
 Trạng thái: `VERIFIED` ngày 2026-10-04.
 
 ### Mục tiêu và invariant
 
-- Mọi asset nguồn hiện hữu có path, byte size và SHA-256 tái sinh được.
-- Asset chưa rõ nguồn phải hiện rõ là `QUARANTINE/UNKNOWN`.
-- Không di chuyển, xóa, tải mới hoặc đổi license asset; game baseline vẫn chạy.
-- Mọi module, feature và phase có tài liệu nguồn sự thật để model khác tiếp tục đồng nhất.
+- Có lịch sử cục bộ trước khi refactor/migration hoặc di chuyển asset.
+- Snapshot không chứa cache, build, log, translation artifact hoặc export.
+- Việc tạo Git không thay đổi gameplay, asset path hay license status.
 
 ### Thay đổi
 
-- `tools/generate_asset_inventory.ps1`: quét source asset, reference, hash và duplicate; merge provenance đã duyệt từ override.
-- `tools/check_asset_inventory.ps1`: fail khi file/size/hash/manifest lệch.
-- `tools/check_documentation.ps1`: kiểm tra tài liệu bắt buộc và relative Markdown links.
-- `tools/check_project.ps1`: chạy documentation/asset integrity trước editor-load và main-scene smoke.
-- `docs/assets/asset_manifest.csv|json`: 166 asset nguồn; 69 referenced, 97 unreferenced, gồm 3 PNG thử nghiệm ở root.
-- `docs/assets/provenance_overrides.csv`: nguồn curated không bị generator ghi đè.
-- `docs/assets/INVENTORY.md`: 3 nhóm duplicate hash, tổng 18 file.
-- `docs/.gdignore`: ngăn Godot import nhầm tài liệu CSV/JSON.
-- `docs/INDEX.md`: chỉ mục và nguồn sự thật.
-- `docs/architecture/MODULES.md`: 19 module, contract mục tiêu, ownership và adapter migration.
-- `docs/gameplay/FEATURES.md`: 16 nhóm tính năng, luật/invariant/acceptance criteria.
-- `docs/roadmap/IMPLEMENTATION_PHASES.md`: package U0–U6 và gate.
-- `docs/process/*`: Definition of Done, ma trận cập nhật và template bàn giao.
-- `docs/decisions/ADR-0001-incremental-modularization.md`: quyết định refactor theo vertical slice.
+- Khởi tạo Git repository với branch `main`.
+- Root commit `2c243e1` lưu 418 file baseline đã audit.
+- Tag `baseline-u0.3` đánh dấu checkpoint sau tài liệu version-control.
+- `docs/process/VERSION_CONTROL.md` ghi branch workflow, commit convention và phục hồi không dùng reset phá hủy.
+- Không cấu hình remote và không push dữ liệu ra ngoài máy.
 
 ### Validation
 
-- Lệnh: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/check_project.ps1`.
-- Asset integrity: 166/166 path, size và SHA-256 hợp lệ; 0 verified, 166 quarantine/unknown.
-- Godot 4.7.2 editor-load: exit 0, log sạch.
-- Main-scene smoke 120 frame: exit 0, không parse/script/resource error hoặc leak.
-- Log cục bộ: `build/checks/headless-editor.log`, `build/checks/headless-smoke.log`.
+- Staging audit: 418 file; 0 file thuộc `.godot`, `build`, log, translation artifact, `node_modules`, export hoặc cache.
+- `git fsck --full` và detached worktree restore test từ tag phải thành công.
+- Gate chính: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/check_project.ps1`.
+- Documentation: 16 file bắt buộc; asset integrity 166/166; Godot editor-load và smoke exit 0.
 
 ### Compatibility và rủi ro
 
-- Save/data breaking change: none. Gameplay/runtime asset path không đổi.
-- Project vẫn chưa là Git repository, nên chưa có restore point/version history.
-- 69 asset runtime vẫn chưa đủ điều kiện phát hành vì provenance chưa xác minh; 97 asset chưa dùng cũng đang quarantine.
-- `game-dev` CLI vẫn thiếu; chưa download/admit package mới.
+- Save/data/gameplay breaking change: none.
+- Repository chỉ ở local; hỏng/mất ổ D vẫn có thể làm mất cả working tree và `.git`.
+- Commit baseline dùng identity cục bộ trung lập vì global Git email chưa cấu hình.
+- 166 asset vẫn `QUARANTINE/UNKNOWN`; Git tracking không xác nhận quyền phân phối.
+- `game-dev` CLI vẫn thiếu; chưa download/admit asset mới.
 
 ### Gói tiếp theo
 
-U0.3: tạo Git repository và baseline snapshot có thể phục hồi trước refactor. Nếu Git snapshot chưa được thực hiện, chỉ được làm U0.4 documentation/provenance triage; không di chuyển asset hoặc bắt đầu migration U1.
+U0.4: phân loại 166 asset theo `keep-and-verify`, `replace`, `remove-later`, ưu tiên 69 asset runtime; lập mapping replacement nhưng chưa di chuyển/xóa. Sau U0.4 bắt đầu U1.1 Core IDs/registry trên branch riêng.
 
 ## Lịch sử
 
+- U0.2: manifest 166 asset, documentation/module/gameplay catalog và validation gates; `VERIFIED` ngày 2026-10-04.
 - U0.1: sửa `is_sprinting`, audio lifecycle và tạo Godot headless editor/smoke gate; `VERIFIED` ngày 2026-10-04.
