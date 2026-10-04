@@ -40,3 +40,13 @@ static func add(legacy_inventory: Dictionary, content_id: StringName, amount: in
 		return false
 	legacy_inventory[legacy_key] = get_count(legacy_inventory, content_id) + amount
 	return true
+
+
+static func set_count(legacy_inventory: Dictionary, content_id: StringName, amount: int) -> bool:
+	if amount < 0:
+		return false
+	var legacy_key := to_legacy_key(content_id)
+	if legacy_key.is_empty():
+		return false
+	legacy_inventory[legacy_key] = amount
+	return true

@@ -1,19 +1,17 @@
-﻿# Prompt triển khai package U1.4
+﻿# Prompt triển khai package U1.4b
 
-Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc theo thứ tự: `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, `docs/roadmap/U1_4_INVENTORY_PLAN.md`, `docs/architecture/INVENTORY_MIGRATION.md`, `docs/architecture/DOMAIN_DEFINITIONS.md`, `docs/architecture/DATA_CONTRACTS.md`, `docs/architecture/MODULES.md` và G03/G10/G11 trong `docs/gameplay/FEATURES.md`. Kiểm tra Git/code thực tế và chạy baseline gate trước khi sửa.
+Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, `docs/roadmap/U1_4_INVENTORY_PLAN.md`, `docs/architecture/INVENTORY_TRANSACTIONS.md`, `INVENTORY_MIGRATION.md`, `DOMAIN_DEFINITIONS.md` và module/gameplay docs. Chạy baseline gate trước khi sửa.
 
-U0.1–U0.4 và U1.1–U1.3 đã được kiểm chứng. U1.3 có 8 typed definitions và deterministic missing-reference validation, nhưng runtime recipe/building/crop vẫn dùng prototype. U1.2 chỉ map wood stable ID lên dictionary legacy. Không xóa compatibility adapter và không tạo stable dictionary song song.
+U1.4a đã VERIFIED: pure transaction trên một legacy backing dictionary, Player stable add/read/remove, rejected pickup retention. Capacity hiện explicit `UNLIMITED`; chest còn direct mutation.
 
-Thực hiện một work package U1.4a dài 0,5–2 ngày:
+Thực hiện U1.4b:
 
-1. Audit mọi direct mutation của `Player.inventory` và `BuildingChest.stored_items`; ghi owner và danh sách consumer còn legacy.
-2. Thiết kế pure `InventoryTransaction` + result/status cho get/add/remove/transfer trên backing dictionary được inject. Service không truy cập SceneTree/HUD/audio và không giữ bản sao state.
-3. Chọn capacity policy rõ ràng. Nếu max-stack/slot cần registry bootstrap làm package quá lớn, dùng explicit unlimited policy ở U1.4a và để finite capacity cho U1.4b; không giả vờ acceptance inventory-full đã đạt.
-4. Mở rộng legacy mapping chỉ cho item có definition và consumer trong scope. Stable operation phải mutate chính legacy dictionary để giữ một nguồn sự thật.
-5. Migrate Player/drop qua transaction boundary. Chỉ migrate chest trong cùng package nếu có regression atomic transfer và phạm vi vẫn nhỏ; nếu không, ghi U1.4b.
-6. Regression bắt buộc: invalid ID/amount không mutate; insufficient remove không trừ dở; transfer thành công bảo toàn tổng; transfer thất bại rollback hai đầu; legacy read thấy stable mutation; pickup thất bại không despawn.
-7. Notification HUD/quest/audio chỉ phát một lần sau commit thành công.
+1. Chọn finite slot policy: slot usage = tổng `ceil(count/max_stack)`; max stack lấy từ injected item catalog/lookup, không load resource trong domain service.
+2. Bổ sung capacity dependency/policy sao cho test có thể inject max-stack deterministic. Missing definition phải fail closed.
+3. Mở legacy mapping chỉ cho typed item thực sự được chest migrate: wood, pal ore, berry trước; các key chest chưa có definition giữ legacy path hoặc nằm ngoài batch.
+4. Migrate `BuildingChest` deposit/withdraw cho mapped items qua atomic transaction. Không sửa Player/chest dictionary trực tiếp trong path đã migrate.
+5. Batch deposit phải plan toàn bộ trước commit hoặc ghi rõ partial policy. Ưu tiên all-or-nothing để UI có kết quả rõ; failure không mất/duplicate item.
+6. Regression: exact max stack, mở stack hiện có, hết slot, missing definition, successful transfer conservation, source insufficient và target capacity rollback.
+7. Notification/audio/HUD chỉ sau commit. Giữ consumer crafting/farm khác legacy.
 
-Không chuyển recipe/farm/building placement sang typed runtime trong package này. Không thêm asset. Không đổi save format. Không thêm feature vào `player.gd` ngoài adapter mỏng gọi domain transaction.
-
-Kết thúc bằng `tools/check_project.ps1`, `git diff --check`, cập nhật module/data/gameplay/roadmap/checkpoint và commit trên branch package rồi fast-forward vào `main`. Checkpoint phải ghi capacity policy thật, consumer còn legacy, test/log, rollback, save/asset impact và scope U1.4b hoặc U1.5.
+Kết thúc bằng full gate, docs/checkpoint, commit branch package và fast-forward main. Ghi capacity formula, chest item scope, consumer còn legacy, save/asset impact, rollback và bước đầu U1.5.

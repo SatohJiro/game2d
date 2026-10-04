@@ -2,7 +2,7 @@
 
 ## Phạm vi hiện tại
 
-U1.2 chỉ chuyển vertical slice `chặt cây → drop gỗ → player inventory` sang API `item.wood`. Recipe, chest, HUD, quest và phần lớn item vẫn đọc dictionary bằng tên tiếng Việt. Adapter duy trì đúng một nguồn dữ liệu để tránh nhân đôi hoặc lệch số lượng trong giai đoạn chuyển tiếp.
+U1.2 chuyển vertical slice `chặt cây → drop gỗ → player inventory` sang API `item.wood`. U1.4a đã đặt stable add/read/remove trên `InventoryTransaction`; recipe, chest, HUD, quest và phần lớn item vẫn đọc dictionary bằng tên tiếng Việt. Adapter duy trì đúng một nguồn dữ liệu.
 
 Không có thay đổi save format trong package này. Dự án chưa có save system.
 
@@ -29,8 +29,9 @@ Nếu drop chưa được migrate, `item_id` để rỗng và `DroppedItem` gọ
 | `LegacyItemAdapter.get_count(inventory, id)` | số lượng không âm | Unknown ID trả `0`, không mutate |
 | `LegacyItemAdapter.add(inventory, id, amount)` | `bool` | Reject amount `<= 0` và ID chưa map |
 | `Player.add_item(name, count)` | `bool` | Giữ tương thích legacy; `Gỗ` được route qua stable API |
-| `Player.add_item_by_id(id, count)` | `bool` | Boundary mới cho producer đã migrate |
+| `Player.add_item_by_id(id, count)` | `bool` | Stable add qua transaction |
 | `Player.get_item_count_by_id(id)` | `int` | Boundary đọc stable ID trong giai đoạn chuyển tiếp |
+| `Player.remove_item_by_id(id, count)` | `bool` | Stable atomic remove; thiếu item không trừ dở |
 | `DroppedItem.get_resolved_item_id()` | `StringName` hoặc rỗng | `item_id` hợp lệ được ưu tiên, sau đó mới map `item_name` |
 
 Invariant U1.2:
@@ -47,7 +48,7 @@ Invariant U1.2:
 - `Player` sở hữu dictionary và thông báo HUD/quest sau mutation thành công.
 - `DroppedItem` chỉ định tuyến pickup và chỉ tự hủy khi inventory xác nhận thành công.
 - `ResourceNode` chỉ gắn stable ID khi tạo drop; yield table vẫn là legacy và sẽ được data hóa ở package sau.
-- Adapter không kiểm tra capacity, max stack, remove, transfer hoặc atomic multi-item transaction. Các trách nhiệm này thuộc U1.4.
+- Adapter chỉ map key; transaction sở hữu add/remove/transfer. Capacity/max stack và chest batch thuộc U1.4b.
 
 Các consumer còn dùng key legacy trực tiếp gồm recipe/crafting, chest/storage, farming, building cost, quest và HUD. Không thêm mapping mới nếu chưa có `ItemDefinition`, regression và một producer/consumer cụ thể được migrate cùng package.
 
@@ -61,4 +62,4 @@ Rollback package U1.2 là revert commit của package. Không cần data migrati
 
 ## Bước chuyển tiếp tiếp theo
 
-U1.3 thêm canary typed Resource cho một recipe, workbench và crop, nhưng tiếp tục dùng adapter tại boundary runtime. U1.4 mới tạo inventory transaction/capacity/transfer và chuyển pickup + chest sang stable storage; lúc đó cần migration rõ từ dictionary `Gỗ` sang stack `item.wood` và compatibility view cho consumer chưa chuyển.
+U1.4a đã tạo transaction trên backing store legacy. U1.4b tiếp tục chest/capacity; stable backing store chỉ được xem xét sau khi direct writer đã có boundary.

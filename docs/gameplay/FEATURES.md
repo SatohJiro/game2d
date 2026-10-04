@@ -16,7 +16,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 |---|---|---|---|---|
 | G01 | Di chuyển, sprint, roll | Playable, nằm trong player god script | Component + remap/gamepad | U1/U3 |
 | G02 | Survival needs | Hunger/thirst/temp prototype | Tác động có telegraph và counterplay | U1/U5 |
-| G03 | Gathering/loot | Tree/rock/drop prototype; pickup gỗ dùng `item.wood` tại boundary và lưu vào key legacy `Gỗ` | Tool tiers, yield table, respawn state | U1/U5 |
+| G03 | Gathering/loot | Pickup gỗ dùng stable transaction; rejected pickup ở lại world; capacity vẫn unlimited | Tool tiers, finite capacity, yield table, respawn state | U1/U5 |
 | G04 | Combat | Melee/projectile/status prototype | Deterministic result, telegraph, skill loadout | U1/U5 |
 | G05 | Capture | Sphere + HP-based chance | Species/status/sphere modifiers, clear feedback | U1/U5 |
 | G06 | Pet party/command | Một active pet, stance đơn giản | Roster, command wheel, roles, synergy | U1/U5 |

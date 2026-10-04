@@ -1069,14 +1069,23 @@ func add_item(item_name: String, count: int) -> bool:
 
 
 func add_item_by_id(item_id: StringName, count: int) -> bool:
-	if not LegacyItemAdapter.add(inventory, item_id, count):
+	var result := InventoryTransaction.new(inventory).add(item_id, count)
+	if not result.is_success():
 		return false
 	_on_inventory_changed()
 	return true
 
 
 func get_item_count_by_id(item_id: StringName) -> int:
-	return LegacyItemAdapter.get_count(inventory, item_id)
+	return InventoryTransaction.new(inventory).get_count(item_id)
+
+
+func remove_item_by_id(item_id: StringName, count: int) -> bool:
+	var result := InventoryTransaction.new(inventory).remove(item_id, count)
+	if not result.is_success():
+		return false
+	_on_inventory_changed()
+	return true
 
 
 func _on_inventory_changed() -> void:

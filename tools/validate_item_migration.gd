@@ -12,12 +12,13 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_test_legacy_adapter()
+	_test_inventory_transactions()
 	_test_dropped_item_resolution()
 	await _test_live_player_inventory_boundary()
 	await _clean_tree()
 
 	if _failures.is_empty():
-		print("Item migration validation passed: item.wood pickup/inventory compatibility is valid.")
+		print("Item migration validation passed: U1.4a inventory transactions and wood compatibility are valid.")
 		_finish.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -35,6 +36,46 @@ func _test_legacy_adapter() -> void:
 	_expect(not inventory.has("item.wood"), "adapter must not create a parallel stable-key entry")
 	_expect(not LegacyItemAdapter.add(inventory, &"item.wood", 0), "zero add must be rejected")
 	_expect(not LegacyItemAdapter.add(inventory, &"item.unknown", 1), "unmapped stable ID must be rejected")
+	_expect(LegacyItemAdapter.set_count(inventory, &"item.wood", 1), "mapped count set should succeed")
+	_expect(inventory["Gỗ"] == 1, "count set must update the legacy source of truth")
+	_expect(not LegacyItemAdapter.set_count(inventory, &"item.wood", -1), "negative count set must be rejected")
+
+
+func _test_inventory_transactions() -> void:
+	var source_store := {"Gỗ": 5}
+	var target_store := {"Gỗ": 1}
+	var source := InventoryTransaction.new(source_store)
+	var target := InventoryTransaction.new(target_store)
+	_expect(
+		source.get_capacity_policy() == InventoryTransaction.CapacityPolicy.UNLIMITED,
+		"U1.4a must expose the unlimited capacity policy explicitly"
+	)
+
+	var invalid_item := source.add(&"item.unknown", 2)
+	_expect(invalid_item.status == InventoryTransactionResult.Status.INVALID_ITEM, "unknown item status mismatch")
+	_expect(source_store["Gỗ"] == 5, "unknown add must not mutate source")
+	var invalid_amount := source.remove(&"item.wood", 0)
+	_expect(invalid_amount.status == InventoryTransactionResult.Status.INVALID_AMOUNT, "invalid amount status mismatch")
+	_expect(source_store["Gỗ"] == 5, "invalid remove must not mutate source")
+	var insufficient := source.remove(&"item.wood", 6)
+	_expect(insufficient.status == InventoryTransactionResult.Status.INSUFFICIENT_ITEMS, "insufficient status mismatch")
+	_expect(source_store["Gỗ"] == 5, "insufficient remove must not partially mutate")
+
+	var removed := source.remove(&"item.wood", 2)
+	_expect(removed.is_success() and removed.applied_amount == 2, "valid remove should apply requested amount")
+	_expect(source_store["Gỗ"] == 3, "valid remove count mismatch")
+	var total_before := int(source_store["Gỗ"]) + int(target_store["Gỗ"])
+	var transferred := source.transfer_to(target, &"item.wood", 2)
+	_expect(transferred.is_success(), "valid transfer should succeed")
+	_expect(source_store["Gỗ"] == 1 and target_store["Gỗ"] == 3, "valid transfer counts mismatch")
+	_expect(int(source_store["Gỗ"]) + int(target_store["Gỗ"]) == total_before, "transfer must conserve total count")
+
+	var source_before_failure := int(source_store["Gỗ"])
+	var target_before_failure := int(target_store["Gỗ"])
+	var failed_transfer := source.transfer_to(target, &"item.wood", 5)
+	_expect(failed_transfer.status == InventoryTransactionResult.Status.INSUFFICIENT_ITEMS, "failed transfer status mismatch")
+	_expect(int(source_store["Gỗ"]) == source_before_failure, "failed transfer must preserve source")
+	_expect(int(target_store["Gỗ"]) == target_before_failure, "failed transfer must preserve target")
 
 
 func _test_dropped_item_resolution() -> void:
@@ -69,6 +110,7 @@ func _test_live_player_inventory_boundary() -> void:
 	if player == null:
 		_failures.append("main scene did not register a player")
 		return
+	await _test_rejected_drop_stays_in_world(main_scene, player)
 	var player_parent := player.get_parent()
 	player_parent.remove_child(player)
 	player.set("base_manager_ref", null)
@@ -81,11 +123,32 @@ func _test_live_player_inventory_boundary() -> void:
 	_expect(not inventory.has("item.wood"), "Player must retain one inventory source of truth")
 	_expect(bool(player.call("add_item", "Gỗ", 2)), "legacy Player add should remain compatible")
 	_expect(int(player.call("get_item_count_by_id", &"item.wood")) == initial_count + 6, "legacy add must be visible by stable read")
+	_expect(bool(player.call("remove_item_by_id", &"item.wood", 3)), "Player stable remove failed")
+	_expect(int(player.call("get_item_count_by_id", &"item.wood")) == initial_count + 3, "Player stable remove count mismatch")
+	_expect(not bool(player.call("remove_item_by_id", &"item.wood", initial_count + 4)), "Player insufficient remove should fail")
+	_expect(int(player.call("get_item_count_by_id", &"item.wood")) == initial_count + 3, "failed Player remove must not mutate")
 	_expect(not bool(player.call("add_item_by_id", &"item.unknown", 1)), "unknown stable item should fail closed")
 	player.free()
 	player = null
 	main_scene = null
 	packed_main = null
+
+
+func _test_rejected_drop_stays_in_world(main_scene: Node, player: Node) -> void:
+	var packed_drop := load(DROPPED_ITEM_SCENE_PATH) as PackedScene
+	if packed_drop == null:
+		_failures.append("unable to load rejected dropped item scene")
+		return
+	var drop := packed_drop.instantiate()
+	drop.set("item_name", "Unknown")
+	drop.set("item_id", &"item.unknown")
+	main_scene.add_child(drop)
+	await process_frame
+	drop.set("target_player", player)
+	drop.call("collect")
+	_expect(is_instance_valid(drop) and not drop.is_queued_for_deletion(), "rejected pickup must stay in world")
+	main_scene.remove_child(drop)
+	drop.free()
 
 
 func _clean_tree() -> void:
