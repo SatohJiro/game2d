@@ -1,34 +1,49 @@
 ﻿# Checkpoint triển khai Paloria 3.0
 
-## U1.2 — adapter pickup/inventory cho `item.wood`
+## U1.3 — Recipe, Building và Crop definitions
 
-Trạng thái: `VERIFIED` ngày 2026-10-04; package được tích hợp từ branch `work/u1.2-item-adapter` vào `main` bằng fast-forward.
+Trạng thái: `VERIFIED` ngày 2026-10-04; package được tích hợp từ branch `work/u1.3-domain-definitions` vào `main` bằng fast-forward.
 
 ### Mục tiêu và invariant
 
-- Chuyển đúng một vertical slice `resource tree → dropped wood → Player inventory` sang stable ID `item.wood`.
-- Giữ `Player.inventory["Gỗ"]` là nguồn sự thật duy nhất để recipe, chest, HUD và quest cũ tiếp tục hoạt động.
-- Stable add/read và legacy add phải nhìn thấy cùng số lượng; không tạo key `item.wood` song song.
-- Pickup chỉ biến mất sau khi inventory xác nhận add thành công; invalid count/unknown ID thất bại mà không mutate.
-- Không đổi balance, save format, asset path, asset byte hoặc license status.
+- Tạo typed catalog canary cho recipe sphere, workbench và berry crop từ prototype hiện có.
+- Mọi identity mới dùng stable ID; tên tiếng Việt, scene path và icon path không làm identity.
+- Validate field/domain/range trước khi register; validate cross-reference sau khi toàn catalog đã load.
+- Giữ dictionary recipe/inventory, building script và CropType enum làm runtime authority trong U1.3.
+- Không tạo runtime store thứ hai, không đổi gameplay/balance/save và không thêm asset.
 
-### Code và data flow
+### Schema và catalog
 
-- `data/legacy_item_adapter.gd`: mapping hai chiều `Gỗ` ↔ `item.wood`, stable read/add trên dictionary legacy và fail-closed cho ID chưa map.
-- `scripts/resource_node.gd`: gắn stable ID đã resolve lên drop; item chưa migrate vẫn có `item_id` rỗng.
-- `scripts/dropped_item.gd`: ưu tiên stable pickup API, fallback legacy cho item chưa migrate, chỉ free khi add thành công.
-- `scripts/player.gd`: `add_item_by_id`, `get_item_count_by_id`; `add_item` legacy route gỗ qua cùng boundary và trả `bool`.
-- `tools/validate_item_migration.gd`: regression adapter, drop scene và Player thật sau khi bootstrap `main.tscn`.
-- `tools/check_project.ps1`: thêm item migration gate giữa content validation và main smoke.
+- `ItemAmount`: `item_id` domain item và quantity dương.
+- `RecipeDefinition`: inputs/output/station/time/unlock; reject null, duplicate input, sai domain và range.
+- `BuildingDefinition`: scene/health/build cost/supported recipes/tags.
+- `CropDefinition`: seed/harvest item, growth time và yield range.
+- Item support: `item.pal_ore`, `item.pal_sphere.basic`, `item.berry_seed`, `item.berry`.
+- Domain canary: `recipe.pal_sphere.basic`, `building.workbench`, `crop.berry`.
+- Catalog hiện có đúng 8 definition tính cả `item.wood`.
 
-Luồng và ownership chi tiết nằm trong `docs/architecture/INVENTORY_MIGRATION.md`.
+Chi tiết field, prototype mapping, ownership và compatibility nằm trong `docs/architecture/DOMAIN_DEFINITIONS.md`.
 
-### Tài liệu đã đồng bộ
+### Registry và validation
 
-- `docs/architecture/INVENTORY_MIGRATION.md`: API, invariant, compatibility, failure policy, rollback và kế hoạch U1.4.
-- `docs/architecture/DATA_CONTRACTS.md`, `MODULES.md`: trạng thái stable boundary và nguồn dữ liệu hiện tại.
-- `docs/gameplay/FEATURES.md`: G03 phản ánh pickup gỗ đã migrate.
-- Roadmap, major update plan, index, documentation gate và prompt cho model tiếp theo đã chuyển sang U1.3.
+- `ContentDefinition.get_referenced_content_ids()` là hook reference mặc định.
+- `ContentRegistry.load_directory()` register file theo path sort, sau đó validate reference theo stable ID sort.
+- Missing input/output/station/cost/recipe/seed/harvest target làm content gate thất bại.
+- Recipe ↔ building reference hai chiều hợp lệ vì pass reference chạy sau khi register toàn catalog.
+- `tools/validate_content.gd` có regression cho wrong domain, required field, non-positive value, inverted yield, duplicate ID, missing reference và toàn bộ canary project.
+
+### File chính
+
+- `data/definitions/item_amount.gd`
+- `data/definitions/recipe_definition.gd`
+- `data/definitions/building_definition.gd`
+- `data/definitions/crop_definition.gd`
+- `data/definitions/items/{pal_ore,pal_sphere_basic,berry_seed,berry}.tres`
+- `data/definitions/recipes/pal_sphere_basic.tres`
+- `data/definitions/buildings/workbench.tres`
+- `data/definitions/crops/berry.tres`
+- `data/content_registry.gd`, `tools/validate_content.gd`
+- Tài liệu data/module/gameplay/roadmap và kế hoạch U1.4 đã đồng bộ.
 
 ### Validation
 
@@ -38,34 +53,34 @@ Lệnh:
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/check_project.ps1
 ```
 
-Kết quả ngày 2026-10-04:
+Kết quả cuối ngày 2026-10-04:
 
-- Documentation: 22 required files, 20 Markdown files, không broken relative link.
+- Documentation: 24 required files, 22 Markdown files, không broken relative link.
 - Asset integrity/action: 166/166; 0 verified, 166 quarantine/unknown; 69 runtime P0.
 - Godot 4.7.2 editor-load: exit 0, log sạch.
-- Content registry: `item.wood` và registry contract pass.
-- Item migration: mapping, invalid input, single source of truth, drop resolution và Player add/read pass.
+- Content validation: 8 definition, subtype rules và cross-reference pass.
+- Item migration U1.2: pass.
 - Main scene smoke 120 frame: exit 0, log sạch.
 - Log: `build/checks/headless-editor.log`, `content-validation.log`, `item-migration-validation.log`, `headless-smoke.log`.
 
 ### Compatibility, asset và phần chưa làm
 
-- Save/data breaking change: không; dự án chưa có save system và storage vẫn là dictionary legacy.
-- `add_item` đổi return type từ `void` sang `bool`; call site cũ có thể bỏ qua kết quả nên vẫn tương thích GDScript, còn drop mới dùng kết quả để quyết định despawn.
-- Chỉ `item.wood` được map. Stone, ore, crop, food, building cost, recipe, chest và HUD vẫn dùng tên tiếng Việt.
-- Chưa có capacity, max-stack enforcement, remove/transfer hoặc atomic multi-item transaction; thuộc U1.4.
-- Registry chưa là autoload; adapter dùng stable ID contract nhưng không lookup definition lúc pickup.
-- Không thêm/tải/sửa asset. `assets/items/wood.png` và toàn bộ 166 asset vẫn `QUARANTINE/UNKNOWN`; 69 runtime asset P0 cần xác minh hoặc thay trước release.
-- Visual/manual playtest chưa thực hiện trong package headless; hành vi được bao phủ bằng integration regression và 120-frame smoke.
+- Save/data breaking change: không; dự án chưa có save system và runtime không consume definition U1.3.
+- Bốn item mới chưa được map trong `LegacyItemAdapter`; stable pickup API chỉ support wood như U1.2.
+- Recipe Player, workbench health/interaction và berry crop logic vẫn hardcode. Typed resources là mirror đã validate, chưa phải runtime authority.
+- Registry chưa là autoload; lifecycle/bootstrap phải được owner rõ ràng khi U1.4 cần max stack/catalog.
+- Recipe cycle validation chưa triển khai; U1.3 chỉ có một recipe và reference existence.
+- Không thêm hoặc sửa asset byte. Icon/scene được tham chiếu đều là file cũ và vẫn `QUARANTINE/UNKNOWN`.
+- Visual/manual playtest chưa thực hiện; package không đổi runtime gameplay và được kiểm bằng editor/content/item/smoke headless.
 
-### Gói tiếp theo
+### Rollback và package kế tiếp
 
-U1.3 tạo ba typed canary definition có liên kết chéo tối thiểu: một recipe, `building.workbench` và một crop. Package phải thêm validation cho positive quantities/time và missing referenced ID, nhưng chưa chuyển toàn bộ catalog hoặc inventory storage. Giữ adapter U1.2; chọn đúng một runtime read boundary nếu việc nối definition không làm package vượt ba module.
+Rollback là revert commit U1.3; runtime chưa đọc definitions nên không có data migration ngược.
+
+U1.4 làm theo `docs/roadmap/U1_4_INVENTORY_PLAN.md`: pure transaction trên một backing dictionary, stable add/remove/transfer, rollback hai đầu và migration pickup/chest. Nếu capacity + chest vượt work package 0,5–2 ngày, tách U1.4a transaction/Player/drop và U1.4b chest/capacity.
 
 ## Lịch sử
 
-- U1.1: stable content IDs, `ItemDefinition`, registry và content validator; `VERIFIED` ngày 2026-10-04.
-- U0.4: action/priority/owner cho 166 asset; `VERIFIED` ngày 2026-10-04.
-- U0.3: Git baseline/tag và restore worktree test; `VERIFIED` ngày 2026-10-04.
-- U0.2: asset manifest và documentation gates; `VERIFIED` ngày 2026-10-04.
-- U0.1: parse/audio lifecycle và Godot headless gate; `VERIFIED` ngày 2026-10-04.
+- U1.2: stable `item.wood` pickup/inventory adapter; `VERIFIED` ngày 2026-10-04.
+- U1.1: stable content IDs, ItemDefinition, registry và validator; `VERIFIED` ngày 2026-10-04.
+- U0.1–U0.4: baseline, asset inventory, Git restore point và quarantine actions; `VERIFIED`.

@@ -41,7 +41,7 @@ Domain đã dành trước:
 - `developer_notes: String`: ghi chú editor, không tham gia gameplay/save.
 - `get_validation_errors()`: trả mọi lỗi có thể phát hiện, không sửa data âm thầm.
 
-`ItemDefinition` U1.1 mở rộng:
+`ItemDefinition` mở rộng:
 
 - ID phải thuộc domain `item`.
 - `max_stack > 0`.
@@ -49,6 +49,8 @@ Domain đã dành trước:
 - `tags` dùng để query/capability; không dùng text UI làm tag.
 
 Definition đặt dưới `res://data/definitions/**` dưới dạng `.tres`/`.res`. Mọi resource trong cây này phải kế thừa `ContentDefinition`; file helper/script không bị registry coi là definition.
+
+U1.3 thêm `ItemAmount`, `RecipeDefinition`, `BuildingDefinition` và `CropDefinition`. Schema, range, cross-reference và ranh giới runtime được ghi tại `DOMAIN_DEFINITIONS.md`.
 
 ## Registry contract
 
@@ -58,9 +60,10 @@ Definition đặt dưới `res://data/definitions/**` dưới dạng `.tres`/`.r
 2. Thu thập `.tres`/`.res` đệ quy và sort path để validation deterministic.
 3. Load, kiểm tra type và gọi validation của definition.
 4. Reject duplicate ID; definition đầu tiên theo path sort được giữ, duplicate không ghi đè.
-5. Trả `false` nếu có bất kỳ lỗi; caller đọc toàn bộ `get_errors()`.
+5. Sau khi register toàn catalog, validate reference theo stable ID đã sort; missing target là lỗi.
+6. Trả `false` nếu có bất kỳ lỗi; caller đọc toàn bộ `get_errors()`.
 
-Public query hiện có: `has`, `get_definition`, `get_definitions_for_domain`, `get_all_ids`, `size`. Registry trả Resource definition; domain system cast về subtype và không mutate definition runtime.
+Public query hiện có: `has`, `get_definition`, `get_definitions_for_domain`, `get_all_ids`, `size`. `validate_references` phục vụ catalog dựng thủ công/test sau khi register xong. Registry trả Resource definition; domain system cast về subtype và không mutate definition runtime.
 
 U1.1 chưa autoload registry. Bootstrap/service lifetime chỉ được chốt khi một runtime consumer được migrate, tránh tạo global singleton trước khi ownership rõ.
 

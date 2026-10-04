@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/recipe_definition.gd" id="1_recipe"]
+[ext_resource type="Script" path="res://data/definitions/item_amount.gd" id="2_amount"]
+
+[sub_resource type="Resource" id="ItemAmount_wood"]
+script = ExtResource("2_amount")
+item_id = &"item.wood"
+quantity = 1
+
+[sub_resource type="Resource" id="ItemAmount_ore"]
+script = ExtResource("2_amount")
+item_id = &"item.pal_ore"
+quantity = 1
+
+[sub_resource type="Resource" id="ItemAmount_output"]
+script = ExtResource("2_amount")
+item_id = &"item.pal_sphere.basic"
+quantity = 2
+
+[resource]
+script = ExtResource("1_recipe")
+content_id = &"recipe.pal_sphere.basic"
+display_name_key = &"recipe.pal_sphere.basic.name"
+developer_notes = "U1.3 typed mirror of the regular_sphere prototype recipe. Runtime recipe dictionary remains authoritative."
+inputs = Array[ExtResource("2_amount")]([SubResource("ItemAmount_wood"), SubResource("ItemAmount_ore")])
+output = SubResource("ItemAmount_output")
+station_id = &"building.workbench"
+craft_time_seconds = 2.0
+unlock_level = 1

@@ -15,6 +15,8 @@ Không xóa gameplay hiện có trong một lần. Mỗi milestone là một ver
 
 U1.1 ngày 2026-10-04 đã tạo stable content ID, typed `ContentDefinition`/`ItemDefinition`, registry và `item.wood` canary. U1.2 nối `item.wood` vào luồng pickup/inventory bằng adapter; storage vẫn giữ legacy key để recipe/chest/HUD tương thích cho tới U1.4.
 
+U1.3 đã bổ sung typed mirror cho recipe sphere, workbench và berry crop cùng cross-reference validation. Runtime dictionary/enum chưa đổi; inventory transaction và bootstrap catalog được giữ cho U1.4.
+
 ## Kiến trúc mục tiêu
 
 ```text

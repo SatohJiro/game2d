@@ -7,13 +7,15 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 1. `AGENTS.md`: quy tắc bắt buộc và lệnh kiểm tra.
 2. `docs/CHECKPOINT.md`: work package gần nhất, thay đổi thật và phần còn lại.
 3. `docs/roadmap/IMPLEMENTATION_PHASES.md`: thứ tự package và gate.
+   Kế hoạch chi tiết package kế tiếp: `docs/roadmap/U1_4_INVENTORY_PLAN.md`.
 4. `docs/architecture/MODULES.md`: ownership, contract và ranh giới module.
 5. `docs/architecture/DATA_CONTRACTS.md`: grammar ID, typed Resource, registry và migration legacy.
 6. `docs/architecture/INVENTORY_MIGRATION.md`: boundary stable ID, adapter và single source of truth hiện tại.
-7. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
-8. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
-9. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
-10. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
+7. `docs/architecture/DOMAIN_DEFINITIONS.md`: schema recipe/building/crop, cross-reference và runtime boundary.
+8. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
+9. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
+10. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+11. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 
@@ -37,6 +39,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U0.4 asset triage | Hoàn tất | 166/166 có action; 69 runtime asset ở P0 |
 | U1.1 content foundation | Hoàn tất | Stable ID, typed base/item definition, registry và headless validator |
 | U1.2 wood inventory adapter | Hoàn tất | `item.wood` chạy qua drop/player API; legacy dictionary vẫn là nguồn sự thật |
+| U1.3 domain definitions | Hoàn tất | 8 typed canary; field/domain/missing-reference validator và full gate xanh |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

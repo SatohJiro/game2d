@@ -18,3 +18,7 @@ func get_validation_errors() -> PackedStringArray:
 	if display_name_key.is_empty():
 		errors.append("display_name_key is required for %s" % content_id)
 	return errors
+
+
+func get_referenced_content_ids() -> Array[StringName]:
+	return []

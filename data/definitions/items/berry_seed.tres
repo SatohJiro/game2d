@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://assets/items/seed.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_item")
+content_id = &"item.berry_seed"
+display_name_key = &"item.berry_seed.name"
+developer_notes = "U1.3 crop seed canary for the existing legacy key Hạt Giống Cây. Runtime storage is not migrated."
+max_stack = 999
+icon = ExtResource("2_icon")
+tags = PackedStringArray("seed", "crop", "berry")

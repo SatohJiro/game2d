@@ -21,10 +21,10 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 | G05 | Capture | Sphere + HP-based chance | Species/status/sphere modifiers, clear feedback | U1/U5 |
 | G06 | Pet party/command | Một active pet, stance đơn giản | Roster, command wheel, roles, synergy | U1/U5 |
 | G07 | Pet work | Scan group và auto work | Job board, reservation, suitability, needs | U5 |
-| G08 | Farming | Plot/crop stages trong resource node | Soil/moisture/crop definitions/season-lite | U1/U5 |
+| G08 | Farming | Plot/crop stages trong resource node; `crop.berry` typed mirror chưa nối runtime | Soil/moisture/crop definitions/season-lite | U1/U5 |
 | G09 | Ranch | Assigned pet dictionary, timed output | Welfare, breeding/produce traits sau MVP | U5 |
-| G10 | Craft/processing | Recipe dictionaries, cooking/smelting/compost | Queue, station capability, cancel/refund rules | U1/U5 |
-| G11 | Building/base | Placement và 8 building prototype | Grid/socket, repair, storage/logistics | U1/U5 |
+| G10 | Craft/processing | Recipe dictionaries; `recipe.pal_sphere.basic` typed mirror chưa nối runtime | Queue, station capability, cancel/refund rules | U1/U5 |
+| G11 | Building/base | Placement và 8 building prototype; `building.workbench` typed mirror | Grid/socket, repair, storage/logistics | U1/U5 |
 | G12 | Progression/quests | Level, stats, 5 base levels prototype | Data-driven unlock graph/objectives | U5 |
 | G13 | Day/night/raid/boss | Main-script timers | World clock, schedules, encounter director | U2/U5 |
 | G14 | World/biomes | Scene tĩnh 3.200×3.200 | Chunked biomes, discovery, fast travel | U2 |

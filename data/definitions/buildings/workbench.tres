@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/building_definition.gd" id="1_building"]
+[ext_resource type="Script" path="res://data/definitions/item_amount.gd" id="2_amount"]
+[ext_resource type="PackedScene" path="res://scenes/building_workbench.tscn" id="3_scene"]
+
+[sub_resource type="Resource" id="ItemAmount_wood"]
+script = ExtResource("2_amount")
+item_id = &"item.wood"
+quantity = 10
+
+[resource]
+script = ExtResource("1_building")
+content_id = &"building.workbench"
+display_name_key = &"building.workbench.name"
+developer_notes = "U1.3 workbench catalog canary. Placement and health still use the prototype scene/script values."
+scene = ExtResource("3_scene")
+max_health = 200
+build_cost = Array[ExtResource("2_amount")]([SubResource("ItemAmount_wood")])
+supported_recipe_ids = Array[StringName]([&"recipe.pal_sphere.basic"])
+tags = PackedStringArray("crafting_station", "workbench")

@@ -1,24 +1,19 @@
-﻿# Prompt triển khai package U1.3
+﻿# Prompt triển khai package U1.4
 
-Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, `docs/roadmap/IMPLEMENTATION_PHASES.md`, `docs/architecture/DATA_CONTRACTS.md`, `docs/architecture/INVENTORY_MIGRATION.md`, `docs/architecture/MODULES.md` và `docs/gameplay/FEATURES.md`. Kiểm tra code/Git thực tế trước khi sửa; không suy trạng thái chỉ từ tài liệu.
+Làm việc tại `D:\desktop\VS_WorkSpace\game2d`. Đọc theo thứ tự: `AGENTS.md`, `docs/INDEX.md`, `docs/CHECKPOINT.md`, `docs/roadmap/U1_4_INVENTORY_PLAN.md`, `docs/architecture/INVENTORY_MIGRATION.md`, `docs/architecture/DOMAIN_DEFINITIONS.md`, `docs/architecture/DATA_CONTRACTS.md`, `docs/architecture/MODULES.md` và G03/G10/G11 trong `docs/gameplay/FEATURES.md`. Kiểm tra Git/code thực tế và chạy baseline gate trước khi sửa.
 
-U0.1–U0.4, U1.1 và U1.2 đã được kiểm chứng. Restore tag là `baseline-u0.3`. U1.2 đã migrate riêng luồng wood pickup qua `item.wood`, nhưng `Player.inventory["Gỗ"]` vẫn là nguồn sự thật duy nhất để giữ tương thích. Không xóa adapter hoặc đổi toàn bộ inventory trong U1.3.
+U0.1–U0.4 và U1.1–U1.3 đã được kiểm chứng. U1.3 có 8 typed definitions và deterministic missing-reference validation, nhưng runtime recipe/building/crop vẫn dùng prototype. U1.2 chỉ map wood stable ID lên dictionary legacy. Không xóa compatibility adapter và không tạo stable dictionary song song.
 
-Thực hiện đúng một work package U1.3 dài 0,5–2 ngày:
+Thực hiện một work package U1.4a dài 0,5–2 ngày:
 
-1. Audit recipe/workbench/crop prototype hiện có và ghi rõ ba canary được chọn trước khi code.
-2. Tạo `RecipeDefinition`, `BuildingDefinition`, `CropDefinition` typed, mỗi subtype tự validate domain, required field, positive quantity/time và tham chiếu content.
-3. Tạo tối thiểu một `.tres` cho mỗi subtype. Dùng stable ID; localization key tách khỏi identity.
-4. Mở rộng `ContentRegistry`/validator để phát hiện missing cross-reference và input/output không hợp lệ theo thứ tự deterministic.
-5. Chỉ nối tối đa một runtime read boundary nếu có thể giữ các consumer legacy bằng adapter và package không chạm quá ba module. Không rewrite crafting, building, farming và inventory cùng lúc.
-6. Viết regression headless cho valid canary, invalid domain/value, duplicate và missing reference; thêm vào `tools/check_project.ps1` nếu cần.
+1. Audit mọi direct mutation của `Player.inventory` và `BuildingChest.stored_items`; ghi owner và danh sách consumer còn legacy.
+2. Thiết kế pure `InventoryTransaction` + result/status cho get/add/remove/transfer trên backing dictionary được inject. Service không truy cập SceneTree/HUD/audio và không giữ bản sao state.
+3. Chọn capacity policy rõ ràng. Nếu max-stack/slot cần registry bootstrap làm package quá lớn, dùng explicit unlimited policy ở U1.4a và để finite capacity cho U1.4b; không giả vờ acceptance inventory-full đã đạt.
+4. Mở rộng legacy mapping chỉ cho item có definition và consumer trong scope. Stable operation phải mutate chính legacy dictionary để giữ một nguồn sự thật.
+5. Migrate Player/drop qua transaction boundary. Chỉ migrate chest trong cùng package nếu có regression atomic transfer và phạm vi vẫn nhỏ; nếu không, ghi U1.4b.
+6. Regression bắt buộc: invalid ID/amount không mutate; insufficient remove không trừ dở; transfer thành công bảo toàn tổng; transfer thất bại rollback hai đầu; legacy read thấy stable mutation; pickup thất bại không despawn.
+7. Notification HUD/quest/audio chỉ phát một lần sau commit thành công.
 
-Acceptance bắt buộc:
+Không chuyển recipe/farm/building placement sang typed runtime trong package này. Không thêm asset. Không đổi save format. Không thêm feature vào `player.gd` ngoài adapter mỏng gọi domain transaction.
 
-- Existing editor-load, content validator, item migration validator và 120-frame main smoke vẫn xanh, log không có `SCRIPT ERROR`, `ERROR`, missing resource hoặc invalid node path.
-- Definition không dùng tên tiếng Việt, scene path hoặc asset path làm identity.
-- Không tạo inventory store thứ hai; save/data impact và compatibility được ghi rõ.
-- Không thêm asset ngoài. Nếu asset cần thiết chưa VERIFIED, giữ reference hiện hữu và ghi quarantine; `game-dev` CLI hiện thiếu nên không tải loose file để lách gate.
-- Đồng bộ `DATA_CONTRACTS`, `MODULES`, `FEATURES`, roadmap, `CHECKPOINT` và prompt package tiếp theo theo `DOCUMENTATION_STANDARD.md`.
-
-Kết thúc bằng `tools/check_project.ps1`, `git diff --check`, commit trên branch package rồi fast-forward vào `main`. Ghi commit, lệnh/log, file thay đổi, phần chưa kiểm chứng, rollback và bước đầu của U1.4 trong checkpoint.
+Kết thúc bằng `tools/check_project.ps1`, `git diff --check`, cập nhật module/data/gameplay/roadmap/checkpoint và commit trên branch package rồi fast-forward vào `main`. Checkpoint phải ghi capacity policy thật, consumer còn legacy, test/log, rollback, save/asset impact và scope U1.4b hoặc U1.5.

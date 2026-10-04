@@ -50,6 +50,26 @@ func load_directory(root_path: String) -> bool:
 			continue
 		try_register(definition)
 
+	validate_references()
+
+	return _errors.is_empty()
+
+
+func validate_references() -> bool:
+	var definition_ids := get_all_ids()
+	for definition_id in definition_ids:
+		var definition := _definitions[definition_id] as ContentDefinition
+		var referenced_ids := definition.get_referenced_content_ids()
+		referenced_ids.sort()
+		for referenced_id in referenced_ids:
+			if ContentId.is_valid(referenced_id) and not _definitions.has(referenced_id):
+				_errors.append(
+					"Missing content reference %s from %s (%s)" % [
+						referenced_id,
+						definition.content_id,
+						definition.resource_path,
+					]
+				)
 	return _errors.is_empty()
 
 

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://assets/items/pal_ore.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_item")
+content_id = &"item.pal_ore"
+display_name_key = &"item.pal_ore.name"
+developer_notes = "U1.3 catalog canary for the existing legacy key Quặng Pal. Runtime storage is not migrated."
+max_stack = 999
+icon = ExtResource("2_icon")
+tags = PackedStringArray("material", "ore", "pal")
