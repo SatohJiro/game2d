@@ -114,6 +114,7 @@ const PLAYER_PERCEPTION_INTERVAL := 0.20
 var pack_scan_timer: float = 1.0
 var perception_cadence := CreaturePerceptionCadence.new(PLAYER_PERCEPTION_INTERVAL)
 var perception_query_count: int = 0
+var transition_apply_count: int = 0
 
 # Natural Behaviors (Pond Drinking & Grazing)
 var water_source_pos: Vector2 = Vector2.ZERO
@@ -337,8 +338,12 @@ func _physics_process(delta: float) -> void:
 			
 			velocity = wander_dir * (cur_speed * 0.45)
 			if state_timer <= 0 or global_position.distance_to(home_pos) > 300:
-				state = State.IDLE
-				state_timer = randf_range(1.5, 3.5)
+				var transition := resolve_creature_transition(
+					CreatureTransitionPolicy.EVENT_WANDER_COMPLETE,
+					true,
+					randf_range(1.5, 3.5)
+				)
+				apply_creature_transition(transition)
 		
 		State.SUSPICIOUS:
 			# Staring at the player, investigating strange noise
@@ -347,13 +352,17 @@ func _physics_process(delta: float) -> void:
 				var face_dir = (target.global_position - global_position).normalized()
 				update_facing_direction(face_dir)
 			if state_timer <= 0:
-				# Lost track or confirmed alert
-				if is_instance_valid(target) and global_position.distance_to(target.global_position) < 140.0:
-					trigger_alert(target)
-				else:
-					state = State.WANDER
-					state_timer = 2.0
-					target = null
+				var alert_target := target
+				var transition := resolve_creature_transition(
+					CreatureTransitionPolicy.EVENT_SUSPICION_TIMEOUT,
+					true
+				)
+				if apply_creature_transition(transition):
+					if (
+						transition.reason_id == CreatureTransitionPolicy.REASON_SUSPICION_CONFIRMED
+						and is_instance_valid(alert_target)
+					):
+						present_alert_feedback(alert_target)
 		
 		State.CHASE:
 			handle_smart_chase(delta)
@@ -598,17 +607,20 @@ func perform_melee_attack_on_prey(prey: Node2D) -> void:
 # --- CHASE & FLANKING AI ---
 func handle_smart_chase(delta: float) -> void:
 	if not is_instance_valid(target):
-		state = State.IDLE
-		state_timer = 1.0
+		apply_creature_transition(resolve_creature_transition(
+			CreatureTransitionPolicy.EVENT_CHASE_TARGET_LOST,
+			true
+		))
 		return
 	
 	var raw_dir = (target.global_position - global_position).normalized()
 	var dist = global_position.distance_to(target.global_position)
 	
-	if dist > 450.0 and not is_night_raider:
-		target = null
-		state = State.IDLE
-		state_timer = 2.0
+	if dist > CreatureTransitionPolicy.CHASE_LEASH_DISTANCE and not is_night_raider:
+		apply_creature_transition(resolve_creature_transition(
+			CreatureTransitionPolicy.EVENT_CHASE_OUT_OF_RANGE,
+			true
+		))
 		return
 	
 	# Apply Flanking angle maneuver if in pack
@@ -713,7 +725,7 @@ func perform_fireball_attack(dir: Vector2) -> void:
 	)
 	
 	await get_tree().create_timer(0.3).timeout
-	state = State.CHASE
+	finish_legacy_attack_recovery()
 
 func perform_spore_attack(dir: Vector2) -> void:
 	attack_cooldown = 2.0
@@ -739,7 +751,7 @@ func perform_spore_attack(dir: Vector2) -> void:
 	)
 	
 	await get_tree().create_timer(0.25).timeout
-	state = State.CHASE
+	finish_legacy_attack_recovery()
 
 func perform_melee_attack() -> void:
 	if not is_instance_valid(target): return
@@ -758,7 +770,20 @@ func perform_melee_attack() -> void:
 		if target.has_method("take_damage"):
 			target.take_damage(attack_power, global_position)
 	
+	finish_legacy_attack_recovery()
+
+
+func finish_legacy_attack_recovery() -> bool:
+	if (
+		defeat_committed
+		or state == State.CAPTURING
+		or state == State.STUNNED
+		or state != State.ATTACK
+	):
+		return false
 	state = State.CHASE
+	return true
+
 
 func update_player_perception(delta: float) -> void:
 	if not perception_cadence.advance(delta):
@@ -818,6 +843,90 @@ func is_player_perception_blocked() -> bool:
 		or state == State.FLEE
 	)
 
+func resolve_creature_transition(
+	event_id: StringName,
+	condition_met: bool,
+	proposed_timer: float = 0.0
+) -> CreatureTransitionResult:
+	var has_valid_target := is_instance_valid(target)
+	var target_distance := (
+		global_position.distance_to(target.global_position)
+		if has_valid_target
+		else -1.0
+	)
+	var request := CreatureTransitionRequest.new(
+		get_creature_state_id(),
+		event_id,
+		condition_met,
+		has_valid_target,
+		target_distance,
+		is_night_raider,
+		proposed_timer,
+		is_transition_apply_protected()
+	)
+	return CreatureTransitionPolicy.resolve(request)
+
+
+func apply_creature_transition(result: CreatureTransitionResult) -> bool:
+	if result == null or not result.is_changed() or is_transition_apply_protected():
+		return false
+	if result.from_state_id != get_creature_state_id():
+		return false
+	if not is_supported_transition_state(result.to_state_id):
+		return false
+
+	state = creature_state_from_id(result.to_state_id)
+	state_timer = result.next_timer
+	if result.target_action == CreatureTransitionResult.TargetAction.CLEAR:
+		target = null
+	transition_apply_count += 1
+	return true
+
+
+func is_transition_apply_protected() -> bool:
+	return defeat_committed or state == State.CAPTURING or state == State.STUNNED
+
+
+func get_creature_state_id() -> StringName:
+	match state:
+		State.IDLE:
+			return CreatureTransitionPolicy.STATE_IDLE
+		State.WANDER:
+			return CreatureTransitionPolicy.STATE_WANDER
+		State.SUSPICIOUS:
+			return CreatureTransitionPolicy.STATE_SUSPICIOUS
+		State.ALERT:
+			return CreatureTransitionPolicy.STATE_ALERT
+		State.CHASE:
+			return CreatureTransitionPolicy.STATE_CHASE
+		_:
+			return &"creature.state.legacy"
+
+
+func is_supported_transition_state(state_id: StringName) -> bool:
+	return (
+		state_id == CreatureTransitionPolicy.STATE_IDLE
+		or state_id == CreatureTransitionPolicy.STATE_WANDER
+		or state_id == CreatureTransitionPolicy.STATE_SUSPICIOUS
+		or state_id == CreatureTransitionPolicy.STATE_ALERT
+		or state_id == CreatureTransitionPolicy.STATE_CHASE
+	)
+
+
+func creature_state_from_id(state_id: StringName) -> State:
+	match state_id:
+		CreatureTransitionPolicy.STATE_WANDER:
+			return State.WANDER
+		CreatureTransitionPolicy.STATE_SUSPICIOUS:
+			return State.SUSPICIOUS
+		CreatureTransitionPolicy.STATE_ALERT:
+			return State.ALERT
+		CreatureTransitionPolicy.STATE_CHASE:
+			return State.CHASE
+		_:
+			return State.IDLE
+
+
 func trigger_suspicion(p: Node2D) -> void:
 	target = p
 	state = State.SUSPICIOUS
@@ -827,9 +936,12 @@ func trigger_suspicion(p: Node2D) -> void:
 func trigger_alert(p: Node2D) -> void:
 	target = p
 	state = State.ALERT
-	state_timer = 0.40
+	state_timer = CreatureTransitionPolicy.ALERT_TIMER
+	present_alert_feedback(p)
+
+
+func present_alert_feedback(p: Node2D) -> void:
 	velocity = Vector2.ZERO
-	
 	var tween = create_tween()
 	tween.tween_property(visual, "scale", Vector2(0.9, 1.35), 0.1)
 	tween.tween_property(visual, "scale", Vector2(1.35 if (is_elite or is_alpha) else 1.0, 1.35 if (is_elite or is_alpha) else 1.0), 0.12)
@@ -863,10 +975,14 @@ func start_wander() -> void:
 		spawn_floating_text("🌾 Gặm cỏ thong dong...", Color(0.5, 0.9, 0.3))
 		return
 	
-	state = State.WANDER
-	state_timer = randf_range(2.0, 4.0)
-	var angle = randf() * TAU
-	wander_dir = Vector2(cos(angle), sin(angle))
+	var transition := resolve_creature_transition(
+		CreatureTransitionPolicy.EVENT_IDLE_WANDER,
+		true,
+		randf_range(2.0, 4.0)
+	)
+	if apply_creature_transition(transition):
+		var angle = randf() * TAU
+		wander_dir = Vector2(cos(angle), sin(angle))
 
 func take_damage(amount: int, hit_origin: Vector2, attacker: Node2D = null) -> void:
 	if state == State.CAPTURING or defeat_committed:

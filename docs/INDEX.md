@@ -17,14 +17,15 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 10. `docs/architecture/CAPTURE_CONTRACT.md`: chance request/result, sphere transaction và Creature adapter.
 11. `docs/architecture/CAPTURE_OWNERSHIP_CONTRACT.md`: stable species, rarity/trait và atomic roster ownership.
 12. `docs/architecture/CREATURE_PERCEPTION_CONTRACT.md`: cadence, candidate policy, state guard và scan audit.
-13. `docs/architecture/PLAYER_NEEDS_CONTRACT.md`: state, snapshot, buff ID và Player adapter của survival needs.
-14. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
-15. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
-16. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
-17. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
-18. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
-19. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
-20. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
+13. `docs/architecture/CREATURE_TRANSITION_CONTRACT.md`: stable transition reason, pure policy và apply boundary.
+14. `docs/architecture/PLAYER_NEEDS_CONTRACT.md`: state, snapshot, buff ID và Player adapter của survival needs.
+15. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
+16. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
+17. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
+18. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
+19. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
+20. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+21. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 
@@ -59,6 +60,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.7b sphere transaction | Hoàn tất | Stable basic/mega/giga selection, atomic spend/launch và missed-drop adapter |
 | U1.7c roster ownership | Hoàn tất | Stable species mapping, pure rarity/trait và atomic append/reward/despawn |
 | U1.8a creature perception | Hoàn tất | Pure candidate policy, 0,20s cadence và protected-state group-scan guard |
+| U1.8b creature transitions | Hoàn tất | 5 transition block qua pure policy/apply owner; async attack recovery có lifecycle guard |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

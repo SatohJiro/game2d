@@ -12,10 +12,11 @@ func _initialize() -> void:
 func _run() -> void:
 	_test_cadence()
 	_test_policy_determinism_and_boundaries()
+	_test_transition_policy()
 	await _test_creature_adapter()
 	await _clean_tree()
 	if _failures.is_empty():
-		print("Creature perception validation passed: cadence, deterministic selection, state guards and adapter are valid.")
+		print("Creature validation passed: perception cadence, deterministic selection and transition ownership are valid.")
 		quit.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -101,6 +102,119 @@ func _test_policy_determinism_and_boundaries() -> void:
 	_expect(lost.decision == CreaturePerceptionResult.Decision.NONE, "no candidate must preserve legacy timer-owned target loss")
 
 
+func _test_transition_policy() -> void:
+	var idle_wander := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_IDLE,
+		CreatureTransitionPolicy.EVENT_IDLE_WANDER,
+		true,
+		false,
+		-1.0,
+		false,
+		2.5
+	))
+	_expect(idle_wander.is_changed(), "IDLE wander transition must change")
+	_expect(idle_wander.to_state_id == CreatureTransitionPolicy.STATE_WANDER, "IDLE wander target state mismatch")
+	_expect(is_equal_approx(idle_wander.next_timer, 2.5), "injected wander timer mismatch")
+	_expect(idle_wander.reason_id == CreatureTransitionPolicy.EVENT_IDLE_WANDER, "wander reason ID mismatch")
+
+	var not_triggered := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_WANDER,
+		CreatureTransitionPolicy.EVENT_WANDER_COMPLETE,
+		false,
+		false,
+		-1.0,
+		false,
+		2.0
+	))
+	_expect(not_triggered.status == CreatureTransitionResult.Status.NO_CHANGE, "false transition condition must not change")
+
+	var wander_complete := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_WANDER,
+		CreatureTransitionPolicy.EVENT_WANDER_COMPLETE,
+		true,
+		false,
+		-1.0,
+		false,
+		1.75
+	))
+	_expect(wander_complete.to_state_id == CreatureTransitionPolicy.STATE_IDLE, "WANDER completion target mismatch")
+	_expect(is_equal_approx(wander_complete.next_timer, 1.75), "WANDER completion timer mismatch")
+
+	var confirmed := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_SUSPICIOUS,
+		CreatureTransitionPolicy.EVENT_SUSPICION_TIMEOUT,
+		true,
+		true,
+		139.0
+	))
+	_expect(confirmed.to_state_id == CreatureTransitionPolicy.STATE_ALERT, "close suspicion target must confirm alert")
+	_expect(confirmed.reason_id == CreatureTransitionPolicy.REASON_SUSPICION_CONFIRMED, "confirmed suspicion reason mismatch")
+	_expect(confirmed.target_action == CreatureTransitionResult.TargetAction.KEEP, "confirmed suspicion must keep target")
+
+	var lost := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_SUSPICIOUS,
+		CreatureTransitionPolicy.EVENT_SUSPICION_TIMEOUT,
+		true,
+		true,
+		140.0
+	))
+	_expect(lost.to_state_id == CreatureTransitionPolicy.STATE_WANDER, "suspicion distance boundary must lose target")
+	_expect(lost.reason_id == CreatureTransitionPolicy.REASON_SUSPICION_LOST, "lost suspicion reason mismatch")
+	_expect(lost.target_action == CreatureTransitionResult.TargetAction.CLEAR, "lost suspicion must clear target")
+
+	var chase_lost := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_CHASE,
+		CreatureTransitionPolicy.EVENT_CHASE_TARGET_LOST,
+		true
+	))
+	_expect(chase_lost.to_state_id == CreatureTransitionPolicy.STATE_IDLE, "missing chase target must return IDLE")
+	_expect(is_equal_approx(chase_lost.next_timer, 1.0), "missing chase target timer mismatch")
+
+	var chase_far := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_CHASE,
+		CreatureTransitionPolicy.EVENT_CHASE_OUT_OF_RANGE,
+		true,
+		true,
+		451.0
+	))
+	_expect(chase_far.is_changed() and chase_far.target_action == CreatureTransitionResult.TargetAction.CLEAR, "far chase target must clear and return")
+	var raid_far := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_CHASE,
+		CreatureTransitionPolicy.EVENT_CHASE_OUT_OF_RANGE,
+		true,
+		true,
+		451.0,
+		true
+	))
+	_expect(raid_far.status == CreatureTransitionResult.Status.NO_CHANGE, "night raider must ignore chase leash")
+
+	var protected := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_IDLE,
+		CreatureTransitionPolicy.EVENT_IDLE_WANDER,
+		true,
+		false,
+		-1.0,
+		false,
+		2.0,
+		true
+	))
+	_expect(protected.status == CreatureTransitionResult.Status.PROTECTED, "protected request status mismatch")
+	var invalid := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_IDLE,
+		&"creature.transition.unknown",
+		true
+	))
+	_expect(invalid.status == CreatureTransitionResult.Status.INVALID_REQUEST, "unknown transition event must be invalid")
+	var repeat := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_SUSPICIOUS,
+		CreatureTransitionPolicy.EVENT_SUSPICION_TIMEOUT,
+		true,
+		true,
+		139.0
+	))
+	_expect(repeat.to_state_id == confirmed.to_state_id and repeat.reason_id == confirmed.reason_id, "transition policy must be deterministic")
+
+
 func _test_creature_adapter() -> void:
 	var packed := load(CREATURE_SCENE_PATH) as PackedScene
 	if packed == null:
@@ -117,6 +231,9 @@ func _test_creature_adapter() -> void:
 	await process_frame
 	var state_values: Dictionary = creature.get_script().get_script_constant_map().get("State", {})
 	var idle_state := int(state_values.get("IDLE", 0))
+	var wander_state := int(state_values.get("WANDER", 1))
+	var chase_state := int(state_values.get("CHASE", 2))
+	var attack_state := int(state_values.get("ATTACK", 3))
 	var suspicious_state := int(state_values.get("SUSPICIOUS", 10))
 	var capturing_state := int(state_values.get("CAPTURING", 7))
 	creature.set("is_elite", false)
@@ -133,6 +250,43 @@ func _test_creature_adapter() -> void:
 	_expect(int(creature.get("perception_query_count")) == 1, "Creature adapter query count mismatch")
 	_expect(int(creature.get("state")) == suspicious_state, "Creature adapter must preserve suspicion behavior")
 	_expect(creature.get("target") == player, "Creature adapter selected wrong target")
+
+	creature.set("state", wander_state)
+	creature.set("state_timer", 0.0)
+	creature.set("target", player)
+	var wander_result := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_WANDER,
+		CreatureTransitionPolicy.EVENT_WANDER_COMPLETE,
+		true,
+		true,
+		150.0,
+		false,
+		1.75
+	))
+	_expect(bool(creature.call("apply_creature_transition", wander_result)), "Creature transition adapter must apply current-state result")
+	_expect(int(creature.get("state")) == idle_state, "Creature transition adapter target state mismatch")
+	_expect(is_equal_approx(float(creature.get("state_timer")), 1.75), "Creature transition adapter timer mismatch")
+	_expect(creature.get("target") == player, "WANDER completion must preserve target compatibility")
+	_expect(int(creature.get("transition_apply_count")) == 1, "Creature transition apply count mismatch")
+	_expect(not bool(creature.call("apply_creature_transition", wander_result)), "stale transition result must not apply twice")
+	_expect(int(creature.get("transition_apply_count")) == 1, "stale transition must not increment apply count")
+
+	creature.set("state", chase_state)
+	creature.set("target", null)
+	var lost_result: CreatureTransitionResult = creature.call(
+		"resolve_creature_transition",
+		CreatureTransitionPolicy.EVENT_CHASE_TARGET_LOST,
+		true
+	)
+	_expect(bool(creature.call("apply_creature_transition", lost_result)), "CHASE target-loss transition must apply")
+	_expect(int(creature.get("state")) == idle_state and creature.get("target") == null, "CHASE target-loss adapter mismatch")
+
+	creature.set("state", capturing_state)
+	_expect(not bool(creature.call("finish_legacy_attack_recovery")), "capture state must reject legacy attack recovery")
+	_expect(int(creature.get("state")) == capturing_state, "rejected attack recovery must preserve capture state")
+	creature.set("state", attack_state)
+	_expect(bool(creature.call("finish_legacy_attack_recovery")), "active legacy attack must recover to CHASE")
+	_expect(int(creature.get("state")) == chase_state, "legacy attack recovery target mismatch")
 
 	creature.set("state", capturing_state)
 	creature.set("target", null)

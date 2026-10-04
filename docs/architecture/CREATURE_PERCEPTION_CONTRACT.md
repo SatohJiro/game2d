@@ -59,7 +59,7 @@ Aggro distance giữ nguyên: night raider 280, elite 150, normal 115; suspicion
 | STUNNED/CAPTURING | Blocked trước group query | Status/capture contract | Không bị perception ghi đè |
 | Defeated | Blocked bằng `defeat_committed` | Combat result | Despawn/reward legacy adapter |
 
-Nhiều writer `state`, `target`, `prey_target` và `velocity` vẫn tồn tại trong `creature.gd`; U1.8b phải tách transition policy/command mà không làm lại skill/drop.
+U1.8b đã tách transition policy/apply cho IDLE/WANDER/SUSPICIOUS/CHASE-loss; xem `CREATURE_TRANSITION_CONTRACT.md`. Writer lifecycle/combat/ecology khác vẫn tồn tại và được tiếp tục ở U1.8c/U1.9.
 
 ## Scan còn lại
 
