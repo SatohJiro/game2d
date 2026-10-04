@@ -24,7 +24,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | DATA | Definition registry | Item/Recipe/Building/Crop typed canary; registry validate duplicate, field và missing reference | Typed Resource, ID ổn định, validator | U1.1–U1.3 |
 | PLAYER | Input, locomotion, needs, progression coordinator | Needs/locomotion pure; action input dùng stable intent/mapper/policy; progression/craft/build handler còn trong `player.gd` | Gọi component con; phát snapshot/event | U1.4–U1.6 |
 | COMBAT | Damage, status, targeting, hit result | Pure DamageRequest/Result migrated vào Player + WildCreature; caller khác qua adapter | Command → deterministic result; presentation riêng | U1.5 |
-| CAPTURE | Throw, catch chance, capture result | `sphere.gd`, cuối `creature.gd` | CaptureRequest/Result; seeded RNG; ownership update một lần | U1.7 |
+| CAPTURE | Throw, chance, result, ownership | Pure CaptureRequest/Result resolver + Creature presentation adapter; sphere spend và roster còn legacy | Seeded/injected RNG; inventory spend + ownership update một lần | U1.7 |
 | CREATURE | Wild AI, ecology, locomotion | `creature.gd` 1.054 dòng | Brain/state nodes dùng CreatureDefinition | U1.8–U1.9 |
 | PET | Party, command, combat assist | `pet.gd`, `player.gd` | PetInstance state + PetCommand; không giữ Node trong save | U1.10 |
 | JOBS | Pet work/reservation | Scan group trong `pet.gd`, từng building | Job board, reservation, capability, result | U5.2 |
@@ -68,6 +68,8 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - DamageRequest gồm source ID, target ID, base damage, element/tags và hit position.
 - DamageResult gồm applied damage, critical/status/knockback, defeated flag; VFX đọc result.
 - Contract thực thi U1.5, rule order và legacy paths nằm trong `COMBAT_CONTRACT.md`.
+- CaptureRequest/Result U1.7a dùng injected roll, HP/sphere/status/back-strike scalar; Creature resolve trước animation và commit result một lần. Chi tiết ở `CAPTURE_CONTRACT.md`.
+- Species ID còn rỗng ở adapter legacy; sphere inventory và roster ownership được tách thành U1.7b/U1.7c.
 - Một hitbox chỉ gây damage một lần cho mỗi target trong một activation.
 - Capture chance được clamp, log được input và roll; thành công chuyển ownership đúng một lần và despawn wild instance sau khi party/state nhận dữ liệu.
 

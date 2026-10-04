@@ -66,6 +66,7 @@ var cur_data: Dictionary
 var max_hp: int = 80
 var hp: int = 80
 var defeat_committed: bool = false
+var capture_attempt_active: bool = false
 var move_speed: float = 90.0
 var attack_power: int = 12
 var anim_timer: float = 0.0
@@ -209,9 +210,7 @@ func update_catch_chance_label() -> void:
 		catch_label.visible = false
 
 func get_catch_chance() -> float:
-	var hp_ratio = float(hp) / float(max_hp)
-	var base_chance = lerp(0.95, 0.25, hp_ratio)
-	return clamp(base_chance, 0.15, 0.95)
+	return CaptureResolver.calculate_base_chance(hp, max_hp)
 
 func _process(delta: float) -> void:
 	if state == State.CAPTURING:
@@ -938,35 +937,23 @@ func die(killer: Node2D) -> void:
 	tween.chain().tween_callback(queue_free)
 
 func attempt_capture(player_ref: Node2D, catch_multiplier: float = 1.0, throw_pos: Vector2 = Vector2.ZERO) -> void:
-	if state == State.CAPTURING:
+	if state == State.CAPTURING or capture_attempt_active:
 		return
-	
+
+	var request := create_capture_request(catch_multiplier, randf(), throw_pos)
+	var result := resolve_capture_request(request)
+	if not result.is_resolved():
+		return
+
+	capture_attempt_active = true
 	state = State.CAPTURING
 	velocity = Vector2.ZERO
-	
-	# Calculate Back Strike Bonus (+35% Catch Rate if hit from behind)
-	var is_back_strike = false
-	if throw_pos != Vector2.ZERO:
-		var face_dir = Vector2.DOWN
-		match facing_row:
-			0: face_dir = Vector2.DOWN
-			1: face_dir = Vector2.UP
-			2: face_dir = Vector2.LEFT
-			3: face_dir = Vector2.RIGHT
-		var throw_dir = (global_position - throw_pos).normalized()
-		if face_dir.dot(throw_dir) > 0.25:
-			is_back_strike = true
-			catch_multiplier += 0.35
-			spawn_floating_text("🎯 ĐÁNH LÉN SAU LƯNG! (+35% BẮT)", Color(1.0, 0.9, 0.2))
-	
-	if state == State.SLEEP:
-		catch_multiplier += 0.40
+	if result.tags.has("back_strike"):
+		spawn_floating_text("🎯 ĐÁNH LÉN SAU LƯNG! (+35% BẮT)", Color(1.0, 0.9, 0.2))
+	if result.tags.has("sleep"):
 		spawn_floating_text("💤 BẮT KHI ĐANG NGỦ SAY (+40% BẮT)!", Color(0.4, 0.9, 1.0))
-	
-	var base_chance = get_catch_chance()
-	var final_chance = clampf(base_chance * catch_multiplier, 0.10, 0.98)
-	
-	spawn_floating_text("Tỉ lệ bắt: %d%%" % int(final_chance * 100), Color(0.2, 0.85, 1.0))
+
+	spawn_floating_text("Tỉ lệ bắt: %d%%" % int(result.final_chance * 100), Color(0.2, 0.85, 1.0))
 	
 	# Spiral shrink into sphere
 	var tween = create_tween()
@@ -1018,21 +1005,57 @@ func attempt_capture(player_ref: Node2D, catch_multiplier: float = 1.0, throw_po
 	
 	await get_tree().create_timer(0.35).timeout
 	
-	var roll = randf()
-	if roll <= final_chance:
+	if result.succeeded:
 		var succ_tw = create_tween()
 		succ_tw.tween_property(sphere_spr, "scale", Vector2(1.5, 1.5), 0.15)
 		succ_tw.tween_property(sphere_spr, "modulate", Color(2.5, 2.2, 0.5), 0.15)
 		succ_tw.tween_property(sphere_spr, "scale", Vector2.ZERO, 0.2)
 		await succ_tw.finished
 		sphere_spr.queue_free()
-		capture_succeeded(player_ref)
 	else:
 		var fail_tw = create_tween()
 		fail_tw.tween_property(sphere_spr, "scale", Vector2(1.6, 1.6), 0.08)
 		fail_tw.tween_property(sphere_spr, "modulate:a", 0.0, 0.1)
 		await fail_tw.finished
 		sphere_spr.queue_free()
+	commit_capture_result(result, player_ref)
+
+
+func create_capture_request(catch_multiplier: float, roll: float, throw_pos: Vector2) -> CaptureRequest:
+	var request := CaptureRequest.new(
+		StringName(cur_data.get("id", "")),
+		hp,
+		max_hp,
+		catch_multiplier,
+		roll
+	)
+	request.is_asleep = state == State.SLEEP
+	if throw_pos != Vector2.ZERO:
+		var face_dir := Vector2.DOWN
+		match facing_row:
+			0: face_dir = Vector2.DOWN
+			1: face_dir = Vector2.UP
+			2: face_dir = Vector2.LEFT
+			3: face_dir = Vector2.RIGHT
+		var throw_direction := (global_position - throw_pos).normalized()
+		request.is_back_strike = face_dir.dot(throw_direction) > 0.25
+	return request
+
+
+func resolve_capture_request(request: CaptureRequest) -> CaptureResult:
+	if request != null:
+		request.already_capturing = request.already_capturing or state == State.CAPTURING or capture_attempt_active
+		request.already_defeated = request.already_defeated or defeat_committed
+	return CaptureResolver.resolve(request)
+
+
+func commit_capture_result(result: CaptureResult, player_ref: Node2D) -> void:
+	if not capture_attempt_active or result == null or not result.is_resolved():
+		return
+	capture_attempt_active = false
+	if result.succeeded:
+		capture_succeeded(player_ref)
+	else:
 		capture_failed(player_ref)
 
 func capture_succeeded(player_ref: Node2D) -> void:
