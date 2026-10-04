@@ -65,6 +65,7 @@ var species_data: Array[Dictionary] = [
 var cur_data: Dictionary
 var max_hp: int = 80
 var hp: int = 80
+var defeat_committed: bool = false
 var move_speed: float = 90.0
 var attack_power: int = 12
 var anim_timer: float = 0.0
@@ -828,26 +829,33 @@ func start_wander() -> void:
 	wander_dir = Vector2(cos(angle), sin(angle))
 
 func take_damage(amount: int, hit_origin: Vector2, attacker: Node2D = null) -> void:
-	if state == State.CAPTURING:
+	if state == State.CAPTURING or defeat_committed:
 		return
-	
-	var actual_damage = amount
+
+	var source_faction := &"player_companion"
+	var allow_legacy_wild_damage := false
+	if is_instance_valid(attacker) and attacker.is_in_group("wild_creatures"):
+		source_faction = &"wild"
+		allow_legacy_wild_damage = true
+	var request := DamageRequest.new(source_faction, &"wild", hp, max_hp, amount, hit_origin, global_position)
+	request.knockback_strength = 160.0
+	request.allow_friendly_fire = allow_legacy_wild_damage
 	if state == State.SLEEP:
-		actual_damage = int(amount * 1.75)
+		request.damage_multiplier = 1.75
 		spawn_floating_text("💥 CHÍ MẠNG KHI NGỦ (x1.75)!", Color(1.0, 0.85, 0.2))
 		if attacker:
 			trigger_alert(attacker)
-	
-	hp -= actual_damage
-	hp = max(0, hp)
+
+	var result := apply_damage_request(request)
+	if not result.is_applied():
+		return
 	update_overhead()
 	
-	spawn_floating_text(str(actual_damage), Color(1.0, 0.25, 0.25))
+	spawn_floating_text(str(result.applied_damage), Color(1.0, 0.25, 0.25))
 	if AudioManager:
 		AudioManager.play_sound("hit")
 	
-	var kb_dir = (global_position - hit_origin).normalized()
-	velocity = kb_dir * 160.0
+	velocity = result.knockback
 	
 	var tween = create_tween()
 	visual.modulate = Color(2.5, 0.3, 0.3)
@@ -860,7 +868,7 @@ func take_damage(amount: int, hit_origin: Vector2, attacker: Node2D = null) -> v
 		pack_howl_alert(attacker)
 	
 	# Check panic flee for weak prey
-	if cur_data.get("is_prey", false) and hp < max_hp * 0.35 and not is_enraged:
+	if not result.defeated and cur_data.get("is_prey", false) and hp < max_hp * 0.35 and not is_enraged:
 		state = State.FLEE
 		state_timer = 3.5
 		spawn_floating_text("💦 HOẢNG LOẠN THÁO CHẠY!", Color(0.3, 0.9, 1.0))
@@ -874,8 +882,18 @@ func take_damage(amount: int, hit_origin: Vector2, attacker: Node2D = null) -> v
 		if AudioManager:
 			AudioManager.play_sound("sphere_throw")
 	
-	if hp <= 0:
+	if result.defeated:
+		defeat_committed = true
 		die(attacker)
+
+
+func apply_damage_request(request: DamageRequest) -> DamageResult:
+	if defeat_committed:
+		return DamageResult.new(DamageResult.Status.ALREADY_DEFEATED, 0, 0, true)
+	var result := CombatResolver.resolve(request)
+	if result.is_applied():
+		hp = result.remaining_hp
+	return result
 
 func apply_burn(dur: float) -> void:
 	burn_timer = max(burn_timer, dur)

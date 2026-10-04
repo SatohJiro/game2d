@@ -1009,33 +1009,39 @@ func take_damage(amount: int, hit_origin: Vector2) -> void:
 		spawn_floating_text("NÉ ĐÒN! (DODGE)", Color(0.3, 1.0, 1.0))
 		shake_camera(2.0)
 		return
-	
-	var actual_dmg = amount
-	if has_armor:
-		actual_dmg = int(actual_dmg * 0.75)
-	
-	hp -= actual_dmg
-	hp = max(0, hp)
+
+	var request := DamageRequest.new(&"hostile", &"player", hp, max_hp, amount, hit_origin, global_position)
+	request.damage_multiplier = 0.75 if has_armor else 1.0
+	request.knockback_strength = 200.0
+	var result := apply_damage_request(request)
+	if not result.is_applied():
+		return
 	update_hud()
 	
-	spawn_floating_text(str(actual_dmg), Color(1.0, 0.2, 0.2))
+	spawn_floating_text(str(result.applied_damage), Color(1.0, 0.2, 0.2))
 	shake_camera(6.0)
 	if AudioManager:
 		AudioManager.play_sound("hit")
 	
-	var kb = (global_position - hit_origin).normalized()
-	velocity = kb * 200.0
+	velocity = result.knockback
 	
 	var tween = create_tween()
 	visual.modulate = Color(2.5, 0.4, 0.4)
 	tween.tween_property(visual, "modulate", Color.WHITE, 0.2)
 	
-	if hp <= 0:
+	if result.defeated:
 		spawn_floating_text("BẠN ĐÃ NGẤT! HỒI SINH TẠI TRẠI...", Color(1.0, 0.2, 0.2))
 		hp = max_hp
 		hunger = 80.0
 		global_position = Vector2.ZERO
 		update_hud()
+
+
+func apply_damage_request(request: DamageRequest) -> DamageResult:
+	var result := CombatResolver.resolve(request)
+	if result.is_applied():
+		hp = result.remaining_hp
+	return result
 
 func gain_exp(amount: int) -> void:
 	exp_val += amount

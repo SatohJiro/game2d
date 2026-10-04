@@ -17,6 +17,7 @@ New-Item -ItemType Directory -Force -Path $LogDirectory | Out-Null
 $editorLog = Join-Path $LogDirectory 'headless-editor.log'
 $contentLog = Join-Path $LogDirectory 'content-validation.log'
 $itemMigrationLog = Join-Path $LogDirectory 'item-migration-validation.log'
+$combatLog = Join-Path $LogDirectory 'combat-validation.log'
 $smokeLog = Join-Path $LogDirectory 'headless-smoke.log'
 $failurePattern = 'SCRIPT ERROR|Parse Error|Failed to load script|Cannot open file|Node not found|Invalid get index|^ERROR:'
 
@@ -48,6 +49,9 @@ Invoke-GodotCheck -Name 'Content registry validation' -LogPath $contentLog -Argu
 )
 Invoke-GodotCheck -Name 'Item migration validation' -LogPath $itemMigrationLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_item_migration.gd')
+)
+Invoke-GodotCheck -Name 'Combat validation' -LogPath $combatLog -Arguments @(
+    '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_combat.gd')
 )
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')

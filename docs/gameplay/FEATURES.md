@@ -17,7 +17,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 | G01 | Di chuyển, sprint, roll | Playable, nằm trong player god script | Component + remap/gamepad | U1/U3 |
 | G02 | Survival needs | Hunger/thirst/temp prototype | Tác động có telegraph và counterplay | U1/U5 |
 | G03 | Gathering/loot | Pickup stable transaction; rejected drop giữ lại; chest có finite stack slots | Tool tiers, player capacity, yield table, respawn state | U1/U5 |
-| G04 | Combat | Melee/projectile/status prototype | Deterministic result, telegraph, skill loadout | U1/U5 |
+| G04 | Combat | Player/WildCreature dùng deterministic DamageResult; status/pet/building còn legacy | Telegraph, skill loadout, unified faction/status | U1/U5 |
 | G05 | Capture | Sphere + HP-based chance | Species/status/sphere modifiers, clear feedback | U1/U5 |
 | G06 | Pet party/command | Một active pet, stance đơn giản | Roster, command wheel, roles, synergy | U1/U5 |
 | G07 | Pet work | Scan group và auto work | Job board, reservation, suitability, needs | U5 |
@@ -60,6 +60,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Nhịp attack: anticipation → active/contact → recovery. Telegraph của enemy phải đọc được trước hit.
 - Element/status, critical và defense tính trong CombatSystem; animation chỉ biểu diễn result.
 - Player, wild creature, pet và turret dùng cùng damage contract với faction/filter rõ.
+- U1.5 đã migrate target Player/WildCreature và khóa duplicate defeat; source caller vẫn đi qua signature adapter cũ.
 - Acceptance: một activation không multi-hit ngoài thiết kế; chết chỉ phát reward một lần; reduced shake không đổi damage.
 
 ### G05 — capture

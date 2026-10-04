@@ -1,17 +1,17 @@
-﻿# Prompt triển khai package U1.5
+﻿# Prompt triển khai package U1.6a
 
-Làm việc tại D:\desktop\VS_WorkSpace\game2d. Đọc AGENTS.md, docs/INDEX.md, docs/CHECKPOINT.md, roadmap, docs/architecture/MODULES.md và G04 trong docs/gameplay/FEATURES.md. Audit player.gd, creature.gd, melee/slash/projectile trước khi thiết kế. Chạy baseline gate.
+Làm việc tại D:\desktop\VS_WorkSpace\game2d. Đọc AGENTS.md, docs/INDEX.md, docs/CHECKPOINT.md, roadmap, MODULES và G01/G02/G15. Audit toàn bộ hunger, thirst, temperature, stamina và food buff read/write trong player.gd trước khi sửa.
 
-U1.1–U1.4 đã VERIFIED. Inventory foundation không phải scope combat; không mở rộng chest/crafting trong U1.5.
+U1.1–U1.5 đã VERIFIED. U1.6 phải chia nhỏ vì player.gd chứa input, locomotion, combat, needs, crafting và building.
 
-Thực hiện một package U1.5 nhỏ:
+Thực hiện U1.6a needs boundary:
 
-1. Ghi inventory các đường gây/nhận damage hiện có, faction filtering, reward/death side effect và duplicate-hit risk.
-2. Tạo pure DamageRequest/DamageResult và CombatResolver deterministic. Input tối thiểu: source/target ID hoặc faction, base damage, defense/modifier, tags, hit position/knockback. Result: applied damage, remaining HP, defeated, knockback/status flags.
-3. Không dùng Node/animation/audio trong resolver; clamp HP/damage và reject friendly/invalid request rõ ràng.
-4. Migrate đúng Player + một wild Creature damage boundary. Giữ method adapter cũ cho caller chưa migrate.
-5. Presentation chỉ chạy sau result và không sửa damage.
-6. Regression: zero/negative, defense clamp, lethal exactly once, friendly filter, deterministic same input, HP không âm, adapter compatibility.
-7. Không refactor creature FSM/skills/capture cùng package.
+1. Ghi rõ owner hiện tại, timer, clamp, pause behavior, HUD fields và direct writer.
+2. Tạo pure PlayerNeedsState hoặc tương đương cho hunger/thirst/temperature và timed food buff; không truy cập Input, SceneTree, HUD, audio.
+3. API tick nhận delta/context và trả snapshot/events; mọi value clamp [0,max]. Pause phải do coordinator không gọi tick hoặc context policy rõ.
+4. Migrate calculation trong Player, giữ public fields/adapter nếu consumer cũ cần. HUD chỉ render snapshot.
+5. Không tách locomotion, build placement, crafting hoặc progression trong cùng package.
+6. Regression: zero/large delta clamp, pause/no tick, buff expiry một lần, deterministic same state/input và adapter main scene.
+7. Đo line/responsibility thay đổi thật; không tuyên bố Player hoàn tất.
 
-Kết thúc full gate, docs/checkpoint, commit branch và fast-forward main. Ghi API, migrated callers, legacy paths, save/asset impact, rollback và bước đầu U1.6.
+Kết thúc full gate, docs/checkpoint, commit/fast-forward. Ghi compatibility, save/asset impact, direct writer còn lại và scope U1.6b locomotion/input.

@@ -15,6 +15,7 @@ $requiredFiles = @(
     'docs/architecture/INVENTORY_MIGRATION.md',
     'docs/architecture/INVENTORY_TRANSACTIONS.md',
     'docs/architecture/DOMAIN_DEFINITIONS.md',
+    'docs/architecture/COMBAT_CONTRACT.md',
     'docs/gameplay/FEATURES.md',
     'docs/roadmap/IMPLEMENTATION_PHASES.md',
     'docs/roadmap/U1_4_INVENTORY_PLAN.md',

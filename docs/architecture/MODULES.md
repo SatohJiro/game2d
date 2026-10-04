@@ -23,7 +23,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | CORE | Clock, RNG, command/result, IDs | `ContentId` đã có; clock/RNG/result chưa tách | Kiểu dữ liệu thuần, deterministic, không phụ thuộc scene | U1.1, package sau |
 | DATA | Definition registry | Item/Recipe/Building/Crop typed canary; registry validate duplicate, field và missing reference | Typed Resource, ID ổn định, validator | U1.1–U1.3 |
 | PLAYER | Input, locomotion, needs, progression coordinator | `player.gd` 1.087 dòng | Gọi component con; phát snapshot/event | U1.4–U1.6 |
-| COMBAT | Damage, status, targeting, hit result | Player/creature/pet/slash/turret | Command → deterministic result; presentation riêng | U1.5 |
+| COMBAT | Damage, status, targeting, hit result | Pure DamageRequest/Result migrated vào Player + WildCreature; caller khác qua adapter | Command → deterministic result; presentation riêng | U1.5 |
 | CAPTURE | Throw, catch chance, capture result | `sphere.gd`, cuối `creature.gd` | CaptureRequest/Result; seeded RNG; ownership update một lần | U1.7 |
 | CREATURE | Wild AI, ecology, locomotion | `creature.gd` 1.054 dòng | Brain/state nodes dùng CreatureDefinition | U1.8–U1.9 |
 | PET | Party, command, combat assist | `pet.gd`, `player.gd` | PetInstance state + PetCommand; không giữ Node trong save | U1.10 |
@@ -63,6 +63,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 
 - DamageRequest gồm source ID, target ID, base damage, element/tags và hit position.
 - DamageResult gồm applied damage, critical/status/knockback, defeated flag; VFX đọc result.
+- Contract thực thi U1.5, rule order và legacy paths nằm trong `COMBAT_CONTRACT.md`.
 - Một hitbox chỉ gây damage một lần cho mỗi target trong một activation.
 - Capture chance được clamp, log được input và roll; thành công chuyển ownership đúng một lần và despawn wild instance sau khi party/state nhận dữ liệu.
 
