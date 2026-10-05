@@ -1,6 +1,6 @@
 # Creature skill contract
 
-Status: U1.9b runtime canary, verified 2026-10-05.
+Status: U1.9o Flam/Dragon projectile definitions, verified 2026-10-06.
 
 ## Identity and ownership
 
@@ -20,7 +20,13 @@ Status: U1.9b runtime canary, verified 2026-10-05.
 | travel | 240 px / 0.55 s | Existing linear projectile tween |
 | hit radius | 45 px | Existing target proximity guard |
 
-`LegacySpeciesAdapter.get_primary_skill_definition()` is the temporary projection boundary. It verifies both the creature reference and typed skill resource before returning it. Unknown/non-migrated species return `null` and keep their legacy execution values.
+`LegacySpeciesAdapter.get_primary_skill_definition()` là projection boundary tạm thời. Nó resolve theo stable species ID, yêu cầu đúng một expected skill reference và validate typed resource trước khi trả về. Species chưa migrate trả `null` và giữ legacy execution values.
+
+## U1.9o Dragon fireball
+
+`creature.dragon` reference riêng `skill.dragon.fireball`; không dùng ID hoặc Resource của Flam dù parity hiện tại giống nhau. Dragon giữ cooldown 2,2 giây, recovery 0,3 giây, damage ×1, travel 240 px/0,55 giây và hit radius 45 px. Actor truyền typed definition vào cùng projectile adapter; melee priority trong khoảng 48 px và fireball range 180 px không đổi.
+
+Regression khóa stable ID riêng, toàn bộ tuning, dispatch sang `ATTACK`, typed cooldown và stale recovery không được ghi đè `CAPTURING`.
 
 ## Validation and lifecycle invariants
 
@@ -37,7 +43,8 @@ Status: U1.9b runtime canary, verified 2026-10-05.
 | Slime hop | species-index branch | deferred; needs movement/contact skill contract |
 | Mushroom spore | species-index branch | deferred; next skill catalog expansion, not this canary |
 | Beast charge telegraph/charge | FSM species branch | deferred; needs transition/contact ownership together |
-| Dragon melee/fireball selection | default species branch | deferred; requires explicit stable species definition |
+| Dragon fireball values | typed Dragon reference + actor adapter | U1.9o; melee selection vẫn legacy |
+| Dragon melee selection/values | default species branch | deferred; cần melee contract riêng |
 | Prey melee and generic melee | actor methods | deferred; ecology/faction target policy must be separated first |
 
 ## Compatibility, save and rollback

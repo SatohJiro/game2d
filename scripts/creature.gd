@@ -701,7 +701,7 @@ func handle_smart_chase(delta: float) -> void:
 			if dist <= 48.0 and attack_cooldown <= 0:
 				perform_melee_attack()
 			elif dist <= 180.0 and attack_cooldown <= 0:
-				perform_fireball_attack(raw_dir)
+				perform_fireball_attack(raw_dir, primary_skill_definition)
 
 func perform_slime_hop(dir: Vector2) -> void:
 	attack_cooldown = 1.15

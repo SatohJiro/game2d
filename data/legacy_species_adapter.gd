@@ -7,9 +7,11 @@ const MUSHROOM_DEFINITION: CreatureDefinition = preload("res://data/definitions/
 const BEAST_DEFINITION: CreatureDefinition = preload("res://data/definitions/creatures/beast.tres")
 const DRAGON_DEFINITION: CreatureDefinition = preload("res://data/definitions/creatures/dragon.tres")
 const FLAM_FIREBALL_DEFINITION: SkillDefinition = preload("res://data/definitions/skills/flam_fireball.tres")
+const DRAGON_FIREBALL_DEFINITION: SkillDefinition = preload("res://data/definitions/skills/dragon_fireball.tres")
 
 const FLAM_ID: StringName = &"creature.flam"
 const FLAM_FIREBALL_ID: StringName = &"skill.flam.fireball"
+const DRAGON_FIREBALL_ID: StringName = &"skill.dragon.fireball"
 const SLIME_ID: StringName = &"creature.slime"
 const MUSHROOM_ID: StringName = &"creature.mushroom"
 const BEAST_ID: StringName = &"creature.beast"
@@ -47,13 +49,25 @@ static func is_supported(species_id: StringName) -> bool:
 
 
 static func get_primary_skill_definition(species_id: StringName) -> SkillDefinition:
-	if species_id != FLAM_ID:
+	var expected_skill_id: StringName
+	var skill_definition: SkillDefinition
+	match species_id:
+		FLAM_ID:
+			expected_skill_id = FLAM_FIREBALL_ID
+			skill_definition = FLAM_FIREBALL_DEFINITION
+		DRAGON_ID:
+			expected_skill_id = DRAGON_FIREBALL_ID
+			skill_definition = DRAGON_FIREBALL_DEFINITION
+		_:
+			return null
+	var creature_definition := get_creature_definition(species_id)
+	if creature_definition == null or creature_definition.skill_ids.size() != 1:
 		return null
-	if FLAM_DEFINITION.skill_ids.is_empty() or FLAM_DEFINITION.skill_ids[0] != FLAM_FIREBALL_ID:
+	if creature_definition.skill_ids[0] != expected_skill_id:
 		return null
-	if FLAM_FIREBALL_DEFINITION == null or not FLAM_FIREBALL_DEFINITION.get_validation_errors().is_empty():
+	if skill_definition == null or not skill_definition.get_validation_errors().is_empty():
 		return null
-	return FLAM_FIREBALL_DEFINITION
+	return skill_definition
 
 
 static func get_drop_item_id(species_id: StringName, legacy_drop_name: String = "") -> StringName:

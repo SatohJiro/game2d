@@ -179,7 +179,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 18, "registry must contain eighteen definitions through U1.9n")
+	_expect(registry.size() == 19, "registry must contain nineteen definitions through U1.9o")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -198,6 +198,7 @@ func _validate_project_content() -> void:
 	_expect(registry.has(&"creature.beast"), "registry is missing creature.beast")
 	_expect(registry.has(&"creature.dragon"), "registry is missing creature.dragon")
 	_expect(registry.has(&"skill.flam.fireball"), "registry is missing skill.flam.fireball")
+	_expect(registry.has(&"skill.dragon.fireball"), "registry is missing skill.dragon.fireball")
 	var wood := registry.get_definition(&"item.wood") as ItemDefinition
 	_expect(wood != null, "item.wood must load as ItemDefinition")
 	if wood != null:
@@ -276,7 +277,7 @@ func _validate_project_content() -> void:
 		_expect(dragon.base_attack_power == 26, "Dragon base_attack_power mismatch")
 		_expect(dragon.behavior_profile != null and dragon.behavior_profile.is_predator and not dragon.behavior_profile.is_prey, "Dragon behavior profile mismatch")
 		_expect(dragon.drop_item_id == &"item.pal_ingot", "Dragon drop reference mismatch")
-		_expect(dragon.skill_ids.is_empty(), "Dragon attacks must remain outside typed skill catalog in U1.9n")
+		_expect(dragon.skill_ids == [&"skill.dragon.fireball"], "Dragon fireball reference mismatch")
 	var fireball := registry.get_definition(&"skill.flam.fireball") as SkillDefinition
 	_expect(fireball != null, "skill.flam.fireball must load as SkillDefinition")
 	if fireball != null:
@@ -287,6 +288,16 @@ func _validate_project_content() -> void:
 		_expect(is_equal_approx(fireball.travel_distance, 240.0), "Flam fireball distance mismatch")
 		_expect(is_equal_approx(fireball.travel_seconds, 0.55), "Flam fireball travel time mismatch")
 		_expect(is_equal_approx(fireball.hit_radius, 45.0), "Flam fireball hit radius mismatch")
+	var dragon_fireball := registry.get_definition(&"skill.dragon.fireball") as SkillDefinition
+	_expect(dragon_fireball != null, "skill.dragon.fireball must load as SkillDefinition")
+	if dragon_fireball != null:
+		_expect(dragon_fireball.delivery == SkillDefinition.Delivery.PROJECTILE, "Dragon fireball delivery mismatch")
+		_expect(is_equal_approx(dragon_fireball.cooldown_seconds, 2.2), "Dragon fireball cooldown mismatch")
+		_expect(is_equal_approx(dragon_fireball.recovery_seconds, 0.3), "Dragon fireball recovery mismatch")
+		_expect(is_equal_approx(dragon_fireball.damage_multiplier, 1.0), "Dragon fireball damage scaling mismatch")
+		_expect(is_equal_approx(dragon_fireball.travel_distance, 240.0), "Dragon fireball distance mismatch")
+		_expect(is_equal_approx(dragon_fireball.travel_seconds, 0.55), "Dragon fireball travel time mismatch")
+		_expect(is_equal_approx(dragon_fireball.hit_radius, 45.0), "Dragon fireball hit radius mismatch")
 
 
 func _contains_message(messages: PackedStringArray, fragment: String) -> bool:

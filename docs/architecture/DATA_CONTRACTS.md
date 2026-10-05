@@ -42,6 +42,8 @@ U1.9m admit `item.fresh_meat` và mapping hai chiều `item.fresh_meat` ↔ `Th�
 
 U1.9n admit `item.pal_ingot` và mapping hai chiều `item.pal_ingot` ↔ `Thỏi Pal` để typed Dragon drop reference giữ nguyên storage, furnace/altar/progression và display compatibility. Asset `pal_ingot.png` chỉ được tham chiếu lại từ baseline, vẫn `QUARANTINE/UNKNOWN`; inventory storage chưa migrate.
 
+U1.9o admit `skill.dragon.fireball` làm balance identity riêng và reference duy nhất của `creature.dragon`. Giá trị hiện giữ parity với Flam fireball nhưng hai species không chia sẻ ID/authority; melee selection và presentation vẫn thuộc actor adapter.
+
 `ContentId` tại `core/content_id.gd` là API duy nhất để validate, tạo và tách domain/local name. Không tự ghép hoặc parse ID trong gameplay system.
 
 ## Definition contract
