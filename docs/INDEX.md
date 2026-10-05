@@ -78,6 +78,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.9j drinking decision | Hoàn tất | Water/distance/roll snapshot + stable transition; boundary, duration, direction và RNG guard được khóa regression |
 | U1.9k Slime definition | Hoàn tất | `creature.slime` typed stats/behavior authority; actor parity và legacy fallback được khóa regression |
 | U1.9l Mushroom definition | Hoàn tất | `creature.mushroom` typed authority; berry-seed mapping, actor parity và Beast fallback được khóa regression |
+| U1.9m Beast definition | Hoàn tất | `creature.beast` typed authority; fresh-meat mapping, predator parity và Dragon fallback được khóa regression |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

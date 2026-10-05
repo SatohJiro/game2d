@@ -25,7 +25,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | PLAYER | Input, locomotion, needs, progression coordinator | Needs/locomotion pure; action input dùng stable intent/mapper/policy; progression/craft/build handler còn trong `player.gd` | Gọi component con; phát snapshot/event | U1.4–U1.6 |
 | COMBAT | Damage, status, targeting, hit result | Pure DamageRequest/Result migrated vào Player + WildCreature; caller khác qua adapter | Command → deterministic result; presentation riêng | U1.5 |
 | CAPTURE | Throw, chance, result, ownership | Pure chance + sphere transaction + ownership resolver; stable species adapter; atomic roster commit | Seeded/injected RNG; ownership update một lần | U1.7 |
-| CREATURE | Wild AI, ecology, locomotion | Basic lifecycle owner; Flam/Slime/Mushroom typed stats/behavior; Flam fireball/drop; ecology và natural lifecycle dùng policy/transition owner | Beast/Dragon cùng remaining skill/drop catalog | U1.9 |
+| CREATURE | Wild AI, ecology, locomotion | Basic lifecycle owner; Flam/Slime/Mushroom/Beast typed stats/behavior; Flam fireball/drop; ecology và natural lifecycle dùng policy/transition owner | Dragon cùng remaining skill/drop catalog | U1.9 |
 | PET | Party, command, combat assist | `pet.gd`, `player.gd` | PetInstance state + PetCommand; không giữ Node trong save | U1.10 |
 | JOBS | Pet work/reservation | Scan group trong `pet.gd`, từng building | Job board, reservation, capability, result | U5.2 |
 | INVENTORY | Stack, transfer, equipment, loot | Stable transactions; chest finite stack slots và atomic mapped batch; other direct writers còn legacy | ID-based transaction atomic | U1.2, U1.4 |
@@ -92,6 +92,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.9j thêm pure drinking decision bằng water/distance/roll snapshot; strict 320px/0.25 boundary, duration 3–5 giây, pond direction và RNG ordering được giữ.
 - U1.9k thêm `creature.slime` typed definition; runtime adapter chiếu stat/prey role/drop reference, giữ presentation và hop/drop execution compatibility.
 - U1.9l thêm `creature.mushroom` typed definition và berry-seed legacy mapping; giữ presentation, spore attack và drop execution compatibility.
+- U1.9m thêm `creature.beast`, `item.fresh_meat` và legacy mapping; giữ presentation, charge attack, inventory key và drop execution compatibility.
 - PetInstance lưu unique ID, species ID, level/EXP, stats rolled, needs, skills và assignment.
 - Pet command tối thiểu: follow, guard, attack target, work, return. Job và combat không đồng thời sở hữu locomotion.
 

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CreatureDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/creature_definition.gd" id="1_creature"]
+[ext_resource type="Script" path="res://data/definitions/creature_behavior_profile.gd" id="2_behavior"]
+
+[sub_resource type="Resource" id="Resource_beast_behavior"]
+script = ExtResource("2_behavior")
+is_predator = true
+is_prey = false
+
+[resource]
+script = ExtResource("1_creature")
+content_id = &"creature.beast"
+display_name_key = &"creature.beast.name"
+developer_notes = "U1.9m typed Beast stats/behavior authority. Presentation and charge/drop execution remain behind the legacy adapter."
+base_max_hp = 130
+move_speed = 115.0
+base_attack_power = 16
+behavior_profile = SubResource("Resource_beast_behavior")
+drop_item_id = &"item.fresh_meat"
+skill_ids = Array[StringName]([])

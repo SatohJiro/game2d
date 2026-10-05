@@ -23,13 +23,7 @@ var species_data: Array[Dictionary] = [
 	{
 		"name": "Beast",
 		"element": "Đất",
-		"texture": preload("res://assets/monsters/beast_sheet.png"),
-		"max_hp": 130,
-		"speed": 115.0,
-		"power": 16,
-		"drop_item": "Thịt Tươi",
-		"is_predator": true,
-		"is_prey": false
+		"texture": preload("res://assets/monsters/beast_sheet.png")
 	},
 	{
 		"name": "Dragon",

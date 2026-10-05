@@ -4,6 +4,7 @@ extends RefCounted
 const FLAM_DEFINITION: CreatureDefinition = preload("res://data/definitions/creatures/flam.tres")
 const SLIME_DEFINITION: CreatureDefinition = preload("res://data/definitions/creatures/slime.tres")
 const MUSHROOM_DEFINITION: CreatureDefinition = preload("res://data/definitions/creatures/mushroom.tres")
+const BEAST_DEFINITION: CreatureDefinition = preload("res://data/definitions/creatures/beast.tres")
 const FLAM_FIREBALL_DEFINITION: SkillDefinition = preload("res://data/definitions/skills/flam_fireball.tres")
 
 const FLAM_ID: StringName = &"creature.flam"
@@ -98,5 +99,7 @@ static func get_creature_definition(species_id: StringName) -> CreatureDefinitio
 			return SLIME_DEFINITION
 		MUSHROOM_ID:
 			return MUSHROOM_DEFINITION
+		BEAST_ID:
+			return BEAST_DEFINITION
 		_:
 			return null

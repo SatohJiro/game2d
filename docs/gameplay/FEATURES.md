@@ -79,6 +79,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.9j: creature có hồ trong strict `<320px` uống khi roll strict `<0.25`, duration 3–5 giây; hướng tới hồ và presentation chỉ commit sau accepted transition.
 - U1.9k: Slime giữ nguyên 110 HP, speed 85, power 9 và prey role nhưng các giá trị này lấy từ `creature.slime` typed definition; hop/drop outcome chưa đổi.
 - U1.9l: Mushroom giữ nguyên 90 HP, speed 95, power 11, prey role và Hạt Giống drop nhưng các giá trị gameplay lấy từ typed definition; spore execution chưa đổi.
+- U1.9m: Beast giữ nguyên 130 HP, speed 115, power 16, predator role và Thịt Tươi drop nhưng các giá trị gameplay lấy từ typed definition; charge/drop execution chưa đổi.
 - Acceptance: một activation không multi-hit ngoài thiết kế; chết chỉ phát reward một lần; reduced shake không đổi damage.
 
 ### G05 — capture
