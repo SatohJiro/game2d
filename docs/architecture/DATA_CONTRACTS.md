@@ -34,7 +34,9 @@ Runtime capture sphere IDs đã được admit ở U1.7b: `item.pal_sphere.basic
 
 U1.7c dành năm stable species ID `creature.flam`, `creature.slime`, `creature.mushroom`, `creature.beast`, `creature.dragon`. `LegacySpeciesAdapter` map index hiện hữu sang ID và deep-copy snapshot tại capture boundary. Đây là compatibility mapping; chưa có typed `CreatureDefinition` hoặc registry entry.
 
-U1.9a và U1.9k đã admit typed definitions cho `creature.flam` và `creature.slime`. Stable IDs không đổi; adapter chiếu stats/behavior/drop reference sang legacy-shaped runtime snapshot, còn localized name/element/texture vẫn là presentation data legacy. Mushroom/Beast/Dragon chưa có typed definition.
+U1.9a, U1.9k và U1.9l đã admit typed definitions cho `creature.flam`, `creature.slime` và `creature.mushroom`. Stable IDs không đổi; adapter chiếu stats/behavior/drop reference sang legacy-shaped runtime snapshot, còn localized name/element/texture vẫn là presentation data legacy. Beast/Dragon chưa có typed definition.
+
+U1.9l nối mapping hai chiều `item.berry_seed` ↔ `Hạt Giống Cây` trong `LegacyItemAdapter` để typed Mushroom drop reference giữ đúng storage/display key hiện hữu. Đây là compatibility mapping; inventory storage chưa migrate.
 
 `ContentId` tại `core/content_id.gd` là API duy nhất để validate, tạo và tách domain/local name. Không tự ghép hoặc parse ID trong gameplay system.
 

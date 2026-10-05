@@ -56,3 +56,9 @@ U1.9b audit species attack/charge và tạo typed skill reference/definition can
 `LegacySpeciesAdapter` resolve Flam/Slime definition theo stable ID rồi chiếu về snapshot shape cũ. Slime hop vẫn dùng species branch và `primary_skill_definition == null`; defeat drop execution vẫn dùng legacy path nhưng stable drop mapping giữ nguyên outcome Quả Mọng. Mushroom/Beast/Dragon tiếp tục fallback sang legacy dictionary; invalid index fail closed.
 
 Registry hiện có 13 definitions. Regression khóa catalog reference, stat parity, prey role, legacy display/drop compatibility, Mushroom fallback và invalid snapshot. Save/data breaking change: none; asset/provenance: none.
+
+## U1.9l — Mushroom typed definition
+
+`creature.mushroom` nay là typed authority cho 90 HP, speed 95, power 11, prey=true/predator=false và drop reference `item.berry_seed`. Sáu field gameplay đã được xóa khỏi legacy Mushroom row; name, element và texture vẫn là presentation compatibility data.
+
+Adapter chiếu definition về snapshot shape cũ và dùng mapping `item.berry_seed` ↔ `Hạt Giống Cây`, nên storage/display và drop outcome không đổi. Mushroom spore vẫn chạy species branch với `primary_skill_definition == null`; Beast/Dragon tiếp tục legacy fallback. Registry hiện có 14 definitions; regression khóa stat/role/drop parity, empty typed skill list và Beast fallback.

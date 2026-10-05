@@ -18,13 +18,7 @@ var species_data: Array[Dictionary] = [
 	{
 		"name": "Mushroom",
 		"element": "Thảo Mộc",
-		"texture": preload("res://assets/monsters/mushroom_sheet.png"),
-		"max_hp": 90,
-		"speed": 95.0,
-		"power": 11,
-		"drop_item": "Hạt Giống Cây",
-		"is_predator": false,
-		"is_prey": true
+		"texture": preload("res://assets/monsters/mushroom_sheet.png")
 	},
 	{
 		"name": "Beast",

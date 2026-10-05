@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CreatureDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/creature_definition.gd" id="1_creature"]
+[ext_resource type="Script" path="res://data/definitions/creature_behavior_profile.gd" id="2_behavior"]
+
+[sub_resource type="Resource" id="Resource_mushroom_behavior"]
+script = ExtResource("2_behavior")
+is_predator = false
+is_prey = true
+
+[resource]
+script = ExtResource("1_creature")
+content_id = &"creature.mushroom"
+display_name_key = &"creature.mushroom.name"
+developer_notes = "U1.9l typed Mushroom stats/behavior authority. Presentation and spore/drop execution remain behind the legacy adapter."
+base_max_hp = 90
+move_speed = 95.0
+base_attack_power = 11
+behavior_profile = SubResource("Resource_mushroom_behavior")
+drop_item_id = &"item.berry_seed"
+skill_ids = Array[StringName]([])

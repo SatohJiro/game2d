@@ -1,41 +1,38 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.9k — Slime typed definition
+## U1.9l — Mushroom typed definition
 
 Trạng thái: `VERIFIED` ngày 2026-10-06.
 
 ### Mục tiêu và invariant
 
-- Dùng stable `creature.slime` làm typed authority cho stats/behavior Slime.
-- Giữ species index, name/element/texture, hop skill, drop outcome và ecology behavior hiện hữu.
-- Không migrate Mushroom/Beast/Dragon, Slime hop/drop execution, asset hoặc save.
+- Dùng stable `creature.mushroom` làm typed authority cho stats/behavior Mushroom.
+- Giữ species index, name/element/texture, spore skill, Hạt Giống drop và ecology behavior hiện hữu.
+- Không migrate Beast/Dragon, Mushroom spore/drop execution, asset hoặc save.
 
 ### Kết quả đã triển khai
 
-- Thêm `data/definitions/creatures/slime.tres`: 110 HP, speed 85, power 9, prey role và `item.berry` drop reference.
-- Xóa sáu field gameplay khỏi legacy Slime row; ba field presentation vẫn giữ nguyên.
-- `LegacySpeciesAdapter` resolve typed Flam/Slime definition theo stable ID và chiếu về legacy-shaped runtime snapshot.
-- Slime vẫn không có typed primary skill; Mushroom/Beast/Dragon tiếp tục legacy fallback; invalid index fail closed.
-- Creature validator teardown được làm deterministic sau khi thêm actor fixture thứ hai.
+- Thêm `data/definitions/creatures/mushroom.tres`: 90 HP, speed 95, power 11, prey role và `item.berry_seed` drop reference.
+- Xóa sáu field gameplay khỏi legacy Mushroom row; ba field presentation vẫn giữ nguyên.
+- `LegacySpeciesAdapter` resolve typed Flam/Slime/Mushroom definitions; Beast/Dragon tiếp tục legacy fallback.
+- Bổ sung mapping hai chiều `item.berry_seed` ↔ `Hạt Giống Cây`; inventory storage chưa migrate.
+- Mushroom vẫn không có typed primary skill và spore/drop execution không đổi.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh trước thay đổi.
-- Content validator xanh với 13 definitions, Slime stat/behavior/drop reference và empty skill list.
-- Actor regression xanh cho stable ID, stat parity, prey role, legacy drop key, hop path, Mushroom fallback và invalid snapshot.
-- Creature validator chạy sạch leak hai lần liên tiếp.
-- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, content/actor regressions và main smoke.
-- Final content/creature logs sạch ObjectDB/resource leak.
-- `git diff --check` và final log scan được yêu cầu sạch trước commit.
+- Content validator xanh với 14 definitions, Mushroom stat/behavior/drop reference và empty skill list.
+- Actor regression xanh cho stable ID, stat parity, prey role, legacy seed key, spore path và Beast fallback.
+- Full final gate `tools/check_project.ps1` xanh: documentation, asset integrity, content/domain validators, editor load và main-scene smoke đều đạt; log không còn script/parse/missing dependency/invalid node error.
 
 ### Compatibility, asset và giới hạn
 
-- Save/data breaking change: none; stable species ID và runtime snapshot shape không đổi.
-- Asset/provenance: không thêm/sửa asset; Slime texture hiện hữu vẫn quarantine/unknown.
-- Slime hop/drop execution cùng Mushroom/Beast/Dragon catalog vẫn legacy.
+- Save/data breaking change: none; stable species ID, inventory key và runtime snapshot shape không đổi.
+- Asset/provenance: không thêm/sửa asset; Mushroom texture hiện hữu vẫn quarantine/unknown.
+- Mushroom spore/drop execution cùng Beast/Dragon catalog vẫn legacy.
 - Asset admission mới vẫn bị chặn vì `game-dev` CLI chưa có trong PATH.
-- Rollback: revert U1.9k; không cần migration.
+- Rollback: revert U1.9l; không cần migration.
 
 ### Gói tiếp theo
 
-U1.9l mở rộng typed `CreatureDefinition` cho riêng Mushroom, giữ spore skill/drop/ecology compatibility. Không migrate Beast/Dragon hay skill/drop execution cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.9m mở rộng typed `CreatureDefinition` cho riêng Beast, giữ charge/drop/ecology compatibility. Không migrate Dragon hay skill/drop execution cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
