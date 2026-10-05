@@ -94,3 +94,9 @@ Actor chỉ phát floating text và shake audio sau accepted apply. Target, dura
 `CreatureSleepPolicy` nhận stable species ID, night-raider/enraged flags, injected roll và protected guard. Peaceful creature chỉ sleep khi finite roll trong `[0,1]` strict `<0.18`; đúng `0.18`, night-raider và enraged trả `NO_CHANGE`. Accepted result phát `creature.transition.ecology_sleep_entry`.
 
 Actor chỉ gọi sleep roll khi peaceful, chỉ gọi duration roll sau accepted decision và apply duration trong legacy range 6–11 giây. Transition chỉ nhận IDLE → SLEEP; stale/protected result không mutate. Transient `sleep_roll_count`/`sleep_duration_roll_count` khóa RNG short-circuit, không thuộc save. Natural precedence vẫn sleep → drink → grazing → wander; drinking và remaining typed species catalog còn legacy.
+
+## U1.9j — Drinking-entry decision
+
+`CreatureDrinkingPolicy` nhận stable species ID, water-source flag, distance snapshot, injected roll và protected guard. Accepted decision yêu cầu water source hợp lệ, distance strict `<320px` và roll strict `<0.25`; đúng 320px hoặc 0.25 trả `NO_CHANGE`.
+
+Actor chỉ tiêu thụ drinking roll sau khi water/range guard pass, và chỉ tiêu thụ duration roll sau accepted decision. Stable event `creature.transition.ecology_drinking_entry` chỉ chuyển IDLE → DRINKING với duration 3–5 giây. Sau accepted apply, actor mới commit normalized pond direction và presentation. Transient drinking counters không thuộc save. Precedence sleep → drink → grazing → wander được giữ; remaining typed species catalog còn legacy.

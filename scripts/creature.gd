@@ -116,6 +116,8 @@ var grazing_roll_count: int = 0
 var grazing_duration_roll_count: int = 0
 var sleep_roll_count: int = 0
 var sleep_duration_roll_count: int = 0
+var drinking_roll_count: int = 0
+var drinking_duration_roll_count: int = 0
 
 # Natural Behaviors (Pond Drinking & Grazing)
 var water_source_pos: Vector2 = Vector2.ZERO
@@ -1047,13 +1049,15 @@ func start_wander() -> void:
 				return
 	
 	# Natural behavior: Drink at pond if nearby
-	if has_water_source and global_position.distance_to(water_source_pos) < 320.0 and randf() < 0.25:
-		state = State.DRINKING
-		state_timer = randf_range(3.0, 5.0)
-		var to_pond = (water_source_pos - global_position).normalized()
-		wander_dir = to_pond
-		spawn_floating_text("💧 Đi uống nước mát...", Color(0.4, 0.8, 1.0))
-		return
+	if has_water_source and global_position.distance_to(water_source_pos) < CreatureDrinkingPolicy.WATER_RANGE:
+		drinking_roll_count += 1
+		var drinking_result := resolve_drinking_entry(randf())
+		if drinking_result.should_drink():
+			drinking_duration_roll_count += 1
+			var drinking_duration := randf_range(CreatureDrinkingPolicy.DURATION_MIN, CreatureDrinkingPolicy.DURATION_MAX)
+			if apply_drinking_entry(drinking_result, drinking_duration):
+				spawn_floating_text("💧 Đi uống nước mát...", Color(0.4, 0.8, 1.0))
+				return
 	
 	# Preserve legacy RNG ordering: only prey roll after sleep/drink fail; duration rolls only on acceptance.
 	if cur_data.get("is_prey", false):
@@ -1099,6 +1103,28 @@ func apply_sleep_entry(result: CreatureSleepResult, duration: float) -> bool:
 	if result == null or not result.should_sleep() or duration < CreatureSleepPolicy.DURATION_MIN or duration > CreatureSleepPolicy.DURATION_MAX or not is_finite(duration):
 		return false
 	return apply_creature_transition(resolve_creature_transition(result.transition_event_id, true, duration))
+
+
+func resolve_drinking_entry(roll: float) -> CreatureDrinkingResult:
+	var water_distance := global_position.distance_to(water_source_pos) if has_water_source else -1.0
+	return CreatureDrinkingPolicy.resolve(CreatureDrinkingRequest.new(
+		cur_data.get("id", &"") as StringName,
+		has_water_source,
+		water_distance,
+		roll,
+		is_transition_request_protected(CreatureTransitionPolicy.EVENT_ECOLOGY_DRINKING_ENTRY)
+	))
+
+
+func apply_drinking_entry(result: CreatureDrinkingResult, duration: float) -> bool:
+	if result == null or not result.should_drink() or duration < CreatureDrinkingPolicy.DURATION_MIN or duration > CreatureDrinkingPolicy.DURATION_MAX or not is_finite(duration):
+		return false
+	if not has_water_source or not is_finite(water_source_pos.x) or not is_finite(water_source_pos.y):
+		return false
+	if not apply_creature_transition(resolve_creature_transition(result.transition_event_id, true, duration)):
+		return false
+	wander_dir = (water_source_pos - global_position).normalized()
+	return true
 
 
 func apply_grazing_entry(result: CreatureGrazingResult, duration: float) -> bool:

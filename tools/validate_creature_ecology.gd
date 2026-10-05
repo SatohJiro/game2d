@@ -14,6 +14,7 @@ func _run() -> void:
 	_test_prey_selection_policy()
 	_test_grazing_policy()
 	_test_sleep_policy()
+	_test_drinking_policy()
 	_test_transition_contract()
 	await _test_actor_adapter()
 	for child in root.get_children():
@@ -23,7 +24,7 @@ func _run() -> void:
 	# Let AudioServer release short-lived presentation streams after autoload teardown.
 	await create_timer(0.25).timeout
 	if _failures.is_empty():
-		print("Creature ecology validation passed: damage panic, prey selection, grazing, sleep, hunt lifecycle, predator threat and actor adapters are valid.")
+		print("Creature ecology validation passed: damage panic, prey selection, grazing, sleep, drinking, hunt lifecycle, predator threat and actor adapters are valid.")
 		quit.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -138,6 +139,23 @@ func _test_sleep_policy() -> void:
 	_expect(invalid_duration.status == CreatureTransitionResult.Status.INVALID_REQUEST, "sleep entry must reject duration outside the legacy range")
 
 
+func _test_drinking_policy() -> void:
+	var accepted := CreatureDrinkingPolicy.resolve(CreatureDrinkingRequest.new(&"creature.flam", true, 319.999, 0.249999, false))
+	_expect(accepted.should_drink() and accepted.transition_event_id == CreatureTransitionPolicy.EVENT_ECOLOGY_DRINKING_ENTRY, "water and roll below strict boundaries must drink")
+	_expect(CreatureDrinkingPolicy.resolve(CreatureDrinkingRequest.new(&"creature.flam", true, 320.0, 0.0, false)).status == CreatureDrinkingResult.Status.NO_CHANGE, "exact 320px water boundary must fail")
+	_expect(CreatureDrinkingPolicy.resolve(CreatureDrinkingRequest.new(&"creature.flam", true, 10.0, 0.25, false)).status == CreatureDrinkingResult.Status.NO_CHANGE, "exact 0.25 drinking boundary must fail")
+	_expect(CreatureDrinkingPolicy.resolve(CreatureDrinkingRequest.new(&"creature.flam", false, -1.0, 0.0, false)).status == CreatureDrinkingResult.Status.NO_CHANGE, "missing water source must not drink")
+	_expect(CreatureDrinkingPolicy.resolve(CreatureDrinkingRequest.new(&"creature.flam", true, 10.0, 0.0, true)).status == CreatureDrinkingResult.Status.PROTECTED, "protected drinking request must not change")
+	_expect(CreatureDrinkingPolicy.resolve(CreatureDrinkingRequest.new(&"creature.flam", true, -1.0, 0.0, false)).status == CreatureDrinkingResult.Status.INVALID_REQUEST, "negative available-water distance must be invalid")
+	_expect(CreatureDrinkingPolicy.resolve(null).status == CreatureDrinkingResult.Status.INVALID_REQUEST, "null drinking request must be invalid")
+	var transition := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_ECOLOGY_DRINKING_ENTRY, true, false, -1.0, false, 3.0))
+	_expect(transition.is_changed() and transition.to_state_id == CreatureTransitionPolicy.STATE_DRINKING and is_equal_approx(transition.next_timer, 3.0), "drinking entry must accept the legacy minimum duration")
+	var stale_source := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_WANDER, CreatureTransitionPolicy.EVENT_ECOLOGY_DRINKING_ENTRY, true, false, -1.0, false, 5.0))
+	_expect(stale_source.status == CreatureTransitionResult.Status.NO_CHANGE, "drinking entry must only apply from IDLE")
+	var invalid_duration := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_ECOLOGY_DRINKING_ENTRY, true, false, -1.0, false, 5.01))
+	_expect(invalid_duration.status == CreatureTransitionResult.Status.INVALID_REQUEST, "drinking entry must reject duration outside the legacy range")
+
+
 func _test_actor_adapter() -> void:
 	var packed := load(CREATURE_SCENE_PATH) as PackedScene
 	if packed == null:
@@ -178,6 +196,28 @@ func _test_actor_adapter() -> void:
 	flam.set("is_enraged", true)
 	flam.call("start_wander")
 	_expect(int(flam.get("sleep_roll_count")) == sleep_rolls_before_guard, "enraged guard must short-circuit sleep RNG")
+	flam.set("is_enraged", false)
+	flam.set("state", int(flam_states.get("IDLE", 0)))
+	flam.set("has_water_source", false)
+	var drinking_rolls_before_missing := int(flam.get("drinking_roll_count"))
+	_expect((flam.call("resolve_drinking_entry", 0.0) as CreatureDrinkingResult).status == CreatureDrinkingResult.Status.NO_CHANGE, "actor missing-water snapshot must not drink")
+	flam.set("has_water_source", true)
+	flam.set("water_source_pos", Vector2(100.0, 0.0))
+	flam.global_position = Vector2.ZERO
+	var flam_drinking: CreatureDrinkingResult = flam.call("resolve_drinking_entry", 0.0)
+	_expect(flam_drinking.should_drink(), "actor must accept injected drinking roll in range")
+	_expect(bool(flam.call("apply_drinking_entry", flam_drinking, 5.0)), "actor must apply accepted drinking transition")
+	_expect(int(flam.get("state")) == int(flam_states.get("DRINKING", 12)) and is_equal_approx(float(flam.get("state_timer")), 5.0), "actor drinking state/duration mismatch")
+	_expect((flam.get("wander_dir") as Vector2).is_equal_approx(Vector2.RIGHT), "accepted drinking must preserve pond direction")
+	var drinking_apply_count := int(flam.get("transition_apply_count"))
+	_expect(not bool(flam.call("apply_drinking_entry", flam_drinking, 5.0)), "repeated drinking result must be rejected as stale")
+	_expect(int(flam.get("transition_apply_count")) == drinking_apply_count, "stale drinking result must not mutate actor state")
+	flam.set("state", int(flam_states.get("CAPTURING", 7)))
+	_expect((flam.call("resolve_drinking_entry", 0.0) as CreatureDrinkingResult).status == CreatureDrinkingResult.Status.PROTECTED, "capturing actor drinking request must be protected")
+	flam.set("state", int(flam_states.get("IDLE", 0)))
+	flam.set("has_water_source", false)
+	flam.call("start_wander")
+	_expect(int(flam.get("drinking_roll_count")) == drinking_rolls_before_missing, "missing-water guard must short-circuit drinking RNG")
 
 	var slime := packed.instantiate()
 	slime.set("species_index", 1)

@@ -34,6 +34,7 @@ const EVENT_ECOLOGY_HUNT_ABORTED := &"creature.transition.ecology_hunt_aborted"
 const EVENT_ECOLOGY_HUNT_CONTACT := &"creature.transition.ecology_hunt_contact"
 const EVENT_ECOLOGY_PREDATOR_THREAT := &"creature.transition.ecology_predator_threat"
 const EVENT_ECOLOGY_SLEEP_ENTRY := &"creature.transition.ecology_sleep_entry"
+const EVENT_ECOLOGY_DRINKING_ENTRY := &"creature.transition.ecology_drinking_entry"
 
 const REASON_SUSPICION_CONFIRMED := &"creature.transition.suspicion_confirmed"
 const REASON_SUSPICION_LOST := &"creature.transition.suspicion_lost"
@@ -46,6 +47,8 @@ const CHASE_TARGET_LOST_TIMER := 1.0
 const CHASE_OUT_OF_RANGE_TIMER := 2.0
 const SLEEP_ENTRY_DURATION_MIN := 6.0
 const SLEEP_ENTRY_DURATION_MAX := 11.0
+const DRINKING_ENTRY_DURATION_MIN := 3.0
+const DRINKING_ENTRY_DURATION_MAX := 5.0
 
 
 static func resolve(request: CreatureTransitionRequest) -> CreatureTransitionResult:
@@ -195,6 +198,12 @@ static func resolve(request: CreatureTransitionRequest) -> CreatureTransitionRes
 			if not is_finite(request.proposed_timer) or request.proposed_timer < SLEEP_ENTRY_DURATION_MIN or request.proposed_timer > SLEEP_ENTRY_DURATION_MAX:
 				return _invalid(request)
 			return _changed(request, STATE_SLEEP, EVENT_ECOLOGY_SLEEP_ENTRY, request.proposed_timer, CreatureTransitionResult.TargetAction.KEEP)
+		EVENT_ECOLOGY_DRINKING_ENTRY:
+			if request.current_state_id != STATE_IDLE:
+				return _no_change(request)
+			if not is_finite(request.proposed_timer) or request.proposed_timer < DRINKING_ENTRY_DURATION_MIN or request.proposed_timer > DRINKING_ENTRY_DURATION_MAX:
+				return _invalid(request)
+			return _changed(request, STATE_DRINKING, EVENT_ECOLOGY_DRINKING_ENTRY, request.proposed_timer, CreatureTransitionResult.TargetAction.KEEP)
 		_:
 			return _invalid(request)
 
