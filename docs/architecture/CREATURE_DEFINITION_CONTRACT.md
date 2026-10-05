@@ -68,3 +68,9 @@ Adapter chiếu definition về snapshot shape cũ và dùng mapping `item.berry
 `creature.beast` nay là typed authority cho 130 HP, speed 115, power 16, predator=true/prey=false và drop reference `item.fresh_meat`. Sáu field gameplay đã được xóa khỏi legacy Beast row; name, element và texture vẫn là presentation compatibility data.
 
 Adapter chiếu definition về snapshot shape cũ và dùng mapping `item.fresh_meat` ↔ `Thịt Tươi`, nên inventory/cooking/ranch key và drop outcome không đổi. Beast charge vẫn chạy species branch với `primary_skill_definition == null`; Dragon tiếp tục legacy fallback. Registry có 16 definitions gồm item reference mới; regression khóa stat/role/drop parity, empty typed skill list và Dragon fallback. Save/data breaking change: none; `beaf.png` vẫn là baseline quarantine asset, không được admit lại.
+
+## U1.9n — Dragon typed definition
+
+`creature.dragon` nay là typed authority cho 340 HP, speed 95, power 26, predator=true/prey=false và drop reference `item.pal_ingot`. Sáu field gameplay đã được xóa khỏi legacy Dragon row; name, element và texture vẫn là presentation compatibility data.
+
+Adapter chiếu definition về snapshot shape cũ và dùng mapping `item.pal_ingot` ↔ `Thỏi Pal`, nên inventory/furnace/altar/progression key và drop outcome không đổi. Quy tắc Dragon luôn elite vẫn thuộc actor và regression khóa scaling 2.4 HP, 1.15 speed, 1.45 power. Melee/fireball tiếp tục species branch với `primary_skill_definition == null`. Registry có 18 definitions; toàn bộ năm species đã typed stats/behavior, nhưng remaining skill/drop execution chưa migrate. Save/data breaking change: none; `pal_ingot.png` vẫn là baseline quarantine asset.

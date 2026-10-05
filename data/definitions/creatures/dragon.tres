@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CreatureDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/creature_definition.gd" id="1_creature"]
+[ext_resource type="Script" path="res://data/definitions/creature_behavior_profile.gd" id="2_behavior"]
+
+[sub_resource type="Resource" id="Resource_dragon_behavior"]
+script = ExtResource("2_behavior")
+is_predator = true
+is_prey = false
+
+[resource]
+script = ExtResource("1_creature")
+content_id = &"creature.dragon"
+display_name_key = &"creature.dragon.name"
+developer_notes = "U1.9n typed Dragon stats/behavior authority. Presentation and melee/fireball/drop execution remain behind the legacy adapter."
+base_max_hp = 340
+move_speed = 95.0
+base_attack_power = 26
+behavior_profile = SubResource("Resource_dragon_behavior")
+drop_item_id = &"item.pal_ingot"
+skill_ids = Array[StringName]([])

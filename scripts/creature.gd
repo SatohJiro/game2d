@@ -28,13 +28,7 @@ var species_data: Array[Dictionary] = [
 	{
 		"name": "Dragon",
 		"element": "Hỏa Long",
-		"texture": preload("res://assets/monsters/dragon_sheet.png"),
-		"max_hp": 340,
-		"speed": 95.0,
-		"power": 26,
-		"drop_item": "Thỏi Pal",
-		"is_predator": true,
-		"is_prey": false
+		"texture": preload("res://assets/monsters/dragon_sheet.png")
 	}
 ]
 

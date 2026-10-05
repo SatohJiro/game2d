@@ -22,7 +22,7 @@ func _run() -> void:
 	await process_frame
 
 	if _failures.is_empty():
-		print("Content validation passed: catalog plus typed Flam/Slime/Mushroom/Beast definitions and registry references are valid.")
+		print("Content validation passed: catalog plus all five typed creature definitions and registry references are valid.")
 		_finish.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -179,7 +179,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 16, "registry must contain sixteen definitions through U1.9m")
+	_expect(registry.size() == 18, "registry must contain eighteen definitions through U1.9n")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -188,6 +188,7 @@ func _validate_project_content() -> void:
 	_expect(registry.has(&"item.berry_seed"), "registry is missing item.berry_seed")
 	_expect(registry.has(&"item.berry"), "registry is missing item.berry")
 	_expect(registry.has(&"item.fresh_meat"), "registry is missing item.fresh_meat")
+	_expect(registry.has(&"item.pal_ingot"), "registry is missing item.pal_ingot")
 	_expect(registry.has(&"recipe.pal_sphere.basic"), "registry is missing recipe.pal_sphere.basic")
 	_expect(registry.has(&"building.workbench"), "registry is missing building.workbench")
 	_expect(registry.has(&"crop.berry"), "registry is missing crop.berry")
@@ -195,6 +196,7 @@ func _validate_project_content() -> void:
 	_expect(registry.has(&"creature.slime"), "registry is missing creature.slime")
 	_expect(registry.has(&"creature.mushroom"), "registry is missing creature.mushroom")
 	_expect(registry.has(&"creature.beast"), "registry is missing creature.beast")
+	_expect(registry.has(&"creature.dragon"), "registry is missing creature.dragon")
 	_expect(registry.has(&"skill.flam.fireball"), "registry is missing skill.flam.fireball")
 	var wood := registry.get_definition(&"item.wood") as ItemDefinition
 	_expect(wood != null, "item.wood must load as ItemDefinition")
@@ -262,6 +264,19 @@ func _validate_project_content() -> void:
 		_expect(beast.behavior_profile != null and beast.behavior_profile.is_predator and not beast.behavior_profile.is_prey, "Beast behavior profile mismatch")
 		_expect(beast.drop_item_id == &"item.fresh_meat", "Beast drop reference mismatch")
 		_expect(beast.skill_ids.is_empty(), "Beast charge must remain outside typed skill catalog in U1.9m")
+	var pal_ingot := registry.get_definition(&"item.pal_ingot") as ItemDefinition
+	_expect(pal_ingot != null and pal_ingot.icon != null and pal_ingot.tags.has("ingot"), "Pal ingot definition mismatch")
+	_expect(LegacyItemAdapter.to_content_id("Thỏi Pal") == &"item.pal_ingot", "Pal ingot legacy key must map to stable ID")
+	_expect(LegacyItemAdapter.to_legacy_key(&"item.pal_ingot") == "Thỏi Pal", "Pal ingot stable ID must preserve legacy storage key")
+	var dragon := registry.get_definition(&"creature.dragon") as CreatureDefinition
+	_expect(dragon != null, "creature.dragon must load as CreatureDefinition")
+	if dragon != null:
+		_expect(dragon.base_max_hp == 340, "Dragon base_max_hp mismatch")
+		_expect(is_equal_approx(dragon.move_speed, 95.0), "Dragon move_speed mismatch")
+		_expect(dragon.base_attack_power == 26, "Dragon base_attack_power mismatch")
+		_expect(dragon.behavior_profile != null and dragon.behavior_profile.is_predator and not dragon.behavior_profile.is_prey, "Dragon behavior profile mismatch")
+		_expect(dragon.drop_item_id == &"item.pal_ingot", "Dragon drop reference mismatch")
+		_expect(dragon.skill_ids.is_empty(), "Dragon attacks must remain outside typed skill catalog in U1.9n")
 	var fireball := registry.get_definition(&"skill.flam.fireball") as SkillDefinition
 	_expect(fireball != null, "skill.flam.fireball must load as SkillDefinition")
 	if fireball != null:
