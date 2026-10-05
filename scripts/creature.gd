@@ -60,6 +60,7 @@ var cur_data: Dictionary
 var max_hp: int = 80
 var hp: int = 80
 var defeat_committed: bool = false
+var defeat_drops_committed: bool = false
 var capture_attempt_active: bool = false
 var capture_ownership_committed: bool = false
 var capture_ownership_token: StringName = &""
@@ -1118,29 +1119,79 @@ func die(killer: Node2D) -> void:
 	if killer and killer.has_method("gain_exp"):
 		killer.gain_exp(exp_gained)
 	
-	# Drops
+	var species_id := cur_data.get("id", &"") as StringName
+	if species_id == LegacySpeciesAdapter.FLAM_ID:
+		var has_bonus := is_elite or is_alpha
+		var drop_request := create_defeat_drop_request(
+			randi_range(3, 5) if has_bonus else randi_range(1, 2),
+			randi_range(2, 4) if has_bonus else 0
+		)
+		commit_defeat_drop_result(CreatureDropResolver.resolve(drop_request))
+	else:
+		spawn_legacy_defeat_drops()
+
+	if is_elite or is_alpha:
+		if killer and killer.has_method("shake_camera"):
+			killer.shake_camera(6.0)
+
+	var tween = create_tween()
+	tween.tween_property(self, "scale", Vector2.ZERO, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(queue_free)
+
+
+func create_defeat_drop_request(primary_count_roll: int, bonus_count_roll: int) -> CreatureDropRequest:
+	var species_id := cur_data.get("id", &"") as StringName
+	return CreatureDropRequest.new(
+		species_id,
+		LegacySpeciesAdapter.get_drop_item_id(species_id, String(cur_data.get("drop_item", ""))),
+		defeat_committed,
+		capture_attempt_active or state == State.CAPTURING or capture_ownership_committed,
+		defeat_drops_committed,
+		is_elite,
+		is_alpha,
+		primary_count_roll,
+		bonus_count_roll
+	)
+
+
+func commit_defeat_drop_result(result: CreatureDropResult) -> bool:
+	if result == null or not result.is_accepted() or defeat_drops_committed:
+		return false
+	var species_id := cur_data.get("id", &"") as StringName
+	var expected_item_id := LegacySpeciesAdapter.get_drop_item_id(species_id, String(cur_data.get("drop_item", "")))
+	if result.species_id != species_id or result.primary_item_id != expected_item_id:
+		return false
+	defeat_drops_committed = true
+	for _drop_index in range(result.primary_count):
+		spawn_stable_drop(result.primary_item_id, 1, Vector2(12.0, 8.0))
+	if result.bonus_count > 0:
+		spawn_stable_drop(result.bonus_item_id, result.bonus_count, Vector2(16.0, 10.0))
+	return true
+
+
+func spawn_stable_drop(item_id: StringName, count: int, spread: Vector2) -> void:
+	var item := DROPPED_ITEM_SCENE.instantiate()
+	item.item_id = item_id
+	item.item_name = LegacyItemAdapter.to_legacy_key(item_id)
+	item.count = count
+	item.global_position = global_position + Vector2(randf_range(-spread.x, spread.x), randf_range(-spread.y, spread.y))
+	get_parent().call_deferred("add_child", item)
+
+
+func spawn_legacy_defeat_drops() -> void:
 	var drop_count = randi_range(3, 5) if (is_elite or is_alpha) else randi_range(1, 2)
-	for i in range(drop_count):
+	for _drop_index in range(drop_count):
 		var item = DROPPED_ITEM_SCENE.instantiate()
 		item.item_name = cur_data["drop_item"]
 		item.count = 1
 		item.global_position = global_position + Vector2(randf_range(-12, 12), randf_range(-8, 8))
 		get_parent().call_deferred("add_child", item)
-	
-	# Elite / Alpha bonus drops
 	if is_elite or is_alpha:
 		var bonus_item = DROPPED_ITEM_SCENE.instantiate()
 		bonus_item.item_name = "Quặng Pal"
 		bonus_item.count = randi_range(2, 4)
 		bonus_item.global_position = global_position + Vector2(randf_range(-16, 16), randf_range(-10, 10))
 		get_parent().call_deferred("add_child", bonus_item)
-		
-		if killer and killer.has_method("shake_camera"):
-			killer.shake_camera(6.0)
-	
-	var tween = create_tween()
-	tween.tween_property(self, "scale", Vector2.ZERO, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
-	tween.chain().tween_callback(queue_free)
 
 func attempt_capture(player_ref: Node2D, catch_multiplier: float = 1.0, throw_pos: Vector2 = Vector2.ZERO) -> void:
 	if state == State.CAPTURING or capture_attempt_active:

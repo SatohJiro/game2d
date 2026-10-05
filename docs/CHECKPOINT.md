@@ -1,45 +1,40 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.9b — Flam typed skill canary
+## U1.9c — Flam deterministic defeat drop
 
 Trạng thái: `VERIFIED` ngày 2026-10-05.
 
 ### Mục tiêu và invariant
 
-- Dùng stable ID và typed definition/reference cho đúng một attack canary của Flam.
-- Giữ nguyên cooldown, damage, projectile travel/hit guard và async recovery hiện có.
-- Không đổi asset, balance, collision, spawn, capture, ecology, drop hoặc save schema.
+- Tách quyết định drop của đúng một Flam canary khỏi animation/spawn bằng request/result thuần.
+- Giữ quantity/range, elite bonus, defeat idempotency và capture exclusion hiện hữu.
+- Không đổi EXP, asset, balance, collision, spawn table, skill, save schema hoặc toàn bộ species catalog.
 
 ### Kết quả đã triển khai
 
-- Thêm `SkillDefinition` và `skill.flam.fireball`; `CreatureDefinition.skill_ids` tham chiếu stable ID và tham gia registry cross-reference.
-- `LegacySpeciesAdapter.get_primary_skill_definition()` là compatibility boundary cho Flam; species chưa migrate vẫn nhận `null` và chạy legacy values.
-- `WildCreature.perform_fireball_attack()` nhận typed definition cho Flam, trong khi Dragon/default legacy call giữ fallback cũ.
-- Giá trị giữ nguyên: cooldown 2.2s, recovery 0.3s, damage ×1, travel 240px/0.55s, hit radius 45px.
-- Audit đã phân loại Slime hop, Mushroom spore, Beast charge, Dragon selection, generic/prey melee sang package sau; không mở rộng scope.
+- Thêm `CreatureDropRequest`, `CreatureDropResult`, `CreatureDropResolver`; RNG count sinh ngoài resolver và được inject.
+- Stable `creature.flam` + `item.pal_ore` đi xuyên request/result đến `DroppedItem.item_id`.
+- `defeat_drops_committed` và result identity guard bảo đảm commit tối đa một lần.
+- Capture active trả `CAPTURE_BLOCKED`; living/invalid/duplicate fail closed và không spawn.
+- Normal giữ 1–2 primary node; elite/alpha giữ 3–5 primary node cộng một bonus stack count 2–4.
+- Bốn species còn lại tiếp tục legacy spawn để tránh thay đổi content chưa có typed definition.
 
 ### Validation hiện tại
 
-- Baseline full `tools/check_project.ps1` xanh trước thay đổi.
-- Focused content regression xanh: invalid fields, missing skill reference, catalog 12 definitions và Flam reference/value assertions.
-- Focused creature actor regression xanh: actor resolve stable skill và toàn bộ compatibility values.
-- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, toàn bộ domain regression và main-scene smoke.
-- `git diff --check` sạch; final log scan không có `SCRIPT ERROR`, `Parse Error`, missing dependency hoặc invalid node path.
+- Baseline full gate xanh trước thay đổi.
+- Focused resolver regression xanh cho normal/elite, domain/range invalid, living, capture, duplicate và deterministic injected request.
+- Actor regression xanh cho typed Flam reference, stable spawned item ID, legacy quantity và duplicate commit không spawn thêm.
+- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, toàn bộ domain regression gồm drop validator mới và main smoke.
+- `git diff --check` sạch; final log scan không có script/parse/dependency/node-path error.
 
 ### Compatibility, asset và giới hạn
 
-- Save/data breaking change: none; không serialize Resource/Node và không đổi party snapshot.
-- Asset/provenance: không thêm/sửa asset; 166 asset baseline vẫn quarantine/unknown, 69 runtime P0.
-- Presentation telegraph text/audio/texture còn trong actor; typed skill không quyết định animation hay VFX.
+- Save/data breaking change: none; result là runtime value object, không serialize Node/Resource.
+- Asset/provenance: không thêm/sửa asset; baseline vẫn 166 quarantine/unknown, 69 runtime P0.
+- EXP reward, non-Flam drop, predator/prey targeting, grazing/FLEE và burn defeat path vẫn legacy.
 - Asset admission mới vẫn bị chặn vì `game-dev` CLI chưa có trong PATH.
-- Rollback: revert package U1.9b; không cần migration.
+- Rollback: revert package U1.9c; không cần migration.
 
 ### Gói tiếp theo
 
-U1.9c xử lý một lát cắt nhỏ của ecology/drop ownership hoặc một skill writer kế tiếp sau khi xác nhận dependency; không gom cả hai migration vào cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
-
-## Hướng sản phẩm phải giữ
-
-- Definition dùng stable ID và không lưu Node/ObjectID, sẵn sàng cho save/chunk U2.
-- Combat result là deterministic domain result; animation/VFX chỉ trình bày event.
-- Paloria Luminous Town vẫn là initiative U2–U4; content phát hành phải nguyên bản và có provenance.
+U1.9d chọn đúng một ecology ownership boundary nhỏ cho Flam, ưu tiên pure role/decision không chứa Node hoặc RNG ẩn. Không migrate thêm skill/drop catalog cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

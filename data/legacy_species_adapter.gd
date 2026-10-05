@@ -52,6 +52,12 @@ static func get_primary_skill_definition(species_id: StringName) -> SkillDefinit
 	return FLAM_FIREBALL_DEFINITION
 
 
+static func get_drop_item_id(species_id: StringName, legacy_drop_name: String = "") -> StringName:
+	if species_id == FLAM_ID:
+		return FLAM_DEFINITION.drop_item_id
+	return LegacyItemAdapter.to_content_id(legacy_drop_name)
+
+
 static func create_stable_snapshot(species_index: int, legacy_data: Dictionary) -> Dictionary:
 	var species_id := to_content_id(species_index)
 	if species_id.is_empty() or legacy_data.is_empty():
