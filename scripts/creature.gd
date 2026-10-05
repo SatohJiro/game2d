@@ -114,6 +114,8 @@ var transition_apply_count: int = 0
 var ecology_query_count: int = 0
 var grazing_roll_count: int = 0
 var grazing_duration_roll_count: int = 0
+var sleep_roll_count: int = 0
+var sleep_duration_roll_count: int = 0
 
 # Natural Behaviors (Pond Drinking & Grazing)
 var water_source_pos: Vector2 = Vector2.ZERO
@@ -1035,10 +1037,14 @@ func present_alert_feedback(p: Node2D) -> void:
 
 func start_wander() -> void:
 	# Chance to nap if peaceful
-	if not is_night_raider and not is_enraged and randf() < 0.18:
-		state = State.SLEEP
-		state_timer = randf_range(6.0, 11.0)
-		return
+	if not is_night_raider and not is_enraged:
+		sleep_roll_count += 1
+		var sleep_result := resolve_sleep_entry(randf())
+		if sleep_result.should_sleep():
+			sleep_duration_roll_count += 1
+			var sleep_duration := randf_range(CreatureSleepPolicy.DURATION_MIN, CreatureSleepPolicy.DURATION_MAX)
+			if apply_sleep_entry(sleep_result, sleep_duration):
+				return
 	
 	# Natural behavior: Drink at pond if nearby
 	if has_water_source and global_position.distance_to(water_source_pos) < 320.0 and randf() < 0.25:
@@ -1077,6 +1083,22 @@ func resolve_grazing_entry(roll: float) -> CreatureGrazingResult:
 		roll,
 		is_transition_request_protected(CreatureTransitionPolicy.EVENT_ECOLOGY_GRAZING_ENTRY)
 	))
+
+
+func resolve_sleep_entry(roll: float) -> CreatureSleepResult:
+	return CreatureSleepPolicy.resolve(CreatureSleepRequest.new(
+		cur_data.get("id", &"") as StringName,
+		is_night_raider,
+		is_enraged,
+		roll,
+		is_transition_request_protected(CreatureTransitionPolicy.EVENT_ECOLOGY_SLEEP_ENTRY)
+	))
+
+
+func apply_sleep_entry(result: CreatureSleepResult, duration: float) -> bool:
+	if result == null or not result.should_sleep() or duration < CreatureSleepPolicy.DURATION_MIN or duration > CreatureSleepPolicy.DURATION_MAX or not is_finite(duration):
+		return false
+	return apply_creature_transition(resolve_creature_transition(result.transition_event_id, true, duration))
 
 
 func apply_grazing_entry(result: CreatureGrazingResult, duration: float) -> bool:

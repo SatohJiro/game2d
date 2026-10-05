@@ -81,6 +81,7 @@ Ba callback fireball/spore/melee từng ghi `state = CHASE` trực tiếp sau `a
 - U1.9f thêm `creature.transition.ecology_grazing_entry`: chỉ IDLE vào GRAZING với injected duration 2.5–4.0 giây; protected/stale/wrong-source result không mutate.
 - U1.9g thêm `creature.transition.ecology_hunt_aborted` và `creature.transition.ecology_hunt_contact`: chỉ HUNTING_PREY → IDLE với timer tương ứng 2/3 giây; `prey_target` chỉ clear sau accepted apply và stale/protected result không mutate.
 - U1.9h thêm `creature.transition.ecology_predator_threat`: target hợp lệ vào FLEE 4 giây và set threat target; FLEE/CAPTURING/invalid target cùng stale/protected result không mutate.
+- U1.9i thêm `creature.transition.ecology_sleep_entry`: chỉ IDLE → SLEEP với injected duration 6–11 giây qua actor adapter; wrong-source/stale/protected result không mutate.
 - U1.9c ecology/drop: pack howl, predator/prey HUNTING_PREY/FLEE, prey defeat/drop và damage-reaction CHASE/FLEE.
 - Capture entry `CAPTURING` tiếp tục thuộc capture adapter U1.7; rejection/restore đã qua lifecycle owner. Defeat/despawn tiếp tục thuộc combat/capture committed-result boundary.
 

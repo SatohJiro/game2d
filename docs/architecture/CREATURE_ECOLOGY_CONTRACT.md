@@ -88,3 +88,9 @@ Movement speed ×1.05, contact boundary, damage multiplier, feedback và không-
 `panic_from_predator()` nay resolve stable event `creature.transition.ecology_predator_threat`. Event yêu cầu predator target hợp lệ, từ chối source FLEE/CAPTURING và dùng lifecycle protection chung; accepted result vào FLEE 4 giây với `TargetAction.SET`.
 
 Actor chỉ phát floating text và shake audio sau accepted apply. Target, duration và guard cũ được giữ nguyên; invalid predator fail closed. Regression khóa accepted callback từ prey selection, CAPTURING/FLEE/invalid-target guard và repeated/stale result không mutate. Sleep/drink selection cùng remaining typed species catalog vẫn legacy.
+
+## U1.9i — Sleep-entry decision
+
+`CreatureSleepPolicy` nhận stable species ID, night-raider/enraged flags, injected roll và protected guard. Peaceful creature chỉ sleep khi finite roll trong `[0,1]` strict `<0.18`; đúng `0.18`, night-raider và enraged trả `NO_CHANGE`. Accepted result phát `creature.transition.ecology_sleep_entry`.
+
+Actor chỉ gọi sleep roll khi peaceful, chỉ gọi duration roll sau accepted decision và apply duration trong legacy range 6–11 giây. Transition chỉ nhận IDLE → SLEEP; stale/protected result không mutate. Transient `sleep_roll_count`/`sleep_duration_roll_count` khóa RNG short-circuit, không thuộc save. Natural precedence vẫn sleep → drink → grazing → wander; drinking và remaining typed species catalog còn legacy.

@@ -13,16 +13,17 @@ func _run() -> void:
 	_test_damage_panic_policy()
 	_test_prey_selection_policy()
 	_test_grazing_policy()
+	_test_sleep_policy()
 	_test_transition_contract()
 	await _test_actor_adapter()
-	# FloatingText fades for 0.8s with a 0.32s delay; keep scheduling margin before teardown.
-	await create_timer(1.5).timeout
 	for child in root.get_children():
 		child.free()
 	await process_frame
 	await process_frame
+	# Let AudioServer release short-lived presentation streams after autoload teardown.
+	await create_timer(0.25).timeout
 	if _failures.is_empty():
-		print("Creature ecology validation passed: damage panic, prey selection, grazing decision, hunt lifecycle, predator threat and actor adapters are valid.")
+		print("Creature ecology validation passed: damage panic, prey selection, grazing, sleep, hunt lifecycle, predator threat and actor adapters are valid.")
 		quit.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -120,6 +121,23 @@ func _test_grazing_policy() -> void:
 	_expect(wrong_source.status == CreatureTransitionResult.Status.NO_CHANGE, "grazing entry must only apply from IDLE")
 
 
+func _test_sleep_policy() -> void:
+	var accepted := CreatureSleepPolicy.resolve(CreatureSleepRequest.new(&"creature.flam", false, false, 0.179999, false))
+	_expect(accepted.should_sleep() and accepted.transition_event_id == CreatureTransitionPolicy.EVENT_ECOLOGY_SLEEP_ENTRY, "peaceful roll below 0.18 must sleep")
+	_expect(CreatureSleepPolicy.resolve(CreatureSleepRequest.new(&"creature.flam", false, false, 0.18, false)).status == CreatureSleepResult.Status.NO_CHANGE, "exact 0.18 sleep boundary must fail")
+	_expect(CreatureSleepPolicy.resolve(CreatureSleepRequest.new(&"creature.flam", true, false, 0.0, false)).status == CreatureSleepResult.Status.NO_CHANGE, "night raider must not sleep")
+	_expect(CreatureSleepPolicy.resolve(CreatureSleepRequest.new(&"creature.flam", false, true, 0.0, false)).status == CreatureSleepResult.Status.NO_CHANGE, "enraged creature must not sleep")
+	_expect(CreatureSleepPolicy.resolve(CreatureSleepRequest.new(&"creature.flam", false, false, 0.0, true)).status == CreatureSleepResult.Status.PROTECTED, "protected sleep request must not change")
+	_expect(CreatureSleepPolicy.resolve(CreatureSleepRequest.new(&"item.wrong", false, false, 0.0, false)).status == CreatureSleepResult.Status.INVALID_REQUEST, "wrong sleep species domain must be invalid")
+	_expect(CreatureSleepPolicy.resolve(null).status == CreatureSleepResult.Status.INVALID_REQUEST, "null sleep request must be invalid")
+	var transition := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_ECOLOGY_SLEEP_ENTRY, true, false, -1.0, false, 6.0))
+	_expect(transition.is_changed() and transition.to_state_id == CreatureTransitionPolicy.STATE_SLEEP and is_equal_approx(transition.next_timer, 6.0), "sleep entry must accept the legacy minimum duration")
+	var stale_source := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_WANDER, CreatureTransitionPolicy.EVENT_ECOLOGY_SLEEP_ENTRY, true, false, -1.0, false, 11.0))
+	_expect(stale_source.status == CreatureTransitionResult.Status.NO_CHANGE, "sleep entry must only apply from IDLE")
+	var invalid_duration := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_ECOLOGY_SLEEP_ENTRY, true, false, -1.0, false, 11.01))
+	_expect(invalid_duration.status == CreatureTransitionResult.Status.INVALID_REQUEST, "sleep entry must reject duration outside the legacy range")
+
+
 func _test_actor_adapter() -> void:
 	var packed := load(CREATURE_SCENE_PATH) as PackedScene
 	if packed == null:
@@ -138,6 +156,28 @@ func _test_actor_adapter() -> void:
 	_expect(flam_result.status == CreatureEcologyResult.Status.NO_CHANGE, "typed neutral Flam actor must not panic at low HP")
 	var flam_grazing: CreatureGrazingResult = flam.call("resolve_grazing_entry", 0.0)
 	_expect(flam_grazing.status == CreatureGrazingResult.Status.NO_CHANGE, "typed neutral Flam actor must not accept grazing")
+	flam.set("is_night_raider", false)
+	flam.set("is_enraged", false)
+	var flam_sleep: CreatureSleepResult = flam.call("resolve_sleep_entry", 0.0)
+	_expect(flam_sleep.should_sleep(), "peaceful actor must accept injected sleep roll")
+	_expect(bool(flam.call("apply_sleep_entry", flam_sleep, 11.0)), "actor must apply accepted sleep transition")
+	var flam_states: Dictionary = flam.get_script().get_script_constant_map().get("State", {})
+	_expect(int(flam.get("state")) == int(flam_states.get("SLEEP", 8)) and is_equal_approx(float(flam.get("state_timer")), 11.0), "actor sleep state/duration mismatch")
+	var sleep_apply_count := int(flam.get("transition_apply_count"))
+	_expect(not bool(flam.call("apply_sleep_entry", flam_sleep, 11.0)), "repeated sleep result must be rejected as stale")
+	_expect(int(flam.get("transition_apply_count")) == sleep_apply_count, "stale sleep result must not mutate actor state")
+	flam.set("state", int(flam_states.get("CAPTURING", 7)))
+	_expect((flam.call("resolve_sleep_entry", 0.0) as CreatureSleepResult).status == CreatureSleepResult.Status.PROTECTED, "capturing actor sleep request must be protected")
+	flam.set("state", int(flam_states.get("IDLE", 0)))
+	flam.set("is_night_raider", true)
+	var sleep_rolls_before_guard := int(flam.get("sleep_roll_count"))
+	flam.call("start_wander")
+	_expect(int(flam.get("sleep_roll_count")) == sleep_rolls_before_guard, "night-raider guard must short-circuit sleep RNG")
+	flam.set("state", int(flam_states.get("IDLE", 0)))
+	flam.set("is_night_raider", false)
+	flam.set("is_enraged", true)
+	flam.call("start_wander")
+	_expect(int(flam.get("sleep_roll_count")) == sleep_rolls_before_guard, "enraged guard must short-circuit sleep RNG")
 
 	var slime := packed.instantiate()
 	slime.set("species_index", 1)
@@ -230,6 +270,8 @@ func _test_actor_adapter() -> void:
 	var flam_queries_before := int(flam.get("ecology_query_count"))
 	flam.call("check_predator_prey_ecosystem")
 	_expect(int(flam.get("ecology_query_count")) == flam_queries_before, "typed neutral Flam must skip ecology group scan")
+	fixture.free()
+	await process_frame
 
 
 func _expect(condition: bool, message: String) -> void:

@@ -74,6 +74,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.9f grazing decision | Hoàn tất | Injected roll + stable transition; strict 0.22 boundary và RNG short-circuit giữ nguyên |
 | U1.9g hunt lifecycle | Hoàn tất | Abort/contact dùng stable transition; damage, boundary, recovery và stale guard được khóa regression |
 | U1.9h predator threat | Hoàn tất | Panic callback dùng stable transition; target, FLEE 4 giây và lifecycle guards được khóa regression |
+| U1.9i sleep decision | Hoàn tất | Injected roll + stable transition; strict 0.18 boundary, duration và RNG short-circuit được khóa regression |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

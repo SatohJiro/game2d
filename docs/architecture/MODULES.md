@@ -25,7 +25,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | PLAYER | Input, locomotion, needs, progression coordinator | Needs/locomotion pure; action input dùng stable intent/mapper/policy; progression/craft/build handler còn trong `player.gd` | Gọi component con; phát snapshot/event | U1.4–U1.6 |
 | COMBAT | Damage, status, targeting, hit result | Pure DamageRequest/Result migrated vào Player + WildCreature; caller khác qua adapter | Command → deterministic result; presentation riêng | U1.5 |
 | CAPTURE | Throw, chance, result, ownership | Pure chance + sphere transaction + ownership resolver; stable species adapter; atomic roster commit | Seeded/injected RNG; ownership update một lần | U1.7 |
-| CREATURE | Wild AI, ecology, locomotion | Basic lifecycle owner; Flam typed creature/fireball/drop; damage panic, prey selection, grazing, hunt exit và predator threat dùng policy/transition owner | Sleep/drink rồi remaining species catalog | U1.9 |
+| CREATURE | Wild AI, ecology, locomotion | Basic lifecycle owner; Flam typed creature/fireball/drop; damage panic, prey selection, grazing, sleep, hunt exit và predator threat dùng policy/transition owner | Drinking rồi remaining species catalog | U1.9 |
 | PET | Party, command, combat assist | `pet.gd`, `player.gd` | PetInstance state + PetCommand; không giữ Node trong save | U1.10 |
 | JOBS | Pet work/reservation | Scan group trong `pet.gd`, từng building | Job board, reservation, capability, result | U5.2 |
 | INVENTORY | Stack, transfer, equipment, loot | Stable transactions; chest finite stack slots và atomic mapped batch; other direct writers còn legacy | ID-based transaction atomic | U1.2, U1.4 |
@@ -88,6 +88,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.9f thêm pure grazing decision với injected roll và stable transition; short-circuit RNG của sleep/drink/grazing/wander giữ nguyên. Contract tiếp tục ở `CREATURE_ECOLOGY_CONTRACT.md`.
 - U1.9g đóng hunt abort/contact bằng stable transition events; ecology `prey_target` chỉ clear sau accepted apply, trong khi tốc độ, contact, damage và recovery giữ nguyên.
 - U1.9h đóng predator-threat callback bằng stable transition; FLEE 4 giây, target và presentation giữ compatibility, stale/protected apply bị chặn.
+- U1.9i thêm pure sleep decision/injected roll và stable transition; peaceful guard, strict 0.18 boundary, duration 6–11 giây cùng natural-action RNG ordering được giữ.
 - PetInstance lưu unique ID, species ID, level/EXP, stats rolled, needs, skills và assignment.
 - Pet command tối thiểu: follow, guard, attack target, work, return. Job và combat không đồng thời sở hữu locomotion.
 
