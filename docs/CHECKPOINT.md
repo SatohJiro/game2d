@@ -1,40 +1,41 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.9d — Creature ecology damage-panic policy
+## U1.9e — Deterministic predator/prey selection
 
 Trạng thái: `VERIFIED` ngày 2026-10-05.
 
 ### Mục tiêu và invariant
 
-- Tách đúng low-HP prey panic sau damage thành pure decision và transition-owned mutation.
-- Giữ strict threshold `<35%`, duration 3.5 giây, threat target, lifecycle guard và feedback hiện hữu.
-- Không đổi RNG ordering, predator scan, grazing/hunting, asset, drop, skill, spawn hoặc save.
+- Tách prey selection khỏi SceneTree group ordering; scan chỉ thu candidate, policy thuần chọn result.
+- Giữ scan cadence 2.0–3.5s, strict hunt distance `<210px`, hunt duration 6s, role/capture guards và presentation.
+- Không đổi RNG ordering, grazing, hunt contact/damage, asset, skill, drop, spawn hoặc save.
 
 ### Kết quả đã triển khai
 
-- Thêm `CreatureEcologyRequest`, `CreatureEcologyResult`, `CreatureEcologyPolicy` không chứa Node/RNG.
-- Stable event `creature.transition.ecology_damage_panic` đi qua `CreatureTransitionPolicy` và `apply_creature_transition()`.
-- Typed-neutral Flam trả `NO_CHANGE`; legacy Slime/Mushroom prey vẫn panic khi đủ điều kiện.
-- Defeated/enraged/HP >=35% trả `NO_CHANGE`; capture trả `PROTECTED`; invalid ID/HP fail closed.
-- Floating text chỉ chạy sau accepted apply; không còn direct `state = FLEE` trong damage-panic block.
+- Thêm typed candidate/request/result/policy không chứa Node/ObjectID.
+- Chọn nearest candidate; equal-distance tie-break lexical scan-local key.
+- Duplicate key giữ nearest observation; invalid/non-prey/capture-active/out-of-range bị lọc deterministic.
+- Neutral Flam và blocked predator bỏ group scan; `ecology_query_count` cho phép regression cadence/guard.
+- Accepted result đi qua stable `creature.transition.ecology_prey_acquired` và apply owner trước khi set `prey_target`/feedback/panic callback.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh trước thay đổi.
-- Focused pure regression xanh cho threshold boundary, roles, defeated/enraged/capture, invalid input và stable event/duration.
-- Transition regression xanh cho legacy source state, target preservation và invalid timer.
-- Actor regression xanh cho neutral Flam và prey Slime compatibility.
-- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, toàn bộ domain regression gồm ecology validator mới và main smoke.
+- Pure regression xanh cho nearest/tie, duplicate, invalid, capture, exact 210px boundary, neutral và protected request.
+- Transition regression xanh cho HUNTING_PREY 6s.
+- Actor regression xanh: captured prey gần bị bỏ, eligible prey xa hơn được chọn; CHASE và neutral Flam không scan.
+- Focused harness teardown chờ presentation tween; chạy lại sạch ObjectDB/resource leak.
+- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, toàn bộ domain regression và main smoke; ecology validator sạch leak.
 - `git diff --check` sạch; final log scan không có script/parse/dependency/node-path error.
 
 ### Compatibility, asset và giới hạn
 
-- Save/data breaking change: none; request/result là runtime value object.
+- Save/data breaking change: none; scan-local keys không được persist.
 - Asset/provenance: không thêm/sửa asset; baseline vẫn 166 quarantine/unknown, 69 runtime P0.
-- Predator group scan/selection, `panic_from_predator`, grazing RNG và hunt timeout/contact vẫn legacy.
+- `panic_from_predator`, hunt timeout/contact và `start_wander()` natural-action RNG vẫn legacy.
 - Asset admission mới vẫn bị chặn vì `game-dev` CLI chưa có trong PATH.
-- Rollback: revert U1.9d; không cần migration.
+- Rollback: revert U1.9e; không cần migration.
 
 ### Gói tiếp theo
 
-U1.9e tách deterministic predator/prey candidate selection khỏi group scan cho một canary, giữ scan cadence 2.0–3.5s và hunt distance 210px. Không migrate grazing hoặc skill/drop catalog cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.9f tách một natural-action decision nhỏ trong `start_wander()` với injected rolls, ưu tiên grazing entry vì role/profile đã có. Giữ sleep/drink/grazing precedence và RNG call ordering. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

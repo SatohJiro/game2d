@@ -11,14 +11,16 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_test_damage_panic_policy()
+	_test_prey_selection_policy()
 	_test_transition_contract()
 	await _test_actor_adapter()
+	await create_timer(1.0).timeout
 	for child in root.get_children():
 		child.free()
 	await process_frame
 	await process_frame
 	if _failures.is_empty():
-		print("Creature ecology validation passed: deterministic damage-panic policy and actor transition adapter are valid.")
+		print("Creature ecology validation passed: damage panic, deterministic prey selection and actor adapters are valid.")
 		quit.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -50,6 +52,38 @@ func _test_transition_contract() -> void:
 	_expect(is_equal_approx(result.next_timer, 3.5) and result.target_action == CreatureTransitionResult.TargetAction.KEEP, "damage panic transition must preserve timer and threat target")
 	var invalid_timer := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_CHASE, CreatureTransitionPolicy.EVENT_ECOLOGY_DAMAGE_PANIC, true, true, 10.0, false, 0.0))
 	_expect(invalid_timer.status == CreatureTransitionResult.Status.INVALID_REQUEST, "damage panic transition must reject non-positive duration")
+	var hunt := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_ECOLOGY_PREY_ACQUIRED, true, false, -1.0, false, 6.0))
+	_expect(hunt.is_changed() and hunt.to_state_id == CreatureTransitionPolicy.STATE_HUNTING_PREY and is_equal_approx(hunt.next_timer, 6.0), "prey acquisition event must enter six-second hunt")
+
+
+func _test_prey_selection_policy() -> void:
+	var candidates: Array[CreatureEcologyCandidate] = [
+		CreatureEcologyCandidate.new(&"candidate.far", &"creature.slime", true, false, 180.0),
+		CreatureEcologyCandidate.new(&"candidate.near_z", &"creature.mushroom", true, false, 40.0),
+		CreatureEcologyCandidate.new(&"candidate.near_a", &"creature.slime", true, false, 40.0),
+	]
+	var selected := CreatureEcologySelectionPolicy.resolve(CreatureEcologySelectionRequest.new(&"creature.beast", true, false, candidates))
+	_expect(selected.is_selected(), "predator must select an eligible prey")
+	_expect(selected.candidate_key == &"candidate.near_a", "nearest tie must use lexical scan-local key")
+	_expect(is_equal_approx(selected.distance, 40.0) and is_equal_approx(selected.hunt_duration, 6.0), "selection distance/duration mismatch")
+
+	var duplicates: Array[CreatureEcologyCandidate] = [
+		CreatureEcologyCandidate.new(&"candidate.same", &"creature.slime", true, false, 100.0),
+		CreatureEcologyCandidate.new(&"candidate.same", &"creature.slime", true, false, 60.0),
+	]
+	var duplicate_selected := CreatureEcologySelectionPolicy.resolve(CreatureEcologySelectionRequest.new(&"creature.beast", true, false, duplicates))
+	_expect(duplicate_selected.is_selected() and is_equal_approx(duplicate_selected.distance, 60.0), "duplicate candidate key must deterministically keep nearest observation")
+
+	var filtered: Array[CreatureEcologyCandidate] = [
+		CreatureEcologyCandidate.new(&"candidate.capture", &"creature.slime", true, true, 10.0),
+		CreatureEcologyCandidate.new(&"candidate.boundary", &"creature.slime", true, false, 210.0),
+		CreatureEcologyCandidate.new(&"candidate.neutral", &"creature.flam", false, false, 20.0),
+		CreatureEcologyCandidate.new(&"", &"item.invalid", true, false, 5.0),
+	]
+	_expect(CreatureEcologySelectionPolicy.resolve(CreatureEcologySelectionRequest.new(&"creature.beast", true, false, filtered)).status == CreatureEcologySelectionResult.Status.NONE_AVAILABLE, "capture, neutral, invalid and exact-boundary candidates must be filtered")
+	_expect(CreatureEcologySelectionPolicy.resolve(CreatureEcologySelectionRequest.new(&"creature.flam", false, false, candidates)).status == CreatureEcologySelectionResult.Status.NONE_AVAILABLE, "neutral actor must not select prey")
+	_expect(CreatureEcologySelectionPolicy.resolve(CreatureEcologySelectionRequest.new(&"creature.beast", true, true, candidates)).status == CreatureEcologySelectionResult.Status.PROTECTED, "blocked predator must not select prey")
+	_expect(CreatureEcologySelectionPolicy.resolve(null).status == CreatureEcologySelectionResult.Status.INVALID_REQUEST, "null selection request must be invalid")
 
 
 func _test_actor_adapter() -> void:
@@ -84,6 +118,36 @@ func _test_actor_adapter() -> void:
 	_expect(bool(slime.call("apply_creature_transition", transition)), "actor must apply accepted ecology transition")
 	_expect(int(slime.get("state")) == int(state_values.get("FLEE", 10)), "actor ecology adapter must enter FLEE")
 	_expect(is_equal_approx(float(slime.get("state_timer")), 3.5), "actor ecology adapter must preserve 3.5-second duration")
+
+	var predator := packed.instantiate()
+	predator.set("species_index", 3)
+	fixture.add_child(predator)
+	var captured_prey := packed.instantiate()
+	captured_prey.set("species_index", 1)
+	fixture.add_child(captured_prey)
+	var eligible_prey := packed.instantiate()
+	eligible_prey.set("species_index", 2)
+	fixture.add_child(eligible_prey)
+	await process_frame
+	predator.global_position = Vector2.ZERO
+	captured_prey.global_position = Vector2(30.0, 0.0)
+	eligible_prey.global_position = Vector2(100.0, 0.0)
+	captured_prey.set("capture_attempt_active", true)
+	var predator_states: Dictionary = predator.get_script().get_script_constant_map().get("State", {})
+	predator.set("state", int(predator_states.get("IDLE", 0)))
+	predator.call("check_predator_prey_ecosystem")
+	_expect(int(predator.get("ecology_query_count")) == 1, "eligible predator must perform exactly one ecology query")
+	_expect(predator.get("prey_target") == eligible_prey, "actor must ignore captured nearer prey and select eligible candidate")
+	_expect(int(predator.get("state")) == int(predator_states.get("HUNTING_PREY", 14)), "selected predator must enter HUNTING_PREY")
+	_expect(is_equal_approx(float(predator.get("state_timer")), 6.0), "actor hunt duration must remain six seconds")
+
+	var query_before_block := int(predator.get("ecology_query_count"))
+	predator.set("state", int(predator_states.get("CHASE", 2)))
+	predator.call("check_predator_prey_ecosystem")
+	_expect(int(predator.get("ecology_query_count")) == query_before_block, "blocked predator must skip group scan")
+	var flam_queries_before := int(flam.get("ecology_query_count"))
+	flam.call("check_predator_prey_ecosystem")
+	_expect(int(flam.get("ecology_query_count")) == flam_queries_before, "typed neutral Flam must skip ecology group scan")
 
 
 func _expect(condition: bool, message: String) -> void:

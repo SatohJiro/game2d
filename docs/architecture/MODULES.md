@@ -25,7 +25,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | PLAYER | Input, locomotion, needs, progression coordinator | Needs/locomotion pure; action input dùng stable intent/mapper/policy; progression/craft/build handler còn trong `player.gd` | Gọi component con; phát snapshot/event | U1.4–U1.6 |
 | COMBAT | Damage, status, targeting, hit result | Pure DamageRequest/Result migrated vào Player + WildCreature; caller khác qua adapter | Command → deterministic result; presentation riêng | U1.5 |
 | CAPTURE | Throw, chance, result, ownership | Pure chance + sphere transaction + ownership resolver; stable species adapter; atomic roster commit | Seeded/injected RNG; ownership update một lần | U1.7 |
-| CREATURE | Wild AI, ecology, locomotion | Basic lifecycle owner; Flam typed creature/fireball/drop; damage-panic ecology dùng pure policy; predator scan/grazing còn legacy | Predator/prey selection rồi natural-action ownership | U1.9 |
+| CREATURE | Wild AI, ecology, locomotion | Basic lifecycle owner; Flam typed creature/fireball/drop; damage panic và prey selection dùng pure policy; natural actions còn legacy | Natural-action ownership rồi remaining species catalog | U1.9 |
 | PET | Party, command, combat assist | `pet.gd`, `player.gd` | PetInstance state + PetCommand; không giữ Node trong save | U1.10 |
 | JOBS | Pet work/reservation | Scan group trong `pet.gd`, từng building | Job board, reservation, capability, result | U5.2 |
 | INVENTORY | Stack, transfer, equipment, loot | Stable transactions; chest finite stack slots và atomic mapped batch; other direct writers còn legacy | ID-based transaction atomic | U1.2, U1.4 |
@@ -84,6 +84,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.9b thêm `SkillDefinition`; `creature.flam` tham chiếu `skill.flam.fireball`, còn actor adapter chỉ thi hành scene/tween/damage guard. Contract và remaining-writer audit ở `CREATURE_SKILL_CONTRACT.md`.
 - U1.9c thêm `CreatureDropRequest/Result/Resolver`; Flam defeat drop commit một lần bằng stable item ID, còn actor chỉ spawn node từ accepted result. Contract ở `CREATURE_DROP_CONTRACT.md`.
 - U1.9d thêm `CreatureEcologyRequest/Result/Policy` cho damage panic; accepted decision đi qua stable transition event và apply owner. Contract ở `CREATURE_ECOLOGY_CONTRACT.md`.
+- U1.9e thêm deterministic nearest prey selection với scan-local key/tie-break; group scan chỉ thu candidate và actor apply accepted result. Contract tiếp tục ở `CREATURE_ECOLOGY_CONTRACT.md`.
 - PetInstance lưu unique ID, species ID, level/EXP, stats rolled, needs, skills và assignment.
 - Pet command tối thiểu: follow, guard, attack target, work, return. Job và combat không đồng thời sở hữu locomotion.
 

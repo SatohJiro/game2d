@@ -42,3 +42,19 @@ Accepted result phát stable event `creature.transition.ecology_damage_panic` v�
 | Hunt timeout/contact | direct IDLE writer và legacy melee | transition/skill follow-up |
 
 Rollback bằng revert U1.9d; không cần save/data migration.
+
+## U1.9e — Predator/prey selection
+
+`CreatureEcologySelectionPolicy` nhận predator role/state guard và danh sách candidate thuần. Candidate chỉ chứa scan-local key, stable species ID, prey/capture flags và distance; không chứa Node hay ObjectID.
+
+Selection rule:
+
+1. Invalid/null predator request fail closed; blocked state trả `PROTECTED`; non-predator trả `NONE_AVAILABLE` trước group scan ở actor.
+2. Bỏ candidate null/invalid, non-prey, capture-active, distance không hữu hạn/âm hoặc `>=210px`.
+3. Duplicate scan-local key giữ observation gần nhất.
+4. Chọn distance nhỏ nhất; bằng nhau tie-break lexical `candidate_key`, không phụ thuộc thứ tự group.
+5. Accepted result phát `creature.transition.ecology_prey_acquired`, duration 6 giây.
+
+Actor giữ map scan-local key → live `WildCreature` chỉ trong lần query. Sau khi result và transition được accept, actor mới set `prey_target`, phát feedback và gọi legacy `panic_from_predator()`. Pack/ecology cadence vẫn 2.0–3.5 giây; policy không gọi RNG.
+
+Writer còn lại sau U1.9e: prey panic callback vẫn direct FLEE; hunt timeout/contact vẫn direct IDLE/melee; grazing/sleep/drink choice vẫn nằm trong `start_wander()`.

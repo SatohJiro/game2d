@@ -111,6 +111,7 @@ var pack_scan_timer: float = 1.0
 var perception_cadence := CreaturePerceptionCadence.new(PLAYER_PERCEPTION_INTERVAL)
 var perception_query_count: int = 0
 var transition_apply_count: int = 0
+var ecology_query_count: int = 0
 
 # Natural Behaviors (Pond Drinking & Grazing)
 var water_source_pos: Vector2 = Vector2.ZERO
@@ -555,25 +556,40 @@ func join_pack_attack(threat: Node2D) -> void:
 
 # --- PREDATOR VS PREY ECOSYSTEM ---
 func check_predator_prey_ecosystem() -> void:
-	if not cur_data.get("is_predator", false) or state == State.CHASE or state == State.ALERT or state == State.CAPTURING:
+	var is_blocked := state == State.CHASE or state == State.ALERT or state == State.CAPTURING
+	var species_id := cur_data.get("id", &"") as StringName
+	var is_predator := bool(cur_data.get("is_predator", false))
+	if not is_predator or is_blocked:
 		return
-	
-	# Look for prey (Slime or Mushroom) nearby
+
+	ecology_query_count += 1
 	var creatures = get_tree().get_nodes_in_group("wild_creatures")
+	var candidate_nodes: Dictionary = {}
+	var candidates: Array[CreatureEcologyCandidate] = []
 	for c in creatures:
 		if is_instance_valid(c) and c != self and (c is WildCreature):
-			var wild = c as WildCreature
-			if wild.cur_data.get("is_prey", false) and wild.state != State.CAPTURING:
-				var dist = global_position.distance_to(wild.global_position)
-				if dist < 210.0:
-					# Beast starts hunting prey
-					prey_target = wild
-					state = State.HUNTING_PREY
-					state_timer = 6.0
-					spawn_floating_text("🍖 RÌNH RẬP SĂN MỒI...", Color(1.0, 0.6, 0.2))
-					# Warn prey
-					wild.panic_from_predator(self)
-					break
+			var wild := c as WildCreature
+			var candidate_key := StringName("runtime.creature.%d" % wild.get_instance_id())
+			candidate_nodes[candidate_key] = wild
+			candidates.append(CreatureEcologyCandidate.new(
+				candidate_key,
+				wild.cur_data.get("id", &"") as StringName,
+				bool(wild.cur_data.get("is_prey", false)),
+				wild.state == State.CAPTURING or wild.capture_attempt_active or wild.capture_ownership_committed,
+				global_position.distance_to(wild.global_position)
+			))
+	var selection := CreatureEcologySelectionPolicy.resolve(CreatureEcologySelectionRequest.new(species_id, is_predator, is_blocked, candidates))
+	if not selection.is_selected():
+		return
+	var selected_prey := candidate_nodes.get(selection.candidate_key) as WildCreature
+	if not is_instance_valid(selected_prey):
+		return
+	var transition := resolve_creature_transition(selection.transition_event_id, true, selection.hunt_duration)
+	if not apply_creature_transition(transition):
+		return
+	prey_target = selected_prey
+	spawn_floating_text("🍖 RÌNH RẬP SĂN MỒI...", Color(1.0, 0.6, 0.2))
+	selected_prey.panic_from_predator(self)
 
 func panic_from_predator(predator: Node2D) -> void:
 	if state == State.CAPTURING or state == State.FLEE:

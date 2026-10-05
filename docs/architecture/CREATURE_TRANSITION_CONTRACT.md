@@ -77,6 +77,7 @@ Ba callback fireball/spore/melee từng ghi `state = CHASE` trực tiếp sau `a
 - U1.9a CreatureDefinition/behavior profile: random entry SLEEP/DRINKING/GRAZING và species parameters.
 - U1.9b skill execution: TELEGRAPH_CHARGE/CHARGING/STUNNED, species attack start/recovery và projectile/melee skill writers.
 - U1.9d thêm `creature.transition.ecology_damage_panic`: accepted ecology result vào FLEE 3.5 giây qua apply owner, giữ threat target; invalid timer/protected lifecycle không mutate.
+- U1.9e thêm `creature.transition.ecology_prey_acquired`: accepted selection vào HUNTING_PREY 6 giây qua apply owner; `prey_target` chỉ set sau accepted transition.
 - U1.9c ecology/drop: pack howl, predator/prey HUNTING_PREY/FLEE, prey defeat/drop và damage-reaction CHASE/FLEE.
 - Capture entry `CAPTURING` tiếp tục thuộc capture adapter U1.7; rejection/restore đã qua lifecycle owner. Defeat/despawn tiếp tục thuộc combat/capture committed-result boundary.
 
