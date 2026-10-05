@@ -1,45 +1,44 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.8c — Creature lifecycle closure
+## U1.9a — CreatureDefinition Flam canary
 
 Trạng thái: `VERIFIED` ngày 2026-10-05.
 
 ### Mục tiêu và invariant
 
-- Basic lifecycle transition có một pure resolver và một actor apply owner.
-- Perception entry commit state/target/timer nguyên tử; stale/protected result không mutate.
-- Presentation chỉ chạy sau accepted apply.
-- Giữ nguyên perception cadence 0,20 giây, threshold, timer, balance và scene hierarchy.
+- `creature.flam` dùng stable ID và typed authority cho stats/behavior/drop reference.
+- Không tạo store song song; runtime legacy-shaped snapshot chỉ là compatibility projection.
+- Giữ nguyên balance, spawn, combat/capture behavior, asset và scene hierarchy.
 
 ### Kết quả đã triển khai
 
-- Thêm stable state/event cho perception entry, SLEEP/DRINKING/GRAZING/ALERT/FLEE timeout và capture rejection.
-- `TargetAction.SET` giữ pure result không chứa Node; adapter chỉ nhận target override hợp lệ tại apply boundary.
-- CAPTURING chỉ cho phép explicit capture-rejection exit; event khác vẫn protected.
-- Drinking heal/text, flee text, alert/suspicion feedback và capture failure presentation chạy sau accepted apply.
-- Writer metric trong scope: 10 direct block trước migration, 0 sau migration.
+- Thêm `CreatureDefinition`, embedded `CreatureBehaviorProfile` và canary `flam.tres`.
+- Flam giữ 80 HP, speed 105, power 14, neutral ecology role và drop `item.pal_ore`.
+- `LegacySpeciesAdapter.create_runtime_snapshot()` chiếu typed fields về shape cũ.
+- Xóa sáu field migrated khỏi row Flam; chỉ còn name/element/texture presentation.
+- Registry cross-reference kiểm tra stable drop item; catalog tăng 10→11 definition.
 
 ### Validation hiện tại
 
-- Focused Creature validator đạt perception cadence/policy, perception entry, duplicate guard, natural timeout, FLEE target loss, ALERT target loss, capture rejection, protected/stale apply và legacy attack recovery.
-- Full `tools/check_project.ps1` đạt sau package: documentation/asset gates, editor load, mọi domain regression và main-scene smoke xanh.
-- `git diff --check` sạch; log scan không có script/parse/dependency/runtime error hoặc resource leak.
+- Focused content validator đạt valid/invalid definition, duplicate/missing reference và project catalog.
+- Creature actor regression đạt stable ID, stats, drop mapping và no-parallel-source assertion.
+- Full `tools/check_project.ps1` đạt: documentation/asset gates, editor load, toàn bộ domain regression và main smoke xanh.
+- `git diff --check` và log scan sạch.
 
 ### Compatibility, asset và giới hạn
 
-- Save/data breaking change: none; state/event/result và transition count đều transient.
-- Asset/provenance: không thêm hoặc sửa asset; 166 asset giữ nguyên trạng thái inventory/action hiện hữu.
-- Balance, animation, collision, spawn và scene hierarchy không đổi.
-- Manual test còn cần cho alert howl, drinking heal feedback, FLEE completion và capture rejection visual.
-- Random natural-state entry chuyển U1.9a; charge/species attack sang U1.9b; pack/predator-prey/drop/damage-reaction writer sang U1.9c.
-- Rollback: revert package U1.8c; không cần migration.
+- Save/data breaking change: none; party snapshot format giữ nguyên và đã có stable species ID từ U1.7c.
+- Asset/provenance: không thêm/sửa asset; texture Flam hiện hữu vẫn quarantine/unknown.
+- Bốn species còn lại vẫn dictionary-authoritative.
+- Skill execution, ecology/drop resolver và random natural-state entry chưa migrate.
+- Rollback: revert package U1.9a; không cần migration.
 
 ### Gói tiếp theo
 
-U1.9a audit và tạo lát cắt CreatureDefinition/behavior profile typed. Không migrate skill execution hoặc drop/ecology trong cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.9b audit species attack/charge và tạo typed skill reference/definition canary nhỏ nhất. Không migrate ecology/drop trong cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
 
 ## Hướng sản phẩm phải giữ
 
-- AI state không lưu Node/ObjectID làm persistent identity, sẵn sàng cho chunk unload U2.
-- Paloria Luminous Town vẫn là initiative U2–U4; content phải nguyên bản và có license/provenance.
+- Definition dùng stable ID và không lưu Node/ObjectID, sẵn sàng cho save/chunk U2.
+- Paloria Luminous Town vẫn là initiative U2–U4; content phải nguyên bản và có provenance.
 - Asset admission mới còn bị chặn vì `game-dev` CLI chưa có trong PATH.

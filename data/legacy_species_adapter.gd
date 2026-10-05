@@ -1,6 +1,8 @@
 class_name LegacySpeciesAdapter
 extends RefCounted
 
+const FLAM_DEFINITION: CreatureDefinition = preload("res://data/definitions/creatures/flam.tres")
+
 const FLAM_ID: StringName = &"creature.flam"
 const SLIME_ID: StringName = &"creature.slime"
 const MUSHROOM_ID: StringName = &"creature.mushroom"
@@ -44,4 +46,23 @@ static func create_stable_snapshot(species_index: int, legacy_data: Dictionary) 
 		return {}
 	var snapshot := legacy_data.duplicate(true)
 	snapshot["id"] = species_id
+	return snapshot
+
+
+static func create_runtime_snapshot(species_index: int, legacy_data: Dictionary) -> Dictionary:
+	var snapshot := create_stable_snapshot(species_index, legacy_data)
+	if snapshot.is_empty():
+		return {}
+	if snapshot["id"] == FLAM_ID:
+		if FLAM_DEFINITION == null or not FLAM_DEFINITION.get_validation_errors().is_empty():
+			return {}
+		snapshot["max_hp"] = FLAM_DEFINITION.base_max_hp
+		snapshot["speed"] = FLAM_DEFINITION.move_speed
+		snapshot["power"] = FLAM_DEFINITION.base_attack_power
+		snapshot["is_predator"] = FLAM_DEFINITION.behavior_profile.is_predator
+		snapshot["is_prey"] = FLAM_DEFINITION.behavior_profile.is_prey
+		var legacy_drop := LegacyItemAdapter.to_legacy_key(FLAM_DEFINITION.drop_item_id)
+		if legacy_drop.is_empty():
+			return {}
+		snapshot["drop_item"] = legacy_drop
 	return snapshot

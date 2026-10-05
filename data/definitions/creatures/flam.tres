@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CreatureDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/creature_definition.gd" id="1_creature"]
+[ext_resource type="Script" path="res://data/definitions/creature_behavior_profile.gd" id="2_behavior"]
+
+[sub_resource type="Resource" id="Resource_flam_behavior"]
+script = ExtResource("2_behavior")
+is_predator = false
+is_prey = false
+
+[resource]
+script = ExtResource("1_creature")
+content_id = &"creature.flam"
+display_name_key = &"creature.flam.name"
+developer_notes = "U1.9a typed runtime canary. Existing presentation texture/name/element remain in the legacy adapter boundary."
+base_max_hp = 80
+move_speed = 105.0
+base_attack_power = 14
+behavior_profile = SubResource("Resource_flam_behavior")
+drop_item_id = &"item.pal_ore"

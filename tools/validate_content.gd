@@ -22,7 +22,7 @@ func _run() -> void:
 	await process_frame
 
 	if _failures.is_empty():
-		print("Content validation passed: item/recipe/building/crop catalog through U1.7b and registry references are valid.")
+		print("Content validation passed: item/recipe/building/crop catalog plus U1.9a Flam CreatureDefinition and registry references are valid.")
 		_finish.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -97,6 +97,25 @@ func _test_definition_validation() -> void:
 	_expect(_contains_message(crop_errors, "growth_time_seconds"), "CropDefinition must require positive growth time")
 	_expect(_contains_message(crop_errors, "harvest_yield_max"), "CropDefinition must reject an inverted yield range")
 
+	var invalid_behavior := CreatureBehaviorProfile.new()
+	invalid_behavior.is_predator = true
+	invalid_behavior.is_prey = true
+	var invalid_creature := CreatureDefinition.new()
+	invalid_creature.content_id = &"item.not_a_creature"
+	invalid_creature.display_name_key = &"creature.invalid.name"
+	invalid_creature.base_max_hp = 0
+	invalid_creature.move_speed = NAN
+	invalid_creature.base_attack_power = 0
+	invalid_creature.behavior_profile = invalid_behavior
+	invalid_creature.drop_item_id = &"creature.not_an_item"
+	var creature_errors := invalid_creature.get_validation_errors()
+	_expect(_contains_message(creature_errors, "creature domain"), "CreatureDefinition must reject the wrong domain")
+	_expect(_contains_message(creature_errors, "base_max_hp"), "CreatureDefinition must require positive health")
+	_expect(_contains_message(creature_errors, "move_speed"), "CreatureDefinition must require finite positive speed")
+	_expect(_contains_message(creature_errors, "base_attack_power"), "CreatureDefinition must require positive attack power")
+	_expect(_contains_message(creature_errors, "both predator and prey"), "Creature behavior profile must reject conflicting ecology roles")
+	_expect(_contains_message(creature_errors, "drop_item_id"), "CreatureDefinition must require an item drop reference")
+
 
 func _test_missing_reference_validation() -> void:
 	var input := ItemAmount.new()
@@ -115,11 +134,22 @@ func _test_missing_reference_validation() -> void:
 
 	var registry := ContentRegistry.new()
 	_expect(registry.try_register(recipe), "locally valid recipe should register before reference validation")
+	var behavior := CreatureBehaviorProfile.new()
+	var creature := CreatureDefinition.new()
+	creature.content_id = &"creature.reference_test"
+	creature.display_name_key = &"creature.reference_test.name"
+	creature.base_max_hp = 10
+	creature.move_speed = 10.0
+	creature.base_attack_power = 1
+	creature.behavior_profile = behavior
+	creature.drop_item_id = &"item.missing_creature_drop"
+	_expect(registry.try_register(creature), "locally valid creature should register before reference validation")
 	_expect(not registry.validate_references(), "registry must reject missing cross-references")
 	var errors := registry.get_errors()
 	_expect(_contains_message(errors, "building.missing_station"), "missing station reference should be reported")
 	_expect(_contains_message(errors, "item.missing_input"), "missing input reference should be reported")
 	_expect(_contains_message(errors, "item.missing_output"), "missing output reference should be reported")
+	_expect(_contains_message(errors, "item.missing_creature_drop"), "missing creature drop reference should be reported")
 
 
 func _validate_project_content() -> void:
@@ -129,7 +159,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 10, "registry must contain the ten definitions through U1.7b")
+	_expect(registry.size() == 11, "registry must contain eleven definitions through U1.9a")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -140,6 +170,7 @@ func _validate_project_content() -> void:
 	_expect(registry.has(&"recipe.pal_sphere.basic"), "registry is missing recipe.pal_sphere.basic")
 	_expect(registry.has(&"building.workbench"), "registry is missing building.workbench")
 	_expect(registry.has(&"crop.berry"), "registry is missing crop.berry")
+	_expect(registry.has(&"creature.flam"), "registry is missing creature.flam")
 	var wood := registry.get_definition(&"item.wood") as ItemDefinition
 	_expect(wood != null, "item.wood must load as ItemDefinition")
 	if wood != null:
@@ -166,6 +197,14 @@ func _validate_project_content() -> void:
 		_expect(crop.seed_item_id == &"item.berry_seed", "berry crop seed mismatch")
 		_expect(crop.harvest_item_id == &"item.berry", "berry crop harvest mismatch")
 		_expect(crop.harvest_yield_min == 3 and crop.harvest_yield_max == 5, "berry crop yield mismatch")
+	var flam := registry.get_definition(&"creature.flam") as CreatureDefinition
+	_expect(flam != null, "creature.flam must load as CreatureDefinition")
+	if flam != null:
+		_expect(flam.base_max_hp == 80, "Flam base_max_hp mismatch")
+		_expect(is_equal_approx(flam.move_speed, 105.0), "Flam move_speed mismatch")
+		_expect(flam.base_attack_power == 14, "Flam base_attack_power mismatch")
+		_expect(flam.behavior_profile != null and not flam.behavior_profile.is_predator and not flam.behavior_profile.is_prey, "Flam behavior profile mismatch")
+		_expect(flam.drop_item_id == &"item.pal_ore", "Flam drop reference mismatch")
 
 
 func _contains_message(messages: PackedStringArray, fragment: String) -> bool:

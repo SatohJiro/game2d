@@ -8,13 +8,7 @@ var species_data: Array[Dictionary] = [
 	{
 		"name": "Flam",
 		"element": "Lửa",
-		"texture": preload("res://assets/monsters/flam_sheet.png"),
-		"max_hp": 80,
-		"speed": 105.0,
-		"power": 14,
-		"drop_item": "Quặng Pal",
-		"is_predator": false,
-		"is_prey": false
+		"texture": preload("res://assets/monsters/flam_sheet.png")
 	},
 	{
 		"name": "Slime",
@@ -154,7 +148,7 @@ func _ready() -> void:
 
 func setup_species() -> void:
 	species_index = species_index % species_data.size()
-	cur_data = LegacySpeciesAdapter.create_stable_snapshot(species_index, species_data[species_index])
+	cur_data = LegacySpeciesAdapter.create_runtime_snapshot(species_index, species_data[species_index])
 	
 	# 18% chance to become an Elite monster (or 100% if night raider or dragon)
 	if is_night_raider or species_index == 4 or randf() < 0.18:
