@@ -375,13 +375,14 @@ func _physics_process(delta: float) -> void:
 				var zigzag = Vector2(-flee_dir.y, flee_dir.x) * sin(Time.get_ticks_msec() * 0.01) * 0.4
 				velocity = (flee_dir + zigzag).normalized() * (cur_speed * 1.35)
 				if state_timer <= 0 or global_position.distance_to(target.global_position) > 360.0:
-					state = State.IDLE
-					state_timer = 2.0
-					target = null
-					spawn_floating_text("Thoát hiểm!", Color(0.4, 1.0, 0.5))
+					var transition := resolve_creature_transition(CreatureTransitionPolicy.EVENT_FLEE_COMPLETE, true)
+					if apply_creature_transition(transition):
+						spawn_floating_text("Thoát hiểm!", Color(0.4, 1.0, 0.5))
 			else:
-				state = State.IDLE
-				state_timer = 1.0
+				apply_creature_transition(resolve_creature_transition(
+					CreatureTransitionPolicy.EVENT_FLEE_TARGET_LOST,
+					true
+				))
 		
 		State.HUNTING_PREY:
 			# Predator hunting wild prey (e.g. Beast chasing Slime)
@@ -391,18 +392,20 @@ func _physics_process(delta: float) -> void:
 			# Drinking at water pond
 			velocity = Vector2.ZERO
 			if state_timer <= 0:
-				spawn_floating_text("Uống no nước!", Color(0.3, 0.8, 1.0))
-				hp = min(max_hp, hp + 15)
-				update_overhead()
-				state = State.IDLE
-				state_timer = 2.5
+				var transition := resolve_creature_transition(CreatureTransitionPolicy.EVENT_DRINKING_COMPLETE, true)
+				if apply_creature_transition(transition):
+					spawn_floating_text("Uống no nước!", Color(0.3, 0.8, 1.0))
+					hp = min(max_hp, hp + 15)
+					update_overhead()
 		
 		State.GRAZING:
 			# Grazing grass/berries
 			velocity = Vector2.ZERO
 			if state_timer <= 0:
-				state = State.IDLE
-				state_timer = 2.0
+				apply_creature_transition(resolve_creature_transition(
+					CreatureTransitionPolicy.EVENT_GRAZING_COMPLETE,
+					true
+				))
 		
 		State.TELEGRAPH_CHARGE:
 			# Beast winding up charge
@@ -436,13 +439,18 @@ func _physics_process(delta: float) -> void:
 		State.ALERT:
 			velocity = Vector2.ZERO
 			if state_timer <= 0:
-				state = State.CHASE
+				apply_creature_transition(resolve_creature_transition(
+					CreatureTransitionPolicy.EVENT_ALERT_COMPLETE,
+					true
+				))
 		
 		State.SLEEP:
 			velocity = Vector2.ZERO
 			if state_timer <= 0:
-				state = State.IDLE
-				state_timer = 2.0
+				apply_creature_transition(resolve_creature_transition(
+					CreatureTransitionPolicy.EVENT_SLEEP_COMPLETE,
+					true
+				))
 	
 	# Determine animation frame
 	update_animation(delta)
@@ -846,11 +854,13 @@ func is_player_perception_blocked() -> bool:
 func resolve_creature_transition(
 	event_id: StringName,
 	condition_met: bool,
-	proposed_timer: float = 0.0
+	proposed_timer: float = 0.0,
+	proposed_target: Node2D = null
 ) -> CreatureTransitionResult:
-	var has_valid_target := is_instance_valid(target)
+	var resolved_target := proposed_target if is_instance_valid(proposed_target) else target
+	var has_valid_target := is_instance_valid(resolved_target)
 	var target_distance := (
-		global_position.distance_to(target.global_position)
+		global_position.distance_to(resolved_target.global_position)
 		if has_valid_target
 		else -1.0
 	)
@@ -862,29 +872,38 @@ func resolve_creature_transition(
 		target_distance,
 		is_night_raider,
 		proposed_timer,
-		is_transition_apply_protected()
+		is_transition_request_protected(event_id)
 	)
 	return CreatureTransitionPolicy.resolve(request)
 
 
-func apply_creature_transition(result: CreatureTransitionResult) -> bool:
-	if result == null or not result.is_changed() or is_transition_apply_protected():
+func apply_creature_transition(result: CreatureTransitionResult, proposed_target: Node2D = null) -> bool:
+	if result == null or not result.is_changed() or is_transition_apply_protected(result):
 		return false
 	if result.from_state_id != get_creature_state_id():
 		return false
 	if not is_supported_transition_state(result.to_state_id):
+		return false
+	if result.target_action == CreatureTransitionResult.TargetAction.SET and not is_instance_valid(proposed_target):
 		return false
 
 	state = creature_state_from_id(result.to_state_id)
 	state_timer = result.next_timer
 	if result.target_action == CreatureTransitionResult.TargetAction.CLEAR:
 		target = null
+	elif result.target_action == CreatureTransitionResult.TargetAction.SET:
+		target = proposed_target
 	transition_apply_count += 1
 	return true
 
 
-func is_transition_apply_protected() -> bool:
-	return defeat_committed or state == State.CAPTURING or state == State.STUNNED
+func is_transition_request_protected(event_id: StringName) -> bool:
+	return defeat_committed or state == State.STUNNED or (state == State.CAPTURING and event_id != CreatureTransitionPolicy.EVENT_CAPTURE_REJECTED)
+
+
+func is_transition_apply_protected(result: CreatureTransitionResult = null) -> bool:
+	var capture_rejection := result != null and result.reason_id == CreatureTransitionPolicy.EVENT_CAPTURE_REJECTED
+	return defeat_committed or state == State.STUNNED or (state == State.CAPTURING and not capture_rejection)
 
 
 func get_creature_state_id() -> StringName:
@@ -899,6 +918,18 @@ func get_creature_state_id() -> StringName:
 			return CreatureTransitionPolicy.STATE_ALERT
 		State.CHASE:
 			return CreatureTransitionPolicy.STATE_CHASE
+		State.SLEEP:
+			return CreatureTransitionPolicy.STATE_SLEEP
+		State.DRINKING:
+			return CreatureTransitionPolicy.STATE_DRINKING
+		State.GRAZING:
+			return CreatureTransitionPolicy.STATE_GRAZING
+		State.FLEE:
+			return CreatureTransitionPolicy.STATE_FLEE
+		State.CAPTURING:
+			return CreatureTransitionPolicy.STATE_CAPTURING
+		State.HUNTING_PREY:
+			return CreatureTransitionPolicy.STATE_HUNTING_PREY
 		_:
 			return &"creature.state.legacy"
 
@@ -910,6 +941,12 @@ func is_supported_transition_state(state_id: StringName) -> bool:
 		or state_id == CreatureTransitionPolicy.STATE_SUSPICIOUS
 		or state_id == CreatureTransitionPolicy.STATE_ALERT
 		or state_id == CreatureTransitionPolicy.STATE_CHASE
+		or state_id == CreatureTransitionPolicy.STATE_SLEEP
+		or state_id == CreatureTransitionPolicy.STATE_DRINKING
+		or state_id == CreatureTransitionPolicy.STATE_GRAZING
+		or state_id == CreatureTransitionPolicy.STATE_FLEE
+		or state_id == CreatureTransitionPolicy.STATE_CAPTURING
+		or state_id == CreatureTransitionPolicy.STATE_HUNTING_PREY
 	)
 
 
@@ -923,21 +960,31 @@ func creature_state_from_id(state_id: StringName) -> State:
 			return State.ALERT
 		CreatureTransitionPolicy.STATE_CHASE:
 			return State.CHASE
+		CreatureTransitionPolicy.STATE_SLEEP:
+			return State.SLEEP
+		CreatureTransitionPolicy.STATE_DRINKING:
+			return State.DRINKING
+		CreatureTransitionPolicy.STATE_GRAZING:
+			return State.GRAZING
+		CreatureTransitionPolicy.STATE_FLEE:
+			return State.FLEE
+		CreatureTransitionPolicy.STATE_CAPTURING:
+			return State.CAPTURING
+		CreatureTransitionPolicy.STATE_HUNTING_PREY:
+			return State.HUNTING_PREY
 		_:
 			return State.IDLE
 
 
 func trigger_suspicion(p: Node2D) -> void:
-	target = p
-	state = State.SUSPICIOUS
-	state_timer = 1.6
-	spawn_floating_text("❓", Color(1.0, 0.9, 0.2))
+	var transition := resolve_creature_transition(CreatureTransitionPolicy.EVENT_PERCEPTION_SUSPICIOUS, true, 0.0, p)
+	if apply_creature_transition(transition, p):
+		spawn_floating_text("❓", Color(1.0, 0.9, 0.2))
 
 func trigger_alert(p: Node2D) -> void:
-	target = p
-	state = State.ALERT
-	state_timer = CreatureTransitionPolicy.ALERT_TIMER
-	present_alert_feedback(p)
+	var transition := resolve_creature_transition(CreatureTransitionPolicy.EVENT_PERCEPTION_ALERT, true, 0.0, p)
+	if apply_creature_transition(transition, p):
+		present_alert_feedback(p)
 
 
 func present_alert_feedback(p: Node2D) -> void:
@@ -1266,20 +1313,20 @@ func get_capture_ownership_token() -> StringName:
 
 func restore_after_capture_ownership_rejection(player_ref: Node2D) -> void:
 	capture_attempt_active = false
+	var transition := resolve_creature_transition(CreatureTransitionPolicy.EVENT_CAPTURE_REJECTED, true, 0.0, player_ref)
+	if not apply_creature_transition(transition, player_ref):
+		return
 	visual.visible = true
 	visual.rotation = 0.0
 	visual.scale = Vector2.ONE
 	visual.modulate = Color.WHITE
-	if is_instance_valid(player_ref):
-		state = State.CHASE
-		target = player_ref
-	else:
-		state = State.IDLE
-		target = null
 	spawn_floating_text("Không thể chuyển Pet vào đội hình.", Color(1.0, 0.45, 0.25))
 
 
 func capture_failed(player_ref: Node2D) -> void:
+	var transition := resolve_creature_transition(CreatureTransitionPolicy.EVENT_CAPTURE_REJECTED, true, 0.0, player_ref)
+	if not apply_creature_transition(transition, player_ref):
+		return
 	visual.visible = true
 	visual.rotation = 0.0
 	visual.modulate = Color(2.5, 0.3, 0.3)
@@ -1293,10 +1340,9 @@ func capture_failed(player_ref: Node2D) -> void:
 	attack_power = int(attack_power * 1.4)
 	
 	spawn_floating_text("💢 THOÁT CẦU! CUỒNG NỘ (+50% TỐC ĐỘ)!", Color(1.0, 0.15, 0.15))
-	state = State.CHASE
-	target = player_ref
 	# Howl to call pack when escaping sphere!
-	pack_howl_alert(player_ref)
+	if is_instance_valid(player_ref):
+		pack_howl_alert(player_ref)
 
 func spawn_floating_text(txt: String, color: Color) -> void:
 	var float_node = FLOATING_TEXT_SCENE.instantiate()

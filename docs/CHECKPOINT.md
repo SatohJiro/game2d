@@ -1,48 +1,45 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.8b — Creature transition owner slice
+## U1.8c — Creature lifecycle closure
 
-Trạng thái: `VERIFIED` ngày 2026-10-04; package branch `work/u1.8b-creature-transitions`.
+Trạng thái: `VERIFIED` ngày 2026-10-05.
 
 ### Mục tiêu và invariant
 
-- Pure transition result quyết định state/timer/target action cho lát cắt đã chọn.
-- Một apply boundary mutate state/timer/target và reject stale/protected result.
-- Giữ nguyên threshold/timer/gameplay của IDLE/WANDER/SUSPICIOUS/CHASE-loss.
-- Async attack callback không được ghi đè defeated/capture/stun.
+- Basic lifecycle transition có một pure resolver và một actor apply owner.
+- Perception entry commit state/target/timer nguyên tử; stale/protected result không mutate.
+- Presentation chỉ chạy sau accepted apply.
+- Giữ nguyên perception cadence 0,20 giây, threshold, timer, balance và scene hierarchy.
 
 ### Kết quả đã triển khai
 
-- Thêm `CreatureTransitionRequest`, `CreatureTransitionResult`, `CreatureTransitionPolicy`.
-- Stable state/event/reason IDs; không dùng Node hoặc localized display text trong pure contract.
-- Migrate 5 direct-assignment block của lát cắt về `apply_creature_transition()`.
-- Accepted apply có transient counter; apply lại result cũ fail do from-state mismatch.
-- Tách alert presentation khỏi suspicion state commit.
-- Gom ba async attack recovery về helper có ATTACK/lifecycle guard.
-
-Contract và writer audit: `architecture/CREATURE_TRANSITION_CONTRACT.md`.
+- Thêm stable state/event cho perception entry, SLEEP/DRINKING/GRAZING/ALERT/FLEE timeout và capture rejection.
+- `TargetAction.SET` giữ pure result không chứa Node; adapter chỉ nhận target override hợp lệ tại apply boundary.
+- CAPTURING chỉ cho phép explicit capture-rejection exit; event khác vẫn protected.
+- Drinking heal/text, flee text, alert/suspicion feedback và capture failure presentation chạy sau accepted apply.
+- Writer metric trong scope: 10 direct block trước migration, 0 sau migration.
 
 ### Validation hiện tại
 
-- Focused Creature validator đạt perception U1.8a, pure transition rules, actor apply-once và attack recovery guard.
-- Full `tools/check_project.ps1` đạt: 26 required file, 32 Markdown file, 166 asset inventory/action; mọi Godot regression và main smoke xanh.
-- Log scan không có script/parse/dependency/runtime error hoặc resource leak.
+- Focused Creature validator đạt perception cadence/policy, perception entry, duplicate guard, natural timeout, FLEE target loss, ALERT target loss, capture rejection, protected/stale apply và legacy attack recovery.
+- Full `tools/check_project.ps1` đạt sau package: documentation/asset gates, editor load, mọi domain regression và main-scene smoke xanh.
+- `git diff --check` sạch; log scan không có script/parse/dependency/runtime error hoặc resource leak.
 
-### Compatibility, save, asset và giới hạn
+### Compatibility, asset và giới hạn
 
-- Save/data breaking change: none; toàn bộ contract/count là transient.
-- Asset/provenance: không thêm hoặc sửa asset; 166 asset giữ nguyên.
-- 5 direct assignment block trong lát cắt giảm xuống 0; nhiều writer ngoài lát cắt còn legacy.
-- U1.8 chưa hoàn tất: timed natural states, perception entry, damage/capture restore và ecology vẫn cần ownership rõ.
-- Manual test còn cần cho alert feedback/howl, wander, leash và attack interrupted.
-- Rollback: revert commit U1.8b; không cần migration.
+- Save/data breaking change: none; state/event/result và transition count đều transient.
+- Asset/provenance: không thêm hoặc sửa asset; 166 asset giữ nguyên trạng thái inventory/action hiện hữu.
+- Balance, animation, collision, spawn và scene hierarchy không đổi.
+- Manual test còn cần cho alert howl, drinking heal feedback, FLEE completion và capture rejection visual.
+- Random natural-state entry chuyển U1.9a; charge/species attack sang U1.9b; pack/predator-prey/drop/damage-reaction writer sang U1.9c.
+- Rollback: revert package U1.8c; không cần migration.
 
 ### Gói tiếp theo
 
-U1.8c đóng basic lifecycle transition còn lại và phân loại writer nào chuyển U1.9. Không triển khai definition-driven skill/drop trong cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.9a audit và tạo lát cắt CreatureDefinition/behavior profile typed. Không migrate skill execution hoặc drop/ecology trong cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
 
 ## Hướng sản phẩm phải giữ
 
-- Perception/transition state không được giữ Node như dữ liệu bền vững để sẵn sàng chunk unload U2.
+- AI state không lưu Node/ObjectID làm persistent identity, sẵn sàng cho chunk unload U2.
 - Paloria Luminous Town vẫn là initiative U2–U4; content phải nguyên bản và có license/provenance.
 - Asset admission mới còn bị chặn vì `game-dev` CLI chưa có trong PATH.

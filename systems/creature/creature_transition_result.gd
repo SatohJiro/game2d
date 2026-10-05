@@ -2,7 +2,7 @@ class_name CreatureTransitionResult
 extends RefCounted
 
 enum Status { CHANGED, NO_CHANGE, INVALID_REQUEST, PROTECTED }
-enum TargetAction { KEEP, CLEAR }
+enum TargetAction { KEEP, CLEAR, SET }
 
 var status: Status
 var from_state_id: StringName

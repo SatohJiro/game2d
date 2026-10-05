@@ -214,6 +214,51 @@ func _test_transition_policy() -> void:
 	))
 	_expect(repeat.to_state_id == confirmed.to_state_id and repeat.reason_id == confirmed.reason_id, "transition policy must be deterministic")
 
+	var perception_entry := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_IDLE,
+		CreatureTransitionPolicy.EVENT_PERCEPTION_ALERT,
+		true,
+		true,
+		40.0
+	))
+	_expect(perception_entry.to_state_id == CreatureTransitionPolicy.STATE_ALERT, "perception alert must enter ALERT")
+	_expect(perception_entry.target_action == CreatureTransitionResult.TargetAction.SET, "perception alert must set selected target")
+	var duplicate_suspicion := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_SUSPICIOUS,
+		CreatureTransitionPolicy.EVENT_PERCEPTION_SUSPICIOUS,
+		true,
+		true,
+		100.0
+	))
+	_expect(duplicate_suspicion.status == CreatureTransitionResult.Status.NO_CHANGE, "suspicion entry must not retrigger presentation")
+
+	for natural_case in [
+		[CreatureTransitionPolicy.STATE_SLEEP, CreatureTransitionPolicy.EVENT_SLEEP_COMPLETE, 2.0],
+		[CreatureTransitionPolicy.STATE_DRINKING, CreatureTransitionPolicy.EVENT_DRINKING_COMPLETE, 2.5],
+		[CreatureTransitionPolicy.STATE_GRAZING, CreatureTransitionPolicy.EVENT_GRAZING_COMPLETE, 2.0],
+	]:
+		var natural := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+			natural_case[0], natural_case[1], true
+		))
+		_expect(natural.to_state_id == CreatureTransitionPolicy.STATE_IDLE, "natural timeout must return IDLE")
+		_expect(is_equal_approx(natural.next_timer, natural_case[2]), "natural timeout timer mismatch")
+
+	var flee_lost := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_FLEE,
+		CreatureTransitionPolicy.EVENT_FLEE_TARGET_LOST,
+		true
+	))
+	_expect(flee_lost.to_state_id == CreatureTransitionPolicy.STATE_IDLE and flee_lost.target_action == CreatureTransitionResult.TargetAction.CLEAR, "FLEE target loss must clear target")
+	var capture_rejected := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_CAPTURING,
+		CreatureTransitionPolicy.EVENT_CAPTURE_REJECTED,
+		true,
+		true,
+		20.0
+	))
+	_expect(capture_rejected.to_state_id == CreatureTransitionPolicy.STATE_CHASE, "capture rejection with target must restore CHASE")
+	_expect(capture_rejected.target_action == CreatureTransitionResult.TargetAction.SET, "capture rejection must set valid player target")
+
 
 func _test_creature_adapter() -> void:
 	var packed := load(CREATURE_SCENE_PATH) as PackedScene
@@ -236,6 +281,8 @@ func _test_creature_adapter() -> void:
 	var attack_state := int(state_values.get("ATTACK", 3))
 	var suspicious_state := int(state_values.get("SUSPICIOUS", 10))
 	var capturing_state := int(state_values.get("CAPTURING", 7))
+	var sleep_state := int(state_values.get("SLEEP", 8))
+	var alert_state := int(state_values.get("ALERT", 9))
 	creature.set("is_elite", false)
 	creature.set("is_night_raider", false)
 	creature.global_position = Vector2.ZERO
@@ -254,6 +301,7 @@ func _test_creature_adapter() -> void:
 	creature.set("state", wander_state)
 	creature.set("state_timer", 0.0)
 	creature.set("target", player)
+	var before_wander_apply := int(creature.get("transition_apply_count"))
 	var wander_result := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
 		CreatureTransitionPolicy.STATE_WANDER,
 		CreatureTransitionPolicy.EVENT_WANDER_COMPLETE,
@@ -267,9 +315,29 @@ func _test_creature_adapter() -> void:
 	_expect(int(creature.get("state")) == idle_state, "Creature transition adapter target state mismatch")
 	_expect(is_equal_approx(float(creature.get("state_timer")), 1.75), "Creature transition adapter timer mismatch")
 	_expect(creature.get("target") == player, "WANDER completion must preserve target compatibility")
-	_expect(int(creature.get("transition_apply_count")) == 1, "Creature transition apply count mismatch")
+	_expect(int(creature.get("transition_apply_count")) == before_wander_apply + 1, "Creature transition apply count mismatch")
 	_expect(not bool(creature.call("apply_creature_transition", wander_result)), "stale transition result must not apply twice")
-	_expect(int(creature.get("transition_apply_count")) == 1, "stale transition must not increment apply count")
+	_expect(int(creature.get("transition_apply_count")) == before_wander_apply + 1, "stale transition must not increment apply count")
+
+	creature.set("state", idle_state)
+	var entry_count := int(creature.get("transition_apply_count"))
+	creature.call("trigger_suspicion", player)
+	_expect(int(creature.get("state")) == suspicious_state and creature.get("target") == player, "suspicion entry must atomically commit state and target")
+	_expect(int(creature.get("transition_apply_count")) == entry_count + 1, "suspicion entry must use transition apply owner")
+	creature.call("trigger_suspicion", player)
+	_expect(int(creature.get("transition_apply_count")) == entry_count + 1, "duplicate suspicion entry must not apply or present twice")
+
+	creature.set("state", sleep_state)
+	creature.set("state_timer", 0.0)
+	var sleep_result: CreatureTransitionResult = creature.call("resolve_creature_transition", CreatureTransitionPolicy.EVENT_SLEEP_COMPLETE, true)
+	_expect(bool(creature.call("apply_creature_transition", sleep_result)), "SLEEP timeout must apply through lifecycle owner")
+	_expect(int(creature.get("state")) == idle_state and is_equal_approx(float(creature.get("state_timer")), 2.0), "SLEEP timeout adapter mismatch")
+
+	creature.set("state", alert_state)
+	creature.set("target", null)
+	var alert_lost: CreatureTransitionResult = creature.call("resolve_creature_transition", CreatureTransitionPolicy.EVENT_ALERT_COMPLETE, true)
+	_expect(bool(creature.call("apply_creature_transition", alert_lost)), "ALERT without target must exit lifecycle state")
+	_expect(int(creature.get("state")) == idle_state, "ALERT without target must return IDLE")
 
 	creature.set("state", chase_state)
 	creature.set("target", null)
@@ -294,6 +362,15 @@ func _test_creature_adapter() -> void:
 	creature.call("update_player_perception", 0.20)
 	_expect(int(creature.get("perception_query_count")) == 1, "protected state must skip the group query")
 	_expect(int(creature.get("state")) == capturing_state and creature.get("target") == null, "CAPTURING state must reject perception transition")
+	var capture_restore: CreatureTransitionResult = creature.call(
+		"resolve_creature_transition",
+		CreatureTransitionPolicy.EVENT_CAPTURE_REJECTED,
+		true,
+		0.0,
+		player
+	)
+	_expect(bool(creature.call("apply_creature_transition", capture_restore, player)), "capture rejection must be the explicit CAPTURING exit")
+	_expect(int(creature.get("state")) == chase_state and creature.get("target") == player, "capture rejection adapter must restore CHASE target")
 
 	fixture.remove_child(creature)
 	creature.free()

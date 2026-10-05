@@ -6,12 +6,27 @@ const STATE_WANDER := &"creature.state.wander"
 const STATE_SUSPICIOUS := &"creature.state.suspicious"
 const STATE_ALERT := &"creature.state.alert"
 const STATE_CHASE := &"creature.state.chase"
+const STATE_SLEEP := &"creature.state.sleep"
+const STATE_DRINKING := &"creature.state.drinking"
+const STATE_GRAZING := &"creature.state.grazing"
+const STATE_FLEE := &"creature.state.flee"
+const STATE_CAPTURING := &"creature.state.capturing"
+const STATE_HUNTING_PREY := &"creature.state.hunting_prey"
 
 const EVENT_IDLE_WANDER := &"creature.transition.idle_wander"
 const EVENT_WANDER_COMPLETE := &"creature.transition.wander_complete"
 const EVENT_SUSPICION_TIMEOUT := &"creature.transition.suspicion_timeout"
 const EVENT_CHASE_TARGET_LOST := &"creature.transition.chase_target_lost"
 const EVENT_CHASE_OUT_OF_RANGE := &"creature.transition.chase_out_of_range"
+const EVENT_PERCEPTION_SUSPICIOUS := &"creature.transition.perception_suspicious"
+const EVENT_PERCEPTION_ALERT := &"creature.transition.perception_alert"
+const EVENT_SLEEP_COMPLETE := &"creature.transition.sleep_complete"
+const EVENT_DRINKING_COMPLETE := &"creature.transition.drinking_complete"
+const EVENT_GRAZING_COMPLETE := &"creature.transition.grazing_complete"
+const EVENT_ALERT_COMPLETE := &"creature.transition.alert_complete"
+const EVENT_FLEE_COMPLETE := &"creature.transition.flee_complete"
+const EVENT_FLEE_TARGET_LOST := &"creature.transition.flee_target_lost"
+const EVENT_CAPTURE_REJECTED := &"creature.transition.capture_rejected"
 
 const REASON_SUSPICION_CONFIRMED := &"creature.transition.suspicion_confirmed"
 const REASON_SUSPICION_LOST := &"creature.transition.suspicion_lost"
@@ -105,6 +120,40 @@ static func resolve(request: CreatureTransitionRequest) -> CreatureTransitionRes
 				CHASE_OUT_OF_RANGE_TIMER,
 				CreatureTransitionResult.TargetAction.CLEAR
 			)
+		EVENT_PERCEPTION_SUSPICIOUS:
+			if request.current_state_id == STATE_SUSPICIOUS or not _is_perception_entry_state(request.current_state_id) or not _has_valid_target(request):
+				return _no_change(request)
+			return _changed(request, STATE_SUSPICIOUS, EVENT_PERCEPTION_SUSPICIOUS, 1.6, CreatureTransitionResult.TargetAction.SET)
+		EVENT_PERCEPTION_ALERT:
+			if not _is_perception_entry_state(request.current_state_id) or not _has_valid_target(request):
+				return _no_change(request)
+			return _changed(request, STATE_ALERT, EVENT_PERCEPTION_ALERT, ALERT_TIMER, CreatureTransitionResult.TargetAction.SET)
+		EVENT_SLEEP_COMPLETE:
+			return _natural_timeout(request, STATE_SLEEP, EVENT_SLEEP_COMPLETE, 2.0)
+		EVENT_DRINKING_COMPLETE:
+			return _natural_timeout(request, STATE_DRINKING, EVENT_DRINKING_COMPLETE, 2.5)
+		EVENT_GRAZING_COMPLETE:
+			return _natural_timeout(request, STATE_GRAZING, EVENT_GRAZING_COMPLETE, 2.0)
+		EVENT_ALERT_COMPLETE:
+			if request.current_state_id != STATE_ALERT:
+				return _no_change(request)
+			if request.has_target:
+				return _changed(request, STATE_CHASE, EVENT_ALERT_COMPLETE, 0.0, CreatureTransitionResult.TargetAction.KEEP)
+			return _changed(request, STATE_IDLE, EVENT_ALERT_COMPLETE, 1.0, CreatureTransitionResult.TargetAction.CLEAR)
+		EVENT_FLEE_COMPLETE:
+			if request.current_state_id != STATE_FLEE:
+				return _no_change(request)
+			return _changed(request, STATE_IDLE, EVENT_FLEE_COMPLETE, 2.0, CreatureTransitionResult.TargetAction.CLEAR)
+		EVENT_FLEE_TARGET_LOST:
+			if request.current_state_id != STATE_FLEE or request.has_target:
+				return _no_change(request)
+			return _changed(request, STATE_IDLE, EVENT_FLEE_TARGET_LOST, 1.0, CreatureTransitionResult.TargetAction.CLEAR)
+		EVENT_CAPTURE_REJECTED:
+			if request.current_state_id != STATE_CAPTURING:
+				return _no_change(request)
+			if _has_valid_target(request):
+				return _changed(request, STATE_CHASE, EVENT_CAPTURE_REJECTED, 0.0, CreatureTransitionResult.TargetAction.SET)
+			return _changed(request, STATE_IDLE, EVENT_CAPTURE_REJECTED, 0.0, CreatureTransitionResult.TargetAction.CLEAR)
 		_:
 			return _invalid(request)
 
@@ -147,3 +196,22 @@ static func _is_positive_finite(value: float) -> bool:
 
 static func _is_valid_distance(value: float) -> bool:
 	return value >= 0.0 and is_finite(value)
+
+
+static func _has_valid_target(request: CreatureTransitionRequest) -> bool:
+	return request.has_target and _is_valid_distance(request.target_distance)
+
+
+static func _is_perception_entry_state(state_id: StringName) -> bool:
+	return state_id in [STATE_IDLE, STATE_WANDER, STATE_SUSPICIOUS, STATE_SLEEP, STATE_DRINKING, STATE_GRAZING, STATE_HUNTING_PREY]
+
+
+static func _natural_timeout(
+	request: CreatureTransitionRequest,
+	expected_state_id: StringName,
+	reason_id: StringName,
+	next_timer: float
+) -> CreatureTransitionResult:
+	if request.current_state_id != expected_state_id:
+		return _no_change(request)
+	return _changed(request, STATE_IDLE, reason_id, next_timer, CreatureTransitionResult.TargetAction.KEEP)

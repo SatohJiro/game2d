@@ -1,6 +1,6 @@
-# U1.8b — Creature transition contract
+# U1.8 — Creature transition contract
 
-Trạng thái: `VERIFIED` ngày 2026-10-04
+Trạng thái: U1.8b `VERIFIED` ngày 2026-10-04; U1.8c lifecycle closure `VERIFIED` ngày 2026-10-05.
 
 Pure domain: `systems/creature/creature_transition_*.gd`
 Actor adapter: `scripts/creature.gd`
@@ -31,7 +31,18 @@ Suspicion result reason tách thành `creature.transition.suspicion_confirmed` h
 
 `CreatureTransitionRequest` gồm current state ID, event ID, condition flag, target presence/distance, night-raider flag, injected timer và protected flag. Không chứa Node, Callable, SceneTree, tween hoặc RNG.
 
-`CreatureTransitionResult.Status`: `CHANGED`, `NO_CHANGE`, `INVALID_REQUEST`, `PROTECTED`. Result chứa from/to state, stable reason, next timer và target action `KEEP | CLEAR`.
+`CreatureTransitionResult.Status`: `CHANGED`, `NO_CHANGE`, `INVALID_REQUEST`, `PROTECTED`. Result chứa from/to state, stable reason, next timer và target action `KEEP | CLEAR | SET`. `SET` không chứa Node trong pure result; actor adapter chỉ commit khi nhận một target override còn hợp lệ.
+
+## U1.8c — basic lifecycle closure
+
+U1.8c mở rộng cùng request/result/apply owner cho:
+
+- perception entry vào SUSPICIOUS/ALERT, commit state, timer và selected target trong một accepted apply;
+- timeout SLEEP, DRINKING, GRAZING và ALERT;
+- FLEE hoàn tất hoặc mất target;
+- capture/ownership rejection thoát CAPTURING về CHASE khi còn player target, ngược lại về IDLE.
+
+CAPTURING vẫn là protected state cho mọi event ngoài `creature.transition.capture_rejected`. Presentation suspicion/alert, drinking heal/text, flee text và capture-failure feedback chỉ chạy sau accepted apply. Result stale, protected hoặc thiếu target cho `SET` không mutate và không phát presentation.
 
 Policy deterministic và fail closed:
 
@@ -61,23 +72,24 @@ Trước U1.8b có 5 block assignment trực tiếp trong lát cắt: WANDER com
 
 Ba callback fireball/spore/melee từng ghi `state = CHASE` trực tiếp sau `await`. Chúng dùng chung `finish_legacy_attack_recovery()`, chỉ recover nếu actor vẫn ở ATTACK và chưa defeated/CAPTURING/STUNNED. Skill execution vẫn legacy và thuộc U1.9.
 
-## Writer còn legacy
+## Writer còn legacy và owner kế tiếp
 
-- Timed FLEE, DRINKING, GRAZING, SLEEP, ALERT, charge và stun state handlers.
-- `trigger_suspicion`, `trigger_alert`, pack/ecosystem, damage reaction và capture rejection.
-- Species attack start, prey hunt, defeat/despawn và velocity ownership.
+- U1.9a CreatureDefinition/behavior profile: random entry SLEEP/DRINKING/GRAZING và species parameters.
+- U1.9b skill execution: TELEGRAPH_CHARGE/CHARGING/STUNNED, species attack start/recovery và projectile/melee skill writers.
+- U1.9c ecology/drop: pack howl, predator/prey HUNTING_PREY/FLEE, prey defeat/drop và damage-reaction CHASE/FLEE.
+- Capture entry `CAPTURING` tiếp tục thuộc capture adapter U1.7; rejection/restore đã qua lifecycle owner. Defeat/despawn tiếp tục thuộc combat/capture committed-result boundary.
 
-U1.8c phải đóng các lifecycle/basic-state writer phù hợp trước khi U1.8 được đánh dấu hoàn tất. Combat skill/drop và ecology-specific transitions có thể chuyển tiếp U1.9 nếu owner được ghi rõ.
+Trong scope U1.8c có 10 direct writer block trước migration: 2 perception entry, 6 timed lifecycle exit và 2 capture rejection/restore. Sau migration còn 0 block trong scope; các writer còn lại được phân loại cụ thể sang U1.9 hoặc giữ ở committed combat/capture owner hiện hữu.
 
 ## Compatibility, save, asset và rollback
 
 - Gameplay threshold/timer/target-clear behavior của năm block giữ nguyên.
 - Save/data breaking change: none; request/result/count đều transient.
 - Asset/provenance: none.
-- Rollback: revert commit U1.8b; không cần migration.
+- Rollback: revert package U1.8c rồi U1.8b nếu cần; không cần migration.
 
 ## Validation và giới hạn
 
-`tools/validate_creature_perception.gd` kiểm tra deterministic result, condition false, timer injection, suspicion boundary 139/140, target action, chase lost/leash/night raid, protected/unknown event, actor apply, stale result apply-once và legacy attack recovery guard.
+`tools/validate_creature_perception.gd` kiểm tra deterministic result, condition false, timer injection, suspicion boundary 139/140, perception entry/duplicate guard, natural timeout, FLEE target loss, ALERT mất target, capture rejection, target action, chase lost/leash/night raid, protected/unknown event, actor apply, stale result apply-once và legacy attack recovery guard.
 
 Full gate tiếp tục chạy perception, transition, capture regression và main smoke. Manual test còn cần cho alert VFX/howl sau suspicion, wander timing, leash và attack bị capture/stun giữa animation.
