@@ -12,6 +12,7 @@ func _initialize() -> void:
 func _run() -> void:
 	_test_damage_panic_policy()
 	_test_prey_selection_policy()
+	_test_grazing_policy()
 	_test_transition_contract()
 	await _test_actor_adapter()
 	await create_timer(1.0).timeout
@@ -20,7 +21,7 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	if _failures.is_empty():
-		print("Creature ecology validation passed: damage panic, deterministic prey selection and actor adapters are valid.")
+		print("Creature ecology validation passed: damage panic, prey selection, grazing decision and actor adapters are valid.")
 		quit.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -86,6 +87,21 @@ func _test_prey_selection_policy() -> void:
 	_expect(CreatureEcologySelectionPolicy.resolve(null).status == CreatureEcologySelectionResult.Status.INVALID_REQUEST, "null selection request must be invalid")
 
 
+func _test_grazing_policy() -> void:
+	var accepted := CreatureGrazingPolicy.resolve(CreatureGrazingRequest.new(&"creature.slime", true, 0.219999, false))
+	_expect(accepted.should_graze() and accepted.transition_event_id == CreatureTransitionPolicy.EVENT_ECOLOGY_GRAZING_ENTRY, "prey roll below 0.22 must graze")
+	_expect(CreatureGrazingPolicy.resolve(CreatureGrazingRequest.new(&"creature.slime", true, 0.22, false)).status == CreatureGrazingResult.Status.NO_CHANGE, "exact 0.22 grazing boundary must fail")
+	_expect(CreatureGrazingPolicy.resolve(CreatureGrazingRequest.new(&"creature.flam", false, 0.0, false)).status == CreatureGrazingResult.Status.NO_CHANGE, "neutral Flam must not graze")
+	_expect(CreatureGrazingPolicy.resolve(CreatureGrazingRequest.new(&"creature.slime", true, 0.0, true)).status == CreatureGrazingResult.Status.PROTECTED, "protected prey must not graze")
+	_expect(CreatureGrazingPolicy.resolve(CreatureGrazingRequest.new(&"creature.slime", true, -0.01, false)).status == CreatureGrazingResult.Status.INVALID_REQUEST, "negative grazing roll must be invalid")
+	_expect(CreatureGrazingPolicy.resolve(CreatureGrazingRequest.new(&"creature.slime", true, 1.01, false)).status == CreatureGrazingResult.Status.INVALID_REQUEST, "grazing roll above one must be invalid")
+	_expect(CreatureGrazingPolicy.resolve(null).status == CreatureGrazingResult.Status.INVALID_REQUEST, "null grazing request must be invalid")
+	var transition := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_ECOLOGY_GRAZING_ENTRY, true, false, -1.0, false, 2.5))
+	_expect(transition.is_changed() and transition.to_state_id == CreatureTransitionPolicy.STATE_GRAZING and is_equal_approx(transition.next_timer, 2.5), "grazing event must enter GRAZING with injected duration")
+	var wrong_source := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_WANDER, CreatureTransitionPolicy.EVENT_ECOLOGY_GRAZING_ENTRY, true, false, -1.0, false, 3.0))
+	_expect(wrong_source.status == CreatureTransitionResult.Status.NO_CHANGE, "grazing entry must only apply from IDLE")
+
+
 func _test_actor_adapter() -> void:
 	var packed := load(CREATURE_SCENE_PATH) as PackedScene
 	if packed == null:
@@ -102,6 +118,8 @@ func _test_actor_adapter() -> void:
 	flam.set("is_enraged", false)
 	var flam_result: CreatureEcologyResult = flam.call("resolve_damage_panic", false)
 	_expect(flam_result.status == CreatureEcologyResult.Status.NO_CHANGE, "typed neutral Flam actor must not panic at low HP")
+	var flam_grazing: CreatureGrazingResult = flam.call("resolve_grazing_entry", 0.0)
+	_expect(flam_grazing.status == CreatureGrazingResult.Status.NO_CHANGE, "typed neutral Flam actor must not accept grazing")
 
 	var slime := packed.instantiate()
 	slime.set("species_index", 1)
@@ -118,6 +136,13 @@ func _test_actor_adapter() -> void:
 	_expect(bool(slime.call("apply_creature_transition", transition)), "actor must apply accepted ecology transition")
 	_expect(int(slime.get("state")) == int(state_values.get("FLEE", 10)), "actor ecology adapter must enter FLEE")
 	_expect(is_equal_approx(float(slime.get("state_timer")), 3.5), "actor ecology adapter must preserve 3.5-second duration")
+	slime.set("state", idle_state_from(slime))
+	var slime_grazing: CreatureGrazingResult = slime.call("resolve_grazing_entry", 0.0)
+	_expect(slime_grazing.should_graze(), "prey actor must accept injected grazing roll")
+	_expect(bool(slime.call("apply_grazing_entry", slime_grazing, 4.0)), "prey actor must apply accepted grazing transition")
+	_expect(int(slime.get("state")) == int(state_values.get("GRAZING", 13)) and is_equal_approx(float(slime.get("state_timer")), 4.0), "prey actor grazing state/duration mismatch")
+	slime.set("state", int(state_values.get("CAPTURING", 7)))
+	_expect((slime.call("resolve_grazing_entry", 0.0) as CreatureGrazingResult).status == CreatureGrazingResult.Status.PROTECTED, "capturing actor grazing request must be protected")
 
 	var predator := packed.instantiate()
 	predator.set("species_index", 3)
@@ -153,3 +178,8 @@ func _test_actor_adapter() -> void:
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		_failures.append(message)
+
+
+func idle_state_from(creature: Node) -> int:
+	var values: Dictionary = creature.get_script().get_script_constant_map().get("State", {})
+	return int(values.get("IDLE", 0))

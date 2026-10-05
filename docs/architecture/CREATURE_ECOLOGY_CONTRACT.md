@@ -58,3 +58,19 @@ Selection rule:
 Actor giữ map scan-local key → live `WildCreature` chỉ trong lần query. Sau khi result và transition được accept, actor mới set `prey_target`, phát feedback và gọi legacy `panic_from_predator()`. Pack/ecology cadence vẫn 2.0–3.5 giây; policy không gọi RNG.
 
 Writer còn lại sau U1.9e: prey panic callback vẫn direct FLEE; hunt timeout/contact vẫn direct IDLE/melee; grazing/sleep/drink choice vẫn nằm trong `start_wander()`.
+
+## U1.9f — Grazing-entry decision
+
+`CreatureGrazingPolicy` nhận stable species ID, prey role, injected roll và protected guard. Rule giữ nguyên: chỉ prey với finite roll trong `[0,1]` và roll strict `<0.22` được accept; đúng `0.22` trả `NO_CHANGE`.
+
+Accepted result phát `creature.transition.ecology_grazing_entry`. Transition chỉ nhận từ IDLE và dùng duration đã inject trong range legacy 2.5–4.0 giây. Actor chỉ render text sau accepted apply.
+
+RNG ordering được giữ tại `start_wander()`:
+
+1. Sleep roll/optional duration giữ nguyên.
+2. Drink roll/optional duration giữ nguyên.
+3. Chỉ prey mới tăng `grazing_roll_count` và gọi grazing roll.
+4. Chỉ accepted grazing mới tăng `grazing_duration_roll_count` và gọi duration roll.
+5. Nếu không grazing, wander duration rồi angle roll giữ nguyên thứ tự.
+
+Hai counter là transient regression telemetry, không thuộc save. Sleep/drink decisions, predator panic callback và hunt lifecycle vẫn legacy.

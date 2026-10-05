@@ -112,6 +112,8 @@ var perception_cadence := CreaturePerceptionCadence.new(PLAYER_PERCEPTION_INTERV
 var perception_query_count: int = 0
 var transition_apply_count: int = 0
 var ecology_query_count: int = 0
+var grazing_roll_count: int = 0
+var grazing_duration_roll_count: int = 0
 
 # Natural Behaviors (Pond Drinking & Grazing)
 var water_source_pos: Vector2 = Vector2.ZERO
@@ -1034,12 +1036,16 @@ func start_wander() -> void:
 		spawn_floating_text("💧 Đi uống nước mát...", Color(0.4, 0.8, 1.0))
 		return
 	
-	# Natural behavior: Grazing if herbivore
-	if cur_data.get("is_prey", false) and randf() < 0.22:
-		state = State.GRAZING
-		state_timer = randf_range(2.5, 4.0)
-		spawn_floating_text("🌾 Gặm cỏ thong dong...", Color(0.5, 0.9, 0.3))
-		return
+	# Preserve legacy RNG ordering: only prey roll after sleep/drink fail; duration rolls only on acceptance.
+	if cur_data.get("is_prey", false):
+		grazing_roll_count += 1
+		var grazing_result := resolve_grazing_entry(randf())
+		if grazing_result.should_graze():
+			grazing_duration_roll_count += 1
+			var grazing_duration := randf_range(CreatureGrazingPolicy.DURATION_MIN, CreatureGrazingPolicy.DURATION_MAX)
+			if apply_grazing_entry(grazing_result, grazing_duration):
+				spawn_floating_text("🌾 Gặm cỏ thong dong...", Color(0.5, 0.9, 0.3))
+				return
 	
 	var transition := resolve_creature_transition(
 		CreatureTransitionPolicy.EVENT_IDLE_WANDER,
@@ -1049,6 +1055,21 @@ func start_wander() -> void:
 	if apply_creature_transition(transition):
 		var angle = randf() * TAU
 		wander_dir = Vector2(cos(angle), sin(angle))
+
+
+func resolve_grazing_entry(roll: float) -> CreatureGrazingResult:
+	return CreatureGrazingPolicy.resolve(CreatureGrazingRequest.new(
+		cur_data.get("id", &"") as StringName,
+		bool(cur_data.get("is_prey", false)),
+		roll,
+		is_transition_request_protected(CreatureTransitionPolicy.EVENT_ECOLOGY_GRAZING_ENTRY)
+	))
+
+
+func apply_grazing_entry(result: CreatureGrazingResult, duration: float) -> bool:
+	if result == null or not result.should_graze():
+		return false
+	return apply_creature_transition(resolve_creature_transition(result.transition_event_id, true, duration))
 
 func take_damage(amount: int, hit_origin: Vector2, attacker: Node2D = null) -> void:
 	if state == State.CAPTURING or defeat_committed:
