@@ -18,3 +18,4 @@ move_speed = 105.0
 base_attack_power = 14
 behavior_profile = SubResource("Resource_flam_behavior")
 drop_item_id = &"item.pal_ore"
+skill_ids = Array[StringName]([&"skill.flam.fireball"])

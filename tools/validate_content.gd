@@ -22,7 +22,7 @@ func _run() -> void:
 	await process_frame
 
 	if _failures.is_empty():
-		print("Content validation passed: item/recipe/building/crop catalog plus U1.9a Flam CreatureDefinition and registry references are valid.")
+		print("Content validation passed: catalog plus U1.9b Flam SkillDefinition and registry references are valid.")
 		_finish.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -116,6 +116,22 @@ func _test_definition_validation() -> void:
 	_expect(_contains_message(creature_errors, "both predator and prey"), "Creature behavior profile must reject conflicting ecology roles")
 	_expect(_contains_message(creature_errors, "drop_item_id"), "CreatureDefinition must require an item drop reference")
 
+	var invalid_skill := SkillDefinition.new()
+	invalid_skill.content_id = &"creature.not_a_skill"
+	invalid_skill.display_name_key = &"skill.invalid.name"
+	invalid_skill.cooldown_seconds = 0.0
+	invalid_skill.damage_multiplier = NAN
+	invalid_skill.travel_distance = 0.0
+	invalid_skill.travel_seconds = 0.0
+	invalid_skill.hit_radius = 0.0
+	var skill_errors := invalid_skill.get_validation_errors()
+	_expect(_contains_message(skill_errors, "skill domain"), "SkillDefinition must reject the wrong domain")
+	_expect(_contains_message(skill_errors, "cooldown_seconds"), "SkillDefinition must require positive cooldown")
+	_expect(_contains_message(skill_errors, "damage_multiplier"), "SkillDefinition must require finite positive damage scaling")
+	_expect(_contains_message(skill_errors, "travel_distance"), "Projectile skill must require travel distance")
+	_expect(_contains_message(skill_errors, "travel_seconds"), "Projectile skill must require travel time")
+	_expect(_contains_message(skill_errors, "hit_radius"), "Projectile skill must require a hit radius")
+
 
 func _test_missing_reference_validation() -> void:
 	var input := ItemAmount.new()
@@ -143,6 +159,7 @@ func _test_missing_reference_validation() -> void:
 	creature.base_attack_power = 1
 	creature.behavior_profile = behavior
 	creature.drop_item_id = &"item.missing_creature_drop"
+	creature.skill_ids = [&"skill.missing_creature_skill"]
 	_expect(registry.try_register(creature), "locally valid creature should register before reference validation")
 	_expect(not registry.validate_references(), "registry must reject missing cross-references")
 	var errors := registry.get_errors()
@@ -150,6 +167,7 @@ func _test_missing_reference_validation() -> void:
 	_expect(_contains_message(errors, "item.missing_input"), "missing input reference should be reported")
 	_expect(_contains_message(errors, "item.missing_output"), "missing output reference should be reported")
 	_expect(_contains_message(errors, "item.missing_creature_drop"), "missing creature drop reference should be reported")
+	_expect(_contains_message(errors, "skill.missing_creature_skill"), "missing creature skill reference should be reported")
 
 
 func _validate_project_content() -> void:
@@ -159,7 +177,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 11, "registry must contain eleven definitions through U1.9a")
+	_expect(registry.size() == 12, "registry must contain twelve definitions through U1.9b")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -171,6 +189,7 @@ func _validate_project_content() -> void:
 	_expect(registry.has(&"building.workbench"), "registry is missing building.workbench")
 	_expect(registry.has(&"crop.berry"), "registry is missing crop.berry")
 	_expect(registry.has(&"creature.flam"), "registry is missing creature.flam")
+	_expect(registry.has(&"skill.flam.fireball"), "registry is missing skill.flam.fireball")
 	var wood := registry.get_definition(&"item.wood") as ItemDefinition
 	_expect(wood != null, "item.wood must load as ItemDefinition")
 	if wood != null:
@@ -205,6 +224,17 @@ func _validate_project_content() -> void:
 		_expect(flam.base_attack_power == 14, "Flam base_attack_power mismatch")
 		_expect(flam.behavior_profile != null and not flam.behavior_profile.is_predator and not flam.behavior_profile.is_prey, "Flam behavior profile mismatch")
 		_expect(flam.drop_item_id == &"item.pal_ore", "Flam drop reference mismatch")
+		_expect(flam.skill_ids == [&"skill.flam.fireball"], "Flam skill reference mismatch")
+	var fireball := registry.get_definition(&"skill.flam.fireball") as SkillDefinition
+	_expect(fireball != null, "skill.flam.fireball must load as SkillDefinition")
+	if fireball != null:
+		_expect(fireball.delivery == SkillDefinition.Delivery.PROJECTILE, "Flam fireball delivery mismatch")
+		_expect(is_equal_approx(fireball.cooldown_seconds, 2.2), "Flam fireball cooldown mismatch")
+		_expect(is_equal_approx(fireball.recovery_seconds, 0.3), "Flam fireball recovery mismatch")
+		_expect(is_equal_approx(fireball.damage_multiplier, 1.0), "Flam fireball damage scaling mismatch")
+		_expect(is_equal_approx(fireball.travel_distance, 240.0), "Flam fireball distance mismatch")
+		_expect(is_equal_approx(fireball.travel_seconds, 0.55), "Flam fireball travel time mismatch")
+		_expect(is_equal_approx(fireball.hit_radius, 45.0), "Flam fireball hit radius mismatch")
 
 
 func _contains_message(messages: PackedStringArray, fragment: String) -> bool:

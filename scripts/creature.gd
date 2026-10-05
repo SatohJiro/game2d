@@ -93,6 +93,7 @@ var target: Node2D = null
 var prey_target: Node2D = null
 var home_pos: Vector2 = Vector2.ZERO
 var attack_cooldown: float = 0.0
+var primary_skill_definition: SkillDefinition
 var is_enraged: bool = false
 var is_night_raider: bool = false
 var is_elite: bool = false
@@ -149,6 +150,7 @@ func _ready() -> void:
 func setup_species() -> void:
 	species_index = species_index % species_data.size()
 	cur_data = LegacySpeciesAdapter.create_runtime_snapshot(species_index, species_data[species_index])
+	primary_skill_definition = LegacySpeciesAdapter.get_primary_skill_definition(cur_data.get("id", &"") as StringName)
 	
 	# 18% chance to become an Elite monster (or 100% if night raider or dragon)
 	if is_night_raider or species_index == 4 or randf() < 0.18:
@@ -638,7 +640,7 @@ func handle_smart_chase(delta: float) -> void:
 				var tangent = Vector2(-raw_dir.y, raw_dir.x)
 				velocity = (tangent * 0.8 + raw_dir * 0.2).normalized() * move_speed
 				if attack_cooldown <= 0:
-					perform_fireball_attack(raw_dir)
+					perform_fireball_attack(raw_dir, primary_skill_definition)
 		
 		1: # Slime (Nước) - Bouncy Hopper
 			if hp < max_hp * 0.30:
@@ -701,8 +703,14 @@ func perform_slime_hop(dir: Vector2) -> void:
 	tween.tween_property(visual, "position:y", 0.0, 0.15)
 	tween.tween_property(visual, "scale", Vector2.ONE, 0.1)
 
-func perform_fireball_attack(dir: Vector2) -> void:
-	attack_cooldown = 2.2
+func perform_fireball_attack(dir: Vector2, skill: SkillDefinition = null) -> void:
+	var cooldown_seconds := skill.cooldown_seconds if skill != null else 2.2
+	var travel_distance := skill.travel_distance if skill != null else 240.0
+	var travel_seconds := skill.travel_seconds if skill != null else 0.55
+	var hit_radius := skill.hit_radius if skill != null else 45.0
+	var recovery_seconds := skill.recovery_seconds if skill != null else 0.3
+	var damage_multiplier := skill.damage_multiplier if skill != null else 1.0
+	attack_cooldown = cooldown_seconds
 	state = State.ATTACK
 	velocity = Vector2.ZERO
 	
@@ -717,16 +725,16 @@ func perform_fireball_attack(dir: Vector2) -> void:
 	get_parent().add_child(fb)
 	
 	var tween = create_tween()
-	var dest = fb.global_position + dir * 240.0
-	tween.tween_property(fb, "global_position", dest, 0.55).set_trans(Tween.TRANS_LINEAR)
+	var dest = fb.global_position + dir * travel_distance
+	tween.tween_property(fb, "global_position", dest, travel_seconds).set_trans(Tween.TRANS_LINEAR)
 	tween.tween_callback(func():
-		if is_instance_valid(target) and fb.global_position.distance_to(target.global_position) < 45.0:
+		if is_instance_valid(target) and fb.global_position.distance_to(target.global_position) < hit_radius:
 			if target.has_method("take_damage"):
-				target.take_damage(attack_power, global_position)
+				target.take_damage(int(attack_power * damage_multiplier), global_position)
 		fb.queue_free()
 	)
 	
-	await get_tree().create_timer(0.3).timeout
+	await get_tree().create_timer(recovery_seconds).timeout
 	finish_legacy_attack_recovery()
 
 func perform_spore_attack(dir: Vector2) -> void:

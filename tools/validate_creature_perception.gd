@@ -283,6 +283,16 @@ func _test_creature_adapter() -> void:
 	_expect(int(runtime_species.get("power", 0)) == 14, "Flam runtime power compatibility mismatch")
 	_expect(runtime_species.get("drop_item", "") == LegacyItemAdapter.to_legacy_key(&"item.pal_ore"), "Flam stable drop reference must preserve legacy runtime key")
 	_expect(not (legacy_species_rows[0] as Dictionary).has("max_hp"), "migrated Flam HP must not remain a parallel legacy source")
+	var primary_skill := creature.get("primary_skill_definition") as SkillDefinition
+	_expect(primary_skill != null, "Flam actor must resolve its typed primary skill")
+	if primary_skill != null:
+		_expect(primary_skill.content_id == LegacySpeciesAdapter.FLAM_FIREBALL_ID, "Flam actor skill must use stable skill ID")
+		_expect(is_equal_approx(primary_skill.cooldown_seconds, 2.2), "Flam actor skill cooldown compatibility mismatch")
+		_expect(is_equal_approx(primary_skill.recovery_seconds, 0.3), "Flam actor skill recovery compatibility mismatch")
+		_expect(is_equal_approx(primary_skill.travel_distance, 240.0), "Flam actor projectile distance compatibility mismatch")
+		_expect(is_equal_approx(primary_skill.travel_seconds, 0.55), "Flam actor projectile timing compatibility mismatch")
+		_expect(is_equal_approx(primary_skill.hit_radius, 45.0), "Flam actor hit radius compatibility mismatch")
+		_expect(is_equal_approx(primary_skill.damage_multiplier, 1.0), "Flam actor damage compatibility mismatch")
 	var idle_state := int(state_values.get("IDLE", 0))
 	var wander_state := int(state_values.get("WANDER", 1))
 	var chase_state := int(state_values.get("CHASE", 2))

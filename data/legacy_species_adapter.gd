@@ -2,8 +2,10 @@ class_name LegacySpeciesAdapter
 extends RefCounted
 
 const FLAM_DEFINITION: CreatureDefinition = preload("res://data/definitions/creatures/flam.tres")
+const FLAM_FIREBALL_DEFINITION: SkillDefinition = preload("res://data/definitions/skills/flam_fireball.tres")
 
 const FLAM_ID: StringName = &"creature.flam"
+const FLAM_FIREBALL_ID: StringName = &"skill.flam.fireball"
 const SLIME_ID: StringName = &"creature.slime"
 const MUSHROOM_ID: StringName = &"creature.mushroom"
 const BEAST_ID: StringName = &"creature.beast"
@@ -38,6 +40,16 @@ static func to_legacy_index(species_id: StringName) -> int:
 
 static func is_supported(species_id: StringName) -> bool:
 	return CONTENT_ID_TO_INDEX.has(species_id)
+
+
+static func get_primary_skill_definition(species_id: StringName) -> SkillDefinition:
+	if species_id != FLAM_ID:
+		return null
+	if FLAM_DEFINITION.skill_ids.is_empty() or FLAM_DEFINITION.skill_ids[0] != FLAM_FIREBALL_ID:
+		return null
+	if FLAM_FIREBALL_DEFINITION == null or not FLAM_FIREBALL_DEFINITION.get_validation_errors().is_empty():
+		return null
+	return FLAM_FIREBALL_DEFINITION
 
 
 static func create_stable_snapshot(species_index: int, legacy_data: Dictionary) -> Dictionary:

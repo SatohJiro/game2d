@@ -7,6 +7,7 @@ extends ContentDefinition
 @export_range(1, 100000, 1) var base_attack_power: int = 1
 @export var behavior_profile: CreatureBehaviorProfile
 @export var drop_item_id: StringName = &""
+@export var skill_ids: Array[StringName] = []
 
 
 func get_validation_errors() -> PackedStringArray:
@@ -26,6 +27,9 @@ func get_validation_errors() -> PackedStringArray:
 			errors.append(message)
 	if ContentId.domain_of(drop_item_id) != &"item":
 		errors.append("drop_item_id must use the item domain for %s" % content_id)
+	for skill_id in skill_ids:
+		if ContentId.domain_of(skill_id) != &"skill":
+			errors.append("skill_ids must use the skill domain for %s: %s" % [content_id, skill_id])
 	return errors
 
 
@@ -33,4 +37,7 @@ func get_referenced_content_ids() -> Array[StringName]:
 	var references: Array[StringName] = []
 	if ContentId.is_valid(drop_item_id):
 		references.append(drop_item_id)
+	for skill_id in skill_ids:
+		if ContentId.is_valid(skill_id):
+			references.append(skill_id)
 	return references

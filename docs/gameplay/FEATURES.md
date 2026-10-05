@@ -68,6 +68,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.8b chuyển 5 block IDLE/WANDER/SUSPICIOUS/CHASE-loss sang pure transition result + guarded apply; attack callback chỉ recover nếu actor vẫn ở ATTACK.
 - U1.8c đóng perception entry, SLEEP/DRINKING/GRAZING/ALERT/FLEE timeout và capture rejection qua cùng apply owner; presentation chỉ chạy sau accepted apply. Skill/ecology writer được hoãn có owner sang U1.9.
 - U1.9a: Flam dùng typed `CreatureDefinition` làm authority cho base HP/speed/power, predator/prey profile và stable drop reference; runtime legacy snapshot giữ nguyên behavior/balance cho consumer cũ.
+- U1.9b: `skill.flam.fireball` là typed authority cho cooldown, recovery, damage scale, projectile travel và hit radius; giá trị gameplay quan sát được không đổi.
 - Acceptance: một activation không multi-hit ngoài thiết kế; chết chỉ phát reward một lần; reduced shake không đổi damage.
 
 ### G05 — capture
