@@ -22,13 +22,14 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 15. `docs/architecture/CREATURE_DEFINITION_CONTRACT.md`: typed Flam canary, legacy adapter và species field audit.
 16. `docs/architecture/CREATURE_SKILL_CONTRACT.md`: stable skill ID, typed Flam fireball canary và remaining attack writer audit.
 17. `docs/architecture/CREATURE_DROP_CONTRACT.md`: deterministic defeat drop, capture guard và atomic Flam commit.
-18. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
-19. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
-20. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
-21. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
-22. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
-23. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
-24. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
+18. `docs/architecture/CREATURE_ECOLOGY_CONTRACT.md`: pure damage-panic policy, stable ecology event và transition ownership.
+19. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
+20. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
+21. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
+22. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
+23. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
+24. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+25. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 
@@ -68,6 +69,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.9a creature definition | Hoàn tất | `creature.flam` typed authority cho stats/behavior/drop; runtime adapter giữ compatibility |
 | U1.9b creature skill | Hoàn tất | `skill.flam.fireball` typed authority cho attack tuning; actor adapter giữ timing/damage/lifecycle |
 | U1.9c creature drop | Hoàn tất | Flam dùng deterministic drop result + atomic commit; quantity/capture compatibility giữ nguyên |
+| U1.9d creature ecology | Hoàn tất | Damage panic dùng pure policy + transition owner; threshold/duration/RNG ordering giữ nguyên |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

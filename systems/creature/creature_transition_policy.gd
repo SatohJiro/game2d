@@ -27,6 +27,7 @@ const EVENT_ALERT_COMPLETE := &"creature.transition.alert_complete"
 const EVENT_FLEE_COMPLETE := &"creature.transition.flee_complete"
 const EVENT_FLEE_TARGET_LOST := &"creature.transition.flee_target_lost"
 const EVENT_CAPTURE_REJECTED := &"creature.transition.capture_rejected"
+const EVENT_ECOLOGY_DAMAGE_PANIC := &"creature.transition.ecology_damage_panic"
 
 const REASON_SUSPICION_CONFIRMED := &"creature.transition.suspicion_confirmed"
 const REASON_SUSPICION_LOST := &"creature.transition.suspicion_lost"
@@ -154,6 +155,10 @@ static func resolve(request: CreatureTransitionRequest) -> CreatureTransitionRes
 			if _has_valid_target(request):
 				return _changed(request, STATE_CHASE, EVENT_CAPTURE_REJECTED, 0.0, CreatureTransitionResult.TargetAction.SET)
 			return _changed(request, STATE_IDLE, EVENT_CAPTURE_REJECTED, 0.0, CreatureTransitionResult.TargetAction.CLEAR)
+		EVENT_ECOLOGY_DAMAGE_PANIC:
+			if not _is_positive_finite(request.proposed_timer):
+				return _invalid(request)
+			return _changed(request, STATE_FLEE, EVENT_ECOLOGY_DAMAGE_PANIC, request.proposed_timer, CreatureTransitionResult.TargetAction.KEEP)
 		_:
 			return _invalid(request)
 

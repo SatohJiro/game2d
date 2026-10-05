@@ -1,40 +1,40 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.9c — Flam deterministic defeat drop
+## U1.9d — Creature ecology damage-panic policy
 
 Trạng thái: `VERIFIED` ngày 2026-10-05.
 
 ### Mục tiêu và invariant
 
-- Tách quyết định drop của đúng một Flam canary khỏi animation/spawn bằng request/result thuần.
-- Giữ quantity/range, elite bonus, defeat idempotency và capture exclusion hiện hữu.
-- Không đổi EXP, asset, balance, collision, spawn table, skill, save schema hoặc toàn bộ species catalog.
+- Tách đúng low-HP prey panic sau damage thành pure decision và transition-owned mutation.
+- Giữ strict threshold `<35%`, duration 3.5 giây, threat target, lifecycle guard và feedback hiện hữu.
+- Không đổi RNG ordering, predator scan, grazing/hunting, asset, drop, skill, spawn hoặc save.
 
 ### Kết quả đã triển khai
 
-- Thêm `CreatureDropRequest`, `CreatureDropResult`, `CreatureDropResolver`; RNG count sinh ngoài resolver và được inject.
-- Stable `creature.flam` + `item.pal_ore` đi xuyên request/result đến `DroppedItem.item_id`.
-- `defeat_drops_committed` và result identity guard bảo đảm commit tối đa một lần.
-- Capture active trả `CAPTURE_BLOCKED`; living/invalid/duplicate fail closed và không spawn.
-- Normal giữ 1–2 primary node; elite/alpha giữ 3–5 primary node cộng một bonus stack count 2–4.
-- Bốn species còn lại tiếp tục legacy spawn để tránh thay đổi content chưa có typed definition.
+- Thêm `CreatureEcologyRequest`, `CreatureEcologyResult`, `CreatureEcologyPolicy` không chứa Node/RNG.
+- Stable event `creature.transition.ecology_damage_panic` đi qua `CreatureTransitionPolicy` và `apply_creature_transition()`.
+- Typed-neutral Flam trả `NO_CHANGE`; legacy Slime/Mushroom prey vẫn panic khi đủ điều kiện.
+- Defeated/enraged/HP >=35% trả `NO_CHANGE`; capture trả `PROTECTED`; invalid ID/HP fail closed.
+- Floating text chỉ chạy sau accepted apply; không còn direct `state = FLEE` trong damage-panic block.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh trước thay đổi.
-- Focused resolver regression xanh cho normal/elite, domain/range invalid, living, capture, duplicate và deterministic injected request.
-- Actor regression xanh cho typed Flam reference, stable spawned item ID, legacy quantity và duplicate commit không spawn thêm.
-- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, toàn bộ domain regression gồm drop validator mới và main smoke.
+- Focused pure regression xanh cho threshold boundary, roles, defeated/enraged/capture, invalid input và stable event/duration.
+- Transition regression xanh cho legacy source state, target preservation và invalid timer.
+- Actor regression xanh cho neutral Flam và prey Slime compatibility.
+- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, toàn bộ domain regression gồm ecology validator mới và main smoke.
 - `git diff --check` sạch; final log scan không có script/parse/dependency/node-path error.
 
 ### Compatibility, asset và giới hạn
 
-- Save/data breaking change: none; result là runtime value object, không serialize Node/Resource.
+- Save/data breaking change: none; request/result là runtime value object.
 - Asset/provenance: không thêm/sửa asset; baseline vẫn 166 quarantine/unknown, 69 runtime P0.
-- EXP reward, non-Flam drop, predator/prey targeting, grazing/FLEE và burn defeat path vẫn legacy.
+- Predator group scan/selection, `panic_from_predator`, grazing RNG và hunt timeout/contact vẫn legacy.
 - Asset admission mới vẫn bị chặn vì `game-dev` CLI chưa có trong PATH.
-- Rollback: revert package U1.9c; không cần migration.
+- Rollback: revert U1.9d; không cần migration.
 
 ### Gói tiếp theo
 
-U1.9d chọn đúng một ecology ownership boundary nhỏ cho Flam, ưu tiên pure role/decision không chứa Node hoặc RNG ẩn. Không migrate thêm skill/drop catalog cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.9e tách deterministic predator/prey candidate selection khỏi group scan cho một canary, giữ scan cadence 2.0–3.5s và hunt distance 210px. Không migrate grazing hoặc skill/drop catalog cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

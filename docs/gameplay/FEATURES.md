@@ -70,6 +70,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.9a: Flam dùng typed `CreatureDefinition` làm authority cho base HP/speed/power, predator/prey profile và stable drop reference; runtime legacy snapshot giữ nguyên behavior/balance cho consumer cũ.
 - U1.9b: `skill.flam.fireball` là typed authority cho cooldown, recovery, damage scale, projectile travel và hit radius; giá trị gameplay quan sát được không đổi.
 - U1.9c: Flam defeat drop dùng injected count roll và deterministic result; normal 1–2, elite/alpha 3–5 primary cộng bonus 2–4 giữ nguyên, capture/duplicate không phát loot.
+- U1.9d: low-HP prey panic sau damage dùng pure ecology policy và transition owner; ngưỡng strict `<35%`, FLEE 3.5 giây, neutral/defeated/enraged/capture giữ nguyên rule cũ.
 - Acceptance: một activation không multi-hit ngoài thiết kế; chết chỉ phát reward một lần; reduced shake không đổi damage.
 
 ### G05 — capture

@@ -1073,12 +1073,16 @@ func take_damage(amount: int, hit_origin: Vector2, attacker: Node2D = null) -> v
 		# Call pack assistance immediately
 		pack_howl_alert(attacker)
 	
-	# Check panic flee for weak prey
-	if not result.defeated and cur_data.get("is_prey", false) and hp < max_hp * 0.35 and not is_enraged:
-		state = State.FLEE
-		state_timer = 3.5
-		spawn_floating_text("💦 HOẢNG LOẠN THÁO CHẠY!", Color(0.3, 0.9, 1.0))
-		return
+	var ecology_result := resolve_damage_panic(result.defeated)
+	if ecology_result.should_panic_flee():
+		var panic_transition := resolve_creature_transition(
+			ecology_result.transition_event_id,
+			true,
+			ecology_result.state_duration
+		)
+		if apply_creature_transition(panic_transition):
+			spawn_floating_text("💦 HOẢNG LOẠN THÁO CHẠY!", Color(0.3, 0.9, 1.0))
+			return
 	
 	if hp > 0 and hp <= max_hp * 0.5 and not is_enraged and level >= 5:
 		is_enraged = true
@@ -1091,6 +1095,22 @@ func take_damage(amount: int, hit_origin: Vector2, attacker: Node2D = null) -> v
 	if result.defeated:
 		defeat_committed = true
 		die(attacker)
+
+
+func create_damage_ecology_request(defeated: bool) -> CreatureEcologyRequest:
+	return CreatureEcologyRequest.new(
+		cur_data.get("id", &"") as StringName,
+		bool(cur_data.get("is_prey", false)),
+		hp,
+		max_hp,
+		defeated,
+		is_enraged,
+		capture_attempt_active or state == State.CAPTURING or capture_ownership_committed
+	)
+
+
+func resolve_damage_panic(defeated: bool) -> CreatureEcologyResult:
+	return CreatureEcologyPolicy.resolve_damage_panic(create_damage_ecology_request(defeated))
 
 
 func apply_damage_request(request: DamageRequest) -> DamageResult:
