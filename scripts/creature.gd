@@ -605,9 +605,10 @@ func panic_from_predator(predator: Node2D) -> void:
 
 func handle_prey_hunt(delta: float) -> void:
 	if not is_instance_valid(prey_target) or state_timer <= 0:
-		prey_target = null
-		state = State.IDLE
-		state_timer = 2.0
+		apply_prey_hunt_exit(resolve_creature_transition(
+			CreatureTransitionPolicy.EVENT_ECOLOGY_HUNT_ABORTED,
+			true
+		))
 		return
 	
 	var dir = (prey_target.global_position - global_position).normalized()
@@ -616,12 +617,20 @@ func handle_prey_hunt(delta: float) -> void:
 	velocity = dir * (move_speed * 1.05)
 	
 	if dist < 42.0:
-		# Attack prey
+		var transition := resolve_creature_transition(
+			CreatureTransitionPolicy.EVENT_ECOLOGY_HUNT_CONTACT,
+			true
+		)
 		perform_melee_attack_on_prey(prey_target)
-		state = State.IDLE
-		state_timer = 3.0
-		spawn_floating_text("Vồ hụt con mồi!", Color(1.0, 0.7, 0.3))
-		prey_target = null
+		if apply_prey_hunt_exit(transition):
+			spawn_floating_text("Vồ hụt con mồi!", Color(1.0, 0.7, 0.3))
+
+
+func apply_prey_hunt_exit(result: CreatureTransitionResult) -> bool:
+	if not apply_creature_transition(result):
+		return false
+	prey_target = null
+	return true
 
 func perform_melee_attack_on_prey(prey: Node2D) -> void:
 	if is_instance_valid(prey) and prey.has_method("take_damage"):

@@ -1,22 +1,22 @@
-# Prompt cho model tiếp theo — U1.9g Hunt lifecycle closure
+# Prompt cho model tiếp theo — U1.9h Predator-threat panic callback
 
-Tiếp tục Godot 4.7.2 project Paloria 3.0 bằng đúng một package nhỏ: U1.9g. Đọc `AGENTS.md`, checkpoint và creature ecology/transition/combat contracts trước khi sửa.
+Tiếp tục Godot 4.7.2 project Paloria 3.0 bằng đúng một package nhỏ: U1.9h. Đọc `AGENTS.md`, checkpoint và creature ecology/transition contracts trước khi sửa.
 
 ## Mục tiêu
 
-Đưa HUNTING_PREY target-loss/timeout và contact exit qua transition owner, giữ movement/contact/damage hiện hữu. Không migrate skill catalog hoặc toàn bộ species.
+Đưa `panic_from_predator()` qua transition owner mà không thay đổi predator/prey selection hoặc hunt lifecycle đã khóa.
 
 ## Phạm vi bắt buộc
 
-1. Baseline gate; audit direct state/prey-target writers trong `panic_from_predator()` và `handle_prey_hunt()`.
-2. Stable transition events cho hunt abort/contact; stale/protected result guard.
-3. Actor regression cho invalid prey, timeout, contact và repeated/stale callback.
-4. Giữ hunt speed ×1.05, contact `<42px`, prey damage ×0.7, abort timer 2s, contact recovery 3s và feedback.
-5. Không đổi sleep/drink, asset, skill, drop, spawn hoặc save.
+1. Baseline gate và audit direct writer trong `panic_from_predator()`.
+2. Stable transition event cho predator-threat panic; stale/protected result guard.
+3. Giữ threat target, FLEE 4 giây, floating text, shake audio và CAPTURING/FLEE guards.
+4. Actor regression cho accepted panic, capture/FLEE guard, invalid predator và repeated/stale result.
+5. Không đổi sleep/drink, asset, skill, drop, spawn, species catalog hoặc save.
 6. Full gate, docs/checkpoint, rollback và remaining-writer audit.
 
 ## Definition of Done
 
 - Transition/pure regression và actor compatibility xanh.
 - Full `tools/check_project.ps1`, leak-aware log scan và `git diff --check` sạch.
-- Không tuyên bố hoàn tất U1.9 khi catalog/sleep-drink writer còn lại chưa đạt gate.
+- Không tuyên bố hoàn tất U1.9 khi sleep/drink và remaining species catalog chưa đạt gate.

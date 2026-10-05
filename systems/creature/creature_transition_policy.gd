@@ -30,6 +30,8 @@ const EVENT_CAPTURE_REJECTED := &"creature.transition.capture_rejected"
 const EVENT_ECOLOGY_DAMAGE_PANIC := &"creature.transition.ecology_damage_panic"
 const EVENT_ECOLOGY_PREY_ACQUIRED := &"creature.transition.ecology_prey_acquired"
 const EVENT_ECOLOGY_GRAZING_ENTRY := &"creature.transition.ecology_grazing_entry"
+const EVENT_ECOLOGY_HUNT_ABORTED := &"creature.transition.ecology_hunt_aborted"
+const EVENT_ECOLOGY_HUNT_CONTACT := &"creature.transition.ecology_hunt_contact"
 
 const REASON_SUSPICION_CONFIRMED := &"creature.transition.suspicion_confirmed"
 const REASON_SUSPICION_LOST := &"creature.transition.suspicion_lost"
@@ -171,6 +173,14 @@ static func resolve(request: CreatureTransitionRequest) -> CreatureTransitionRes
 			if not _is_positive_finite(request.proposed_timer):
 				return _invalid(request)
 			return _changed(request, STATE_GRAZING, EVENT_ECOLOGY_GRAZING_ENTRY, request.proposed_timer, CreatureTransitionResult.TargetAction.KEEP)
+		EVENT_ECOLOGY_HUNT_ABORTED:
+			if request.current_state_id != STATE_HUNTING_PREY:
+				return _no_change(request)
+			return _changed(request, STATE_IDLE, EVENT_ECOLOGY_HUNT_ABORTED, 2.0, CreatureTransitionResult.TargetAction.KEEP)
+		EVENT_ECOLOGY_HUNT_CONTACT:
+			if request.current_state_id != STATE_HUNTING_PREY:
+				return _no_change(request)
+			return _changed(request, STATE_IDLE, EVENT_ECOLOGY_HUNT_CONTACT, 3.0, CreatureTransitionResult.TargetAction.KEEP)
 		_:
 			return _invalid(request)
 

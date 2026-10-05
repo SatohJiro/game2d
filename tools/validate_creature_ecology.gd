@@ -15,13 +15,14 @@ func _run() -> void:
 	_test_grazing_policy()
 	_test_transition_contract()
 	await _test_actor_adapter()
-	await create_timer(1.0).timeout
+	# FloatingText fades for 0.8s with a 0.32s delay before it queues itself free.
+	await create_timer(1.25).timeout
 	for child in root.get_children():
 		child.free()
 	await process_frame
 	await process_frame
 	if _failures.is_empty():
-		print("Creature ecology validation passed: damage panic, prey selection, grazing decision and actor adapters are valid.")
+		print("Creature ecology validation passed: damage panic, prey selection, grazing decision, hunt lifecycle and actor adapters are valid.")
 		quit.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -55,6 +56,14 @@ func _test_transition_contract() -> void:
 	_expect(invalid_timer.status == CreatureTransitionResult.Status.INVALID_REQUEST, "damage panic transition must reject non-positive duration")
 	var hunt := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_ECOLOGY_PREY_ACQUIRED, true, false, -1.0, false, 6.0))
 	_expect(hunt.is_changed() and hunt.to_state_id == CreatureTransitionPolicy.STATE_HUNTING_PREY and is_equal_approx(hunt.next_timer, 6.0), "prey acquisition event must enter six-second hunt")
+	var aborted := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_HUNTING_PREY, CreatureTransitionPolicy.EVENT_ECOLOGY_HUNT_ABORTED, true, false, -1.0))
+	_expect(aborted.is_changed() and aborted.to_state_id == CreatureTransitionPolicy.STATE_IDLE and is_equal_approx(aborted.next_timer, 2.0), "hunt abort must return to IDLE for two seconds")
+	var contact := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_HUNTING_PREY, CreatureTransitionPolicy.EVENT_ECOLOGY_HUNT_CONTACT, true, false, -1.0))
+	_expect(contact.is_changed() and contact.to_state_id == CreatureTransitionPolicy.STATE_IDLE and is_equal_approx(contact.next_timer, 3.0), "hunt contact must return to IDLE for three seconds")
+	var stale_source := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_ECOLOGY_HUNT_ABORTED, true, false, -1.0))
+	_expect(stale_source.status == CreatureTransitionResult.Status.NO_CHANGE, "hunt exit must reject a non-hunting source")
+	var protected := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_HUNTING_PREY, CreatureTransitionPolicy.EVENT_ECOLOGY_HUNT_CONTACT, true, false, -1.0, false, 0.0, true))
+	_expect(protected.status == CreatureTransitionResult.Status.PROTECTED, "protected hunt contact must not transition")
 
 
 func _test_prey_selection_policy() -> void:
@@ -165,6 +174,31 @@ func _test_actor_adapter() -> void:
 	_expect(predator.get("prey_target") == eligible_prey, "actor must ignore captured nearer prey and select eligible candidate")
 	_expect(int(predator.get("state")) == int(predator_states.get("HUNTING_PREY", 14)), "selected predator must enter HUNTING_PREY")
 	_expect(is_equal_approx(float(predator.get("state_timer")), 6.0), "actor hunt duration must remain six seconds")
+
+	var apply_count_before_abort := int(predator.get("transition_apply_count"))
+	predator.set("prey_target", null)
+	predator.call("handle_prey_hunt", 0.0)
+	_expect(int(predator.get("state")) == int(predator_states.get("IDLE", 0)) and is_equal_approx(float(predator.get("state_timer")), 2.0), "invalid prey must exit hunt through the two-second abort transition")
+	_expect(int(predator.get("transition_apply_count")) == apply_count_before_abort + 1, "hunt abort must apply exactly once")
+
+	predator.set("state", int(predator_states.get("HUNTING_PREY", 14)))
+	predator.set("state_timer", 0.0)
+	predator.set("prey_target", eligible_prey)
+	var timeout_result: CreatureTransitionResult = predator.call("resolve_creature_transition", CreatureTransitionPolicy.EVENT_ECOLOGY_HUNT_ABORTED, true)
+	_expect(bool(predator.call("apply_prey_hunt_exit", timeout_result)), "hunt timeout result must apply")
+	var count_after_timeout := int(predator.get("transition_apply_count"))
+	_expect(not bool(predator.call("apply_prey_hunt_exit", timeout_result)), "repeated hunt result must be rejected as stale")
+	_expect(int(predator.get("transition_apply_count")) == count_after_timeout and predator.get("prey_target") == null, "stale hunt result must not mutate actor state")
+
+	predator.set("state", int(predator_states.get("HUNTING_PREY", 14)))
+	predator.set("state_timer", 6.0)
+	predator.set("prey_target", eligible_prey)
+	eligible_prey.global_position = Vector2(30.0, 0.0)
+	var prey_hp_before := int(eligible_prey.get("hp"))
+	predator.call("handle_prey_hunt", 0.0)
+	_expect(int(eligible_prey.get("hp")) == prey_hp_before - int(float(predator.get("attack_power")) * 0.7), "hunt contact must preserve 0.7 attack-power damage")
+	_expect(int(predator.get("state")) == int(predator_states.get("IDLE", 0)) and is_equal_approx(float(predator.get("state_timer")), 3.0), "hunt contact must apply the three-second recovery")
+	_expect(predator.get("prey_target") == null, "accepted hunt contact must clear only the prey target")
 
 	var query_before_block := int(predator.get("ecology_query_count"))
 	predator.set("state", int(predator_states.get("CHASE", 2)))

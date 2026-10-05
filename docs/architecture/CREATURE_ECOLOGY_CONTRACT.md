@@ -74,3 +74,11 @@ RNG ordering được giữ tại `start_wander()`:
 5. Nếu không grazing, wander duration rồi angle roll giữ nguyên thứ tự.
 
 Hai counter là transient regression telemetry, không thuộc save. Sleep/drink decisions, predator panic callback và hunt lifecycle vẫn legacy.
+
+## U1.9g — Hunt lifecycle closure
+
+`HUNTING_PREY` nay thoát bằng hai stable event: `creature.transition.ecology_hunt_aborted` khi prey không còn hợp lệ hoặc timer hết, và `creature.transition.ecology_hunt_contact` khi khoảng cách strict `<42px`. Hai event chỉ nhận source HUNTING_PREY; lifecycle guard và stale-result guard dùng chung transition owner.
+
+Abort chuyển về IDLE trong 2 giây. Contact giữ melee damage `int(attack_power * 0.7)`, chuyển về IDLE với recovery 3 giây và chỉ phát feedback sau accepted apply. `prey_target` là ecology reference riêng, chỉ được xóa sau accepted transition; regular combat `target` không bị thay đổi.
+
+Movement speed ×1.05, contact boundary, damage multiplier, feedback và không-thứ-tự RNG được giữ nguyên. Regression khóa invalid prey, timeout result, contact damage/recovery, protected request và repeated/stale apply. `panic_from_predator()`, sleep/drink selection và remaining typed species catalog vẫn là writer legacy cho package sau.

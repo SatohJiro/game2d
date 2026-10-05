@@ -72,6 +72,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.9d creature ecology | Hoàn tất | Damage panic dùng pure policy + transition owner; threshold/duration/RNG ordering giữ nguyên |
 | U1.9e prey selection | Hoàn tất | Nearest deterministic candidate + lexical tie-break; capture/range/cadence compatibility giữ nguyên |
 | U1.9f grazing decision | Hoàn tất | Injected roll + stable transition; strict 0.22 boundary và RNG short-circuit giữ nguyên |
+| U1.9g hunt lifecycle | Hoàn tất | Abort/contact dùng stable transition; damage, boundary, recovery và stale guard được khóa regression |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |
