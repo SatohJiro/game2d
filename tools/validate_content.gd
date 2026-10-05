@@ -22,7 +22,7 @@ func _run() -> void:
 	await process_frame
 
 	if _failures.is_empty():
-		print("Content validation passed: catalog plus U1.9b Flam SkillDefinition and registry references are valid.")
+		print("Content validation passed: catalog plus typed Flam/Slime definitions and registry references are valid.")
 		_finish.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -177,7 +177,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 12, "registry must contain twelve definitions through U1.9b")
+	_expect(registry.size() == 13, "registry must contain thirteen definitions through U1.9k")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -189,6 +189,7 @@ func _validate_project_content() -> void:
 	_expect(registry.has(&"building.workbench"), "registry is missing building.workbench")
 	_expect(registry.has(&"crop.berry"), "registry is missing crop.berry")
 	_expect(registry.has(&"creature.flam"), "registry is missing creature.flam")
+	_expect(registry.has(&"creature.slime"), "registry is missing creature.slime")
 	_expect(registry.has(&"skill.flam.fireball"), "registry is missing skill.flam.fireball")
 	var wood := registry.get_definition(&"item.wood") as ItemDefinition
 	_expect(wood != null, "item.wood must load as ItemDefinition")
@@ -225,6 +226,15 @@ func _validate_project_content() -> void:
 		_expect(flam.behavior_profile != null and not flam.behavior_profile.is_predator and not flam.behavior_profile.is_prey, "Flam behavior profile mismatch")
 		_expect(flam.drop_item_id == &"item.pal_ore", "Flam drop reference mismatch")
 		_expect(flam.skill_ids == [&"skill.flam.fireball"], "Flam skill reference mismatch")
+	var slime := registry.get_definition(&"creature.slime") as CreatureDefinition
+	_expect(slime != null, "creature.slime must load as CreatureDefinition")
+	if slime != null:
+		_expect(slime.base_max_hp == 110, "Slime base_max_hp mismatch")
+		_expect(is_equal_approx(slime.move_speed, 85.0), "Slime move_speed mismatch")
+		_expect(slime.base_attack_power == 9, "Slime base_attack_power mismatch")
+		_expect(slime.behavior_profile != null and not slime.behavior_profile.is_predator and slime.behavior_profile.is_prey, "Slime behavior profile mismatch")
+		_expect(slime.drop_item_id == &"item.berry", "Slime drop reference mismatch")
+		_expect(slime.skill_ids.is_empty(), "Slime hop must remain outside typed skill catalog in U1.9k")
 	var fireball := registry.get_definition(&"skill.flam.fireball") as SkillDefinition
 	_expect(fireball != null, "skill.flam.fireball must load as SkillDefinition")
 	if fireball != null:

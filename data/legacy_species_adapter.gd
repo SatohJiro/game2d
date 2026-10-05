@@ -2,6 +2,7 @@ class_name LegacySpeciesAdapter
 extends RefCounted
 
 const FLAM_DEFINITION: CreatureDefinition = preload("res://data/definitions/creatures/flam.tres")
+const SLIME_DEFINITION: CreatureDefinition = preload("res://data/definitions/creatures/slime.tres")
 const FLAM_FIREBALL_DEFINITION: SkillDefinition = preload("res://data/definitions/skills/flam_fireball.tres")
 
 const FLAM_ID: StringName = &"creature.flam"
@@ -53,8 +54,9 @@ static func get_primary_skill_definition(species_id: StringName) -> SkillDefinit
 
 
 static func get_drop_item_id(species_id: StringName, legacy_drop_name: String = "") -> StringName:
-	if species_id == FLAM_ID:
-		return FLAM_DEFINITION.drop_item_id
+	var definition := get_creature_definition(species_id)
+	if definition != null and definition.get_validation_errors().is_empty():
+		return definition.drop_item_id
 	return LegacyItemAdapter.to_content_id(legacy_drop_name)
 
 
@@ -71,16 +73,27 @@ static func create_runtime_snapshot(species_index: int, legacy_data: Dictionary)
 	var snapshot := create_stable_snapshot(species_index, legacy_data)
 	if snapshot.is_empty():
 		return {}
-	if snapshot["id"] == FLAM_ID:
-		if FLAM_DEFINITION == null or not FLAM_DEFINITION.get_validation_errors().is_empty():
+	var definition := get_creature_definition(snapshot["id"] as StringName)
+	if definition != null:
+		if not definition.get_validation_errors().is_empty():
 			return {}
-		snapshot["max_hp"] = FLAM_DEFINITION.base_max_hp
-		snapshot["speed"] = FLAM_DEFINITION.move_speed
-		snapshot["power"] = FLAM_DEFINITION.base_attack_power
-		snapshot["is_predator"] = FLAM_DEFINITION.behavior_profile.is_predator
-		snapshot["is_prey"] = FLAM_DEFINITION.behavior_profile.is_prey
-		var legacy_drop := LegacyItemAdapter.to_legacy_key(FLAM_DEFINITION.drop_item_id)
+		snapshot["max_hp"] = definition.base_max_hp
+		snapshot["speed"] = definition.move_speed
+		snapshot["power"] = definition.base_attack_power
+		snapshot["is_predator"] = definition.behavior_profile.is_predator
+		snapshot["is_prey"] = definition.behavior_profile.is_prey
+		var legacy_drop := LegacyItemAdapter.to_legacy_key(definition.drop_item_id)
 		if legacy_drop.is_empty():
 			return {}
 		snapshot["drop_item"] = legacy_drop
 	return snapshot
+
+
+static func get_creature_definition(species_id: StringName) -> CreatureDefinition:
+	match species_id:
+		FLAM_ID:
+			return FLAM_DEFINITION
+		SLIME_ID:
+			return SLIME_DEFINITION
+		_:
+			return null

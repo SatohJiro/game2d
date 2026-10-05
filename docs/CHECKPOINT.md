@@ -1,40 +1,41 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.9j — Drinking-entry decision
+## U1.9k — Slime typed definition
 
 Trạng thái: `VERIFIED` ngày 2026-10-06.
 
 ### Mục tiêu và invariant
 
-- Tách drinking-entry khỏi `start_wander()` bằng pure policy, water/distance snapshot và injected RNG.
-- Giữ source guard, distance strict `<320px`, chance strict `<0.25`, duration 3–5 giây, pond direction và natural precedence.
-- Không đổi asset, skill, drop, spawn, species catalog hoặc save.
+- Dùng stable `creature.slime` làm typed authority cho stats/behavior Slime.
+- Giữ species index, name/element/texture, hop skill, drop outcome và ecology behavior hiện hữu.
+- Không migrate Mushroom/Beast/Dragon, Slime hop/drop execution, asset hoặc save.
 
 ### Kết quả đã triển khai
 
-- Thêm `CreatureDrinkingRequest/Result/Policy`; policy không chứa Node, SceneTree hoặc RNG.
-- Stable `creature.transition.ecology_drinking_entry` chỉ chuyển IDLE → DRINKING với duration 3–5 giây.
-- Actor chỉ gọi roll sau water/range guard, duration roll sau accepted decision, rồi commit pond direction/presentation sau accepted apply.
-- Transient `drinking_roll_count`/`drinking_duration_roll_count` khóa short-circuit contract.
+- Thêm `data/definitions/creatures/slime.tres`: 110 HP, speed 85, power 9, prey role và `item.berry` drop reference.
+- Xóa sáu field gameplay khỏi legacy Slime row; ba field presentation vẫn giữ nguyên.
+- `LegacySpeciesAdapter` resolve typed Flam/Slime definition theo stable ID và chiếu về legacy-shaped runtime snapshot.
+- Slime vẫn không có typed primary skill; Mushroom/Beast/Dragon tiếp tục legacy fallback; invalid index fail closed.
+- Creature validator teardown được làm deterministic sau khi thêm actor fixture thứ hai.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh trước thay đổi.
-- Focused regression xanh cho 319.999/320px, 0.249999/0.25, missing water, protected/invalid request và duration range.
-- Actor regression xanh cho DRINKING 5 giây, normalized pond direction, capture guard, stale result và missing-water RNG guard.
-- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, toàn bộ domain regression gồm drinking và main smoke.
-- Final ecology log sạch ObjectDB/resource leak.
+- Content validator xanh với 13 definitions, Slime stat/behavior/drop reference và empty skill list.
+- Actor regression xanh cho stable ID, stat parity, prey role, legacy drop key, hop path, Mushroom fallback và invalid snapshot.
+- Creature validator chạy sạch leak hai lần liên tiếp.
+- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, content/actor regressions và main smoke.
+- Final content/creature logs sạch ObjectDB/resource leak.
 - `git diff --check` và final log scan được yêu cầu sạch trước commit.
 
 ### Compatibility, asset và giới hạn
 
-- Save/data breaking change: none; request/result/counters đều transient.
-- Asset/provenance: không thêm/sửa asset; baseline vẫn 166 quarantine/unknown, 69 runtime P0.
-- Natural precedence sleep → drink → grazing → wander và RNG short-circuit giữ nguyên.
-- Slime/Mushroom/Beast/Dragon typed definitions cùng skill/drop catalog vẫn legacy.
+- Save/data breaking change: none; stable species ID và runtime snapshot shape không đổi.
+- Asset/provenance: không thêm/sửa asset; Slime texture hiện hữu vẫn quarantine/unknown.
+- Slime hop/drop execution cùng Mushroom/Beast/Dragon catalog vẫn legacy.
 - Asset admission mới vẫn bị chặn vì `game-dev` CLI chưa có trong PATH.
-- Rollback: revert U1.9j; không cần migration.
+- Rollback: revert U1.9k; không cần migration.
 
 ### Gói tiếp theo
 
-U1.9k mở rộng typed `CreatureDefinition` cho riêng Slime và runtime stat/behavior adapter, giữ legacy attack/drop/ecology compatibility. Không migrate Mushroom/Beast/Dragon hay skill/drop trong cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.9l mở rộng typed `CreatureDefinition` cho riêng Mushroom, giữ spore skill/drop/ecology compatibility. Không migrate Beast/Dragon hay skill/drop execution cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

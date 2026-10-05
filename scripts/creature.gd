@@ -13,13 +13,7 @@ var species_data: Array[Dictionary] = [
 	{
 		"name": "Slime",
 		"element": "Nước",
-		"texture": preload("res://assets/monsters/slime_sheet.png"),
-		"max_hp": 110,
-		"speed": 85.0,
-		"power": 9,
-		"drop_item": "Quả Mọng Hồi Máu",
-		"is_predator": false,
-		"is_prey": true
+		"texture": preload("res://assets/monsters/slime_sheet.png")
 	},
 	{
 		"name": "Mushroom",

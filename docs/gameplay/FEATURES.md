@@ -77,6 +77,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.9h: prey gặp predator vào FLEE 4 giây qua stable transition, giữ threat target và feedback; CAPTURING/FLEE/invalid predator không thay đổi lifecycle.
 - U1.9i: peaceful creature ngủ khi roll strict `<0.18`, duration 6–11 giây qua transition owner; night-raider/enraged không tiêu thụ sleep RNG và precedence tự nhiên giữ nguyên.
 - U1.9j: creature có hồ trong strict `<320px` uống khi roll strict `<0.25`, duration 3–5 giây; hướng tới hồ và presentation chỉ commit sau accepted transition.
+- U1.9k: Slime giữ nguyên 110 HP, speed 85, power 9 và prey role nhưng các giá trị này lấy từ `creature.slime` typed definition; hop/drop outcome chưa đổi.
 - Acceptance: một activation không multi-hit ngoài thiết kế; chết chỉ phát reward một lần; reduced shake không đổi damage.
 
 ### G05 — capture

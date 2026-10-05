@@ -48,3 +48,11 @@ Save/data breaking change: none; chưa có save schema và snapshot party hiện
 ## Boundary tiếp theo
 
 U1.9b audit species attack/charge và tạo typed skill reference/definition canary. Không migrate ecology/drop resolution trong cùng package.
+
+## U1.9k — Slime typed definition
+
+`creature.slime` nay là typed authority cho 110 HP, speed 85, power 9, prey=true/predator=false và drop reference `item.berry`. Sáu field gameplay tương ứng đã được xóa khỏi legacy Slime row; name, element và texture vẫn là presentation compatibility data.
+
+`LegacySpeciesAdapter` resolve Flam/Slime definition theo stable ID rồi chiếu về snapshot shape cũ. Slime hop vẫn dùng species branch và `primary_skill_definition == null`; defeat drop execution vẫn dùng legacy path nhưng stable drop mapping giữ nguyên outcome Quả Mọng. Mushroom/Beast/Dragon tiếp tục fallback sang legacy dictionary; invalid index fail closed.
+
+Registry hiện có 13 definitions. Regression khóa catalog reference, stat parity, prey role, legacy display/drop compatibility, Mushroom fallback và invalid snapshot. Save/data breaking change: none; asset/provenance: none.

@@ -390,6 +390,26 @@ func _test_creature_adapter() -> void:
 	_expect(bool(creature.call("apply_creature_transition", capture_restore, player)), "capture rejection must be the explicit CAPTURING exit")
 	_expect(int(creature.get("state")) == chase_state and creature.get("target") == player, "capture rejection adapter must restore CHASE target")
 
+	var slime := packed.instantiate()
+	slime.set("species_index", 1)
+	fixture.add_child(slime)
+	await process_frame
+	var slime_runtime: Dictionary = slime.get("cur_data")
+	_expect(slime_runtime.get("id", &"") == LegacySpeciesAdapter.SLIME_ID, "Slime runtime must expose stable creature ID")
+	_expect(int(slime_runtime.get("max_hp", 0)) == 110 and int(slime.get("max_hp")) == 110, "Slime typed HP compatibility mismatch")
+	_expect(is_equal_approx(float(slime_runtime.get("speed", 0.0)), 85.0), "Slime typed speed compatibility mismatch")
+	_expect(int(slime_runtime.get("power", 0)) == 9, "Slime typed power compatibility mismatch")
+	_expect(bool(slime_runtime.get("is_prey", false)) and not bool(slime_runtime.get("is_predator", true)), "Slime typed prey role mismatch")
+	_expect(slime_runtime.get("drop_item", "") == LegacyItemAdapter.to_legacy_key(&"item.berry"), "Slime typed drop must preserve legacy runtime key")
+	_expect(slime.get("primary_skill_definition") == null, "Slime hop must remain on the legacy attack path")
+	var slime_legacy_rows: Array = slime.get("species_data")
+	_expect(not (slime_legacy_rows[1] as Dictionary).has("max_hp"), "migrated Slime HP must not remain a parallel legacy source")
+	var mushroom_fallback := LegacySpeciesAdapter.create_runtime_snapshot(2, slime_legacy_rows[2] as Dictionary)
+	_expect(int(mushroom_fallback.get("max_hp", 0)) == 90 and bool(mushroom_fallback.get("is_prey", false)), "unmigrated Mushroom must retain legacy fallback")
+	_expect(LegacySpeciesAdapter.create_runtime_snapshot(-1, {}).is_empty(), "invalid species snapshot must fail closed")
+
+	fixture.remove_child(slime)
+	slime.free()
 	fixture.remove_child(creature)
 	creature.free()
 	fixture.remove_child(player)
@@ -405,7 +425,11 @@ func _clean_tree() -> void:
 		for player in audio_manager.get_children():
 			if player is AudioStreamPlayer:
 				player.stop()
+	for child in root.get_children():
+		child.free()
 	await process_frame
+	await process_frame
+	await create_timer(0.25).timeout
 
 
 func _expect(condition: bool, message: String) -> void:
