@@ -82,3 +82,9 @@ Hai counter là transient regression telemetry, không thuộc save. Sleep/drink
 Abort chuyển về IDLE trong 2 giây. Contact giữ melee damage `int(attack_power * 0.7)`, chuyển về IDLE với recovery 3 giây và chỉ phát feedback sau accepted apply. `prey_target` là ecology reference riêng, chỉ được xóa sau accepted transition; regular combat `target` không bị thay đổi.
 
 Movement speed ×1.05, contact boundary, damage multiplier, feedback và không-thứ-tự RNG được giữ nguyên. Regression khóa invalid prey, timeout result, contact damage/recovery, protected request và repeated/stale apply. `panic_from_predator()`, sleep/drink selection và remaining typed species catalog vẫn là writer legacy cho package sau.
+
+## U1.9h — Predator-threat panic callback
+
+`panic_from_predator()` nay resolve stable event `creature.transition.ecology_predator_threat`. Event yêu cầu predator target hợp lệ, từ chối source FLEE/CAPTURING và dùng lifecycle protection chung; accepted result vào FLEE 4 giây với `TargetAction.SET`.
+
+Actor chỉ phát floating text và shake audio sau accepted apply. Target, duration và guard cũ được giữ nguyên; invalid predator fail closed. Regression khóa accepted callback từ prey selection, CAPTURING/FLEE/invalid-target guard và repeated/stale result không mutate. Sleep/drink selection cùng remaining typed species catalog vẫn legacy.

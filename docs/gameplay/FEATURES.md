@@ -74,6 +74,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.9e: predator chọn prey gần nhất trong `<210px`, bỏ capture-active và tie-break deterministic; scan cadence 2.0–3.5 giây, hunt 6 giây và feedback giữ nguyên.
 - U1.9f: prey grazing dùng injected roll strict `<0.22` và transition owner; duration 2.5–4.0 giây cùng sleep→drink→grazing→wander RNG precedence giữ nguyên.
 - U1.9g: săn mồi thoát qua stable abort/contact events; invalid/timeout về IDLE 2 giây, contact strict `<42px` gây damage ×0.7 rồi recovery 3 giây, với stale/protected guard.
+- U1.9h: prey gặp predator vào FLEE 4 giây qua stable transition, giữ threat target và feedback; CAPTURING/FLEE/invalid predator không thay đổi lifecycle.
 - Acceptance: một activation không multi-hit ngoài thiết kế; chết chỉ phát reward một lần; reduced shake không đổi damage.
 
 ### G05 — capture

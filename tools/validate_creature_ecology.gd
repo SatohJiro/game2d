@@ -15,14 +15,14 @@ func _run() -> void:
 	_test_grazing_policy()
 	_test_transition_contract()
 	await _test_actor_adapter()
-	# FloatingText fades for 0.8s with a 0.32s delay before it queues itself free.
-	await create_timer(1.25).timeout
+	# FloatingText fades for 0.8s with a 0.32s delay; keep scheduling margin before teardown.
+	await create_timer(1.5).timeout
 	for child in root.get_children():
 		child.free()
 	await process_frame
 	await process_frame
 	if _failures.is_empty():
-		print("Creature ecology validation passed: damage panic, prey selection, grazing decision, hunt lifecycle and actor adapters are valid.")
+		print("Creature ecology validation passed: damage panic, prey selection, grazing decision, hunt lifecycle, predator threat and actor adapters are valid.")
 		quit.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -64,6 +64,15 @@ func _test_transition_contract() -> void:
 	_expect(stale_source.status == CreatureTransitionResult.Status.NO_CHANGE, "hunt exit must reject a non-hunting source")
 	var protected := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_HUNTING_PREY, CreatureTransitionPolicy.EVENT_ECOLOGY_HUNT_CONTACT, true, false, -1.0, false, 0.0, true))
 	_expect(protected.status == CreatureTransitionResult.Status.PROTECTED, "protected hunt contact must not transition")
+	var predator_threat := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_ECOLOGY_PREDATOR_THREAT, true, true, 30.0))
+	_expect(predator_threat.is_changed() and predator_threat.to_state_id == CreatureTransitionPolicy.STATE_FLEE and is_equal_approx(predator_threat.next_timer, 4.0), "predator threat must enter four-second FLEE")
+	_expect(predator_threat.target_action == CreatureTransitionResult.TargetAction.SET, "predator threat must set the threat target")
+	var invalid_predator := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_ECOLOGY_PREDATOR_THREAT, true, false, -1.0))
+	_expect(invalid_predator.status == CreatureTransitionResult.Status.NO_CHANGE, "predator threat must reject an invalid predator")
+	var already_fleeing := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_FLEE, CreatureTransitionPolicy.EVENT_ECOLOGY_PREDATOR_THREAT, true, true, 30.0))
+	_expect(already_fleeing.status == CreatureTransitionResult.Status.NO_CHANGE, "predator threat must preserve an existing FLEE lifecycle")
+	var capturing_panic := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(CreatureTransitionPolicy.STATE_CAPTURING, CreatureTransitionPolicy.EVENT_ECOLOGY_PREDATOR_THREAT, true, true, 30.0, false, 0.0, true))
+	_expect(capturing_panic.status == CreatureTransitionResult.Status.PROTECTED, "capture-active predator panic must be protected")
 
 
 func _test_prey_selection_policy() -> void:
@@ -174,6 +183,20 @@ func _test_actor_adapter() -> void:
 	_expect(predator.get("prey_target") == eligible_prey, "actor must ignore captured nearer prey and select eligible candidate")
 	_expect(int(predator.get("state")) == int(predator_states.get("HUNTING_PREY", 14)), "selected predator must enter HUNTING_PREY")
 	_expect(is_equal_approx(float(predator.get("state_timer")), 6.0), "actor hunt duration must remain six seconds")
+	_expect(int(eligible_prey.get("state")) == int(predator_states.get("FLEE", 10)), "selected prey must enter FLEE through predator-threat transition")
+	_expect(eligible_prey.get("target") == predator and is_equal_approx(float(eligible_prey.get("state_timer")), 4.0), "predator panic must preserve threat target and four-second timer")
+	var panic_apply_count := int(eligible_prey.get("transition_apply_count"))
+	_expect(not bool(eligible_prey.call("panic_from_predator", predator)), "already-fleeing prey must reject repeated predator panic")
+	_expect(int(eligible_prey.get("transition_apply_count")) == panic_apply_count, "repeated predator panic must not mutate actor state")
+	eligible_prey.set("state", int(predator_states.get("CAPTURING", 7)))
+	_expect(not bool(eligible_prey.call("panic_from_predator", predator)), "capturing prey must reject predator panic")
+	eligible_prey.set("state", int(predator_states.get("IDLE", 0)))
+	_expect(not bool(eligible_prey.call("panic_from_predator", null)), "invalid predator must not start FLEE")
+	var threat_transition: CreatureTransitionResult = eligible_prey.call("resolve_creature_transition", CreatureTransitionPolicy.EVENT_ECOLOGY_PREDATOR_THREAT, true, 0.0, predator)
+	_expect(bool(eligible_prey.call("apply_creature_transition", threat_transition, predator)), "accepted predator-threat result must apply")
+	var count_after_threat := int(eligible_prey.get("transition_apply_count"))
+	_expect(not bool(eligible_prey.call("apply_creature_transition", threat_transition, predator)), "repeated predator-threat result must be rejected as stale")
+	_expect(int(eligible_prey.get("transition_apply_count")) == count_after_threat, "stale predator-threat result must not mutate actor state")
 
 	var apply_count_before_abort := int(predator.get("transition_apply_count"))
 	predator.set("prey_target", null)

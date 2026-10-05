@@ -1,38 +1,38 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.9g — Hunt lifecycle closure
+## U1.9h — Predator-threat panic callback
 
-Trạng thái: `VERIFIED` ngày 2026-10-05.
+Trạng thái: `VERIFIED` ngày 2026-10-06.
 
 ### Mục tiêu và invariant
 
-- Đưa HUNTING_PREY invalid-target/timeout và contact exit qua transition owner.
-- Giữ speed ×1.05, contact strict `<42px`, damage `int(attack_power * 0.7)`, abort 2 giây, contact recovery 3 giây và feedback.
-- Không đổi sleep/drink, predator panic callback, asset, skill, drop, spawn hoặc save.
+- Đưa `panic_from_predator()` qua transition owner.
+- Giữ threat target, FLEE 4 giây, floating text, shake audio và CAPTURING/FLEE guards.
+- Không đổi hunt selection/lifecycle, sleep/drink, asset, skill, drop, spawn, species catalog hoặc save.
 
 ### Kết quả đã triển khai
 
-- Thêm stable events `creature.transition.ecology_hunt_aborted` và `creature.transition.ecology_hunt_contact`, chỉ nhận source HUNTING_PREY.
-- Actor resolve/apply qua lifecycle owner; ecology `prey_target` chỉ clear sau accepted transition, regular combat target được giữ nguyên.
-- Contact damage vẫn được resolve trước transition commit như behavior cũ; presentation chỉ chạy sau accepted apply.
-- Stale result bị từ chối bằng from-state guard và không tăng apply count.
+- Thêm stable event `creature.transition.ecology_predator_threat`, yêu cầu target hợp lệ và trả `TargetAction.SET`.
+- Accepted callback vào FLEE 4 giây qua apply owner; presentation chỉ chạy sau accepted apply.
+- FLEE/CAPTURING/invalid predator fail closed; repeated result bị from-state stale guard từ chối.
+- Tăng teardown margin của ecology validator từ 1,25 lên 1,5 giây vì baseline ngày 2026-10-06 tái hiện race với FloatingText callback 1,12 giây.
 
 ### Validation hiện tại
 
-- Baseline full gate xanh trước thay đổi.
-- Focused ecology regression xanh cho policy abort/contact, wrong-source/protected, actor invalid prey, timeout, contact damage/recovery và repeated stale result.
-- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, toàn bộ domain regression gồm hunt lifecycle và main smoke.
-- Validator chờ đủ vòng đời FloatingText rồi teardown; final log không còn ObjectDB/resource leak.
+- Baseline assertions xanh nhưng full gate đỏ do ecology fixture báo 2 ObjectDB/1 resource leak không ổn định ở teardown 1,25 giây.
+- Focused ecology validator sau thay đổi xanh và sạch leak cho policy/actor predator threat.
+- Full final `tools/check_project.ps1` xanh: documentation/asset gates, editor load, toàn bộ domain regression gồm predator threat và main smoke.
+- Ecology validator cùng final log sạch ObjectDB/resource leak sau teardown margin 1,5 giây.
 - `git diff --check` và final log scan được yêu cầu sạch trước commit.
 
 ### Compatibility, asset và giới hạn
 
-- Save/data breaking change: none; events và actor helper đều transient.
+- Save/data breaking change: none; stable event và bool callback result đều transient.
 - Asset/provenance: không thêm/sửa asset; baseline vẫn 166 quarantine/unknown, 69 runtime P0.
-- `panic_from_predator()`, sleep/drink selection và non-Flam typed catalog vẫn legacy.
+- Sleep/drink selection và non-Flam typed catalog vẫn legacy.
 - Asset admission mới vẫn bị chặn vì `game-dev` CLI chưa có trong PATH.
-- Rollback: revert U1.9g; không cần migration.
+- Rollback: revert U1.9h; không cần migration.
 
 ### Gói tiếp theo
 
-U1.9h đưa predator-threat panic callback qua transition owner, giữ target, FLEE 4 giây, text/audio và capture/FLEE guards. Không mở rộng sleep/drink hoặc species catalog cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.9i tách sleep-entry decision trong `start_wander()` bằng injected RNG và transition owner, giữ sleep chance/duration cùng RNG short-circuit ordering. Không migrate drinking hoặc species catalog cùng package. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

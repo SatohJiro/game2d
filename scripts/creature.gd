@@ -593,15 +593,19 @@ func check_predator_prey_ecosystem() -> void:
 	spawn_floating_text("🍖 RÌNH RẬP SĂN MỒI...", Color(1.0, 0.6, 0.2))
 	selected_prey.panic_from_predator(self)
 
-func panic_from_predator(predator: Node2D) -> void:
-	if state == State.CAPTURING or state == State.FLEE:
-		return
-	target = predator
-	state = State.FLEE
-	state_timer = 4.0
+func panic_from_predator(predator: Node2D) -> bool:
+	var transition := resolve_creature_transition(
+		CreatureTransitionPolicy.EVENT_ECOLOGY_PREDATOR_THREAT,
+		true,
+		0.0,
+		predator
+	)
+	if not apply_creature_transition(transition, predator):
+		return false
 	spawn_floating_text("😱 GẶP THÚ SĂN MỒI!", Color(0.3, 0.9, 1.0))
 	if AudioManager:
 		AudioManager.play_sound("shake")
+	return true
 
 func handle_prey_hunt(delta: float) -> void:
 	if not is_instance_valid(prey_target) or state_timer <= 0:
