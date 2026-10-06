@@ -96,6 +96,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.11a Save v1 schema | Hoàn tất | Versioned JSON-safe envelope, stable-ID/reference/range validation và round-trip regression |
 | U1.11b runtime snapshot | Hoàn tất | Player/inventory/pets → validated deep-copied DTO; unknown legacy key fail closed |
 | U1.11c runtime apply | Hoàn tất | Validated plan resolve item/species/stance trước atomic Player commit; failure giữ source |
+| U1.11d save repository | Hoàn tất | Temp verification + primary/backup rotation; corrupt primary đọc fallback không side effect |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

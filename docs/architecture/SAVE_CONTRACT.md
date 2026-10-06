@@ -1,4 +1,4 @@
-# U1.11a–c — Save v1 schema, snapshot and runtime apply
+# U1.11a–d — Save v1 schema, runtime adapters and repository
 
 ## Phạm vi
 
@@ -69,3 +69,15 @@ U1.11b admit `item.stone` và `item.iron_ingot` cùng definitions/mapping để 
 - Position/progression/HP/stamina/needs được commit sau validation. HUD chỉ được refresh sau commit.
 
 Giới hạn v1 hiện hữu: rarity/trait và stance mutable của pet không active chưa nằm trong envelope; apply dùng badge `★`, trait rỗng, còn snapshot kế tiếp chiếu pet không active về auto-work. File repository, atomic disk replace, autosave, checksum, backup, migration và UI slot vẫn ngoài U1.11c.
+
+## U1.11d atomic JSON repository
+
+`SaveRepository(primary_path)` sở hữu ba path cùng thư mục: primary `.json`, backup `.json.bak` và temporary `.json.tmp`. `save(snapshot)` validate schema trước I/O, ghi + flush temporary, đọc/validate lại temporary rồi mới promote:
+
+1. Primary hợp lệ hiện hữu được rename thành backup sau khi backup cũ được bỏ.
+2. Primary hỏng bị bỏ nhưng backup hợp lệ hiện hữu được giữ nguyên.
+3. Temporary được rename thành primary; nếu promote thất bại sau rotation, repository thử phục hồi backup về primary.
+
+`load_snapshot()` ưu tiên primary hợp lệ. Khi primary thiếu/hỏng và backup hợp lệ, result trả `RECOVERED_BACKUP` cùng deep-copied DTO nhưng không tự ghi lại primary; read vì thế không có side effect. Không có cả hai file trả `NOT_FOUND`; JSON/schema hỏng trả `INVALID_DATA`; lỗi filesystem trả `IO_ERROR`.
+
+U1.11d chưa có checksum, encryption, migration version, autosave, slot UI hoặc runtime coordinator. Regression dùng thư mục `user://save_repository_test_*` cô lập và dọn primary/backup/temp sau test. Save v1 không đổi shape và chưa có file phát hành cần migration.
