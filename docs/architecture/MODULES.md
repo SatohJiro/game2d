@@ -100,6 +100,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.9r thêm `ChargeSkillDefinition` và `skill.beast.charge`; FSM giữ transition/contact/wall ownership.
 - U1.9s thêm species-specific Beast/Dragon `MeleeSkillDefinition`; giữ target, damage adapter và recovery lifecycle.
 - U1.9t route defeat drop của đủ năm species qua deterministic result + atomic commit; xóa localized legacy spawn writer.
+- U1.9u route burn tick qua `DamageRequest/CombatResolver`; actor giữ cadence và presentation nhưng không còn direct HP writer.
 - PetInstance lưu unique ID, species ID, level/EXP, stats rolled, needs, skills và assignment.
 - Pet command tối thiểu: follow, guard, attack target, work, return. Job và combat không đồng thời sở hữu locomotion.
 

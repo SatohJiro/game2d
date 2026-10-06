@@ -87,6 +87,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.9r: Beast charge giữ range 70–220px, telegraph 0,45s, cooldown 3,5s, speed 330, duration 0,95s và stun 1,4s qua typed charge skill.
 - U1.9s: Beast/Dragon melee dùng identity riêng, giữ activation 38/48px, cooldown 1,2s, lunge 180, contact 55px, damage ×1 và anticipation 0,2s.
 - U1.9t: mọi species defeat drop dùng typed item ID và atomic result; normal 1–2 primary, elite/alpha 3–5 primary cộng Pal Ore 2–4, capture/duplicate không phát loot.
+- U1.9u: burn gây 8 damage mỗi 0,8 giây qua combat result; capture pause tick, text/flash giữ nguyên và lethal tick chỉ commit defeat/reward một lần.
 - Acceptance: một activation không multi-hit ngoài thiết kế; chết chỉ phát reward một lần; reduced shake không đổi damage.
 
 ### G05 — capture

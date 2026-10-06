@@ -1,4 +1,4 @@
-# U1.5 — Combat request/result contract
+# U1.5/U1.9u — Combat request/result contract
 
 ## Phạm vi
 
@@ -26,6 +26,8 @@ U1.5 tách phép tính damage khỏi presentation và migrate hai target boundar
 - `apply_damage_request` trên hai actor là boundary testable, mutate HP duy nhất khi result `OK`.
 - Creature đặt `defeat_committed = true` trước `die()`, ngăn EXP/drop lặp trong khoảng node chờ free.
 - Panic FLEE chỉ chạy khi result chưa defeated; HP 0 luôn đi death path.
+- U1.9u: burn tick tạo request damage 8 với tags `status`, `burn`, `fire`; `apply_damage_request` là HP writer duy nhất, còn text/flash/death chỉ đọc accepted result.
+- Burn cadence vẫn là 0,8 giây và CAPTURING tiếp tục pause timer/tick trước boundary; committed defeat từ chối tick lặp.
 
 ## Legacy caller audit
 
@@ -36,7 +38,7 @@ U1.5 tách phép tính damage khỏi presentation và migrate hai target boundar
 | creature → prey creature | adapter cho phép legacy wild damage | ecology/faction profile U1.8 |
 | pet target | health logic legacy | pet state U1.10 |
 | buildings/resources | health logic legacy | build/resource domain packages |
-| burn tick trong creature | direct HP mutation legacy | status system U1.9 |
+| burn tick trong creature | migrated qua combat result ở U1.9u | status duration/stacking mở rộng ở U5 |
 
 ## Invariant và validation
 

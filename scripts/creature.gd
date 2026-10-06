@@ -265,14 +265,17 @@ func _physics_process(delta: float) -> void:
 		burn_tick += delta
 		if burn_tick >= 0.8:
 			burn_tick = 0.0
-			hp = max(0, hp - 8)
+			var burn_result := resolve_burn_tick_damage()
+			if not burn_result.is_applied():
+				return
 			update_overhead()
-			spawn_floating_text("🔥 -8", Color(1.0, 0.4, 0.1))
+			spawn_floating_text("🔥 -%d" % burn_result.applied_damage, Color(1.0, 0.4, 0.1))
 			if visual:
 				var tw = create_tween()
 				visual.modulate = Color(2.5, 0.5, 0.2)
 				tw.tween_property(visual, "modulate", Color.WHITE, 0.2)
-			if hp <= 0:
+			if burn_result.defeated:
+				defeat_committed = true
 				die(target)
 				return
 
@@ -1215,6 +1218,16 @@ func apply_damage_request(request: DamageRequest) -> DamageResult:
 	if result.is_applied():
 		hp = result.remaining_hp
 	return result
+
+
+func create_burn_tick_damage_request() -> DamageRequest:
+	var request := DamageRequest.new(&"player_companion", &"wild", hp, max_hp, 8, global_position, global_position)
+	request.tags = PackedStringArray(["status", "burn", "fire"])
+	return request
+
+
+func resolve_burn_tick_damage() -> DamageResult:
+	return apply_damage_request(create_burn_tick_damage_request())
 
 func apply_burn(dur: float) -> void:
 	burn_timer = max(burn_timer, dur)

@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.9u burn tick combat boundary
+# Prompt cho model tiếp theo — U1.10a PetInstance identity
 
-Tiếp tục bằng đúng một package nhỏ U1.9u: audit burn timer/tick direct HP writer và migrate tick damage/defeat qua deterministic combat result boundary. Giữ tick cadence, damage amount, immunity/capture policy và presentation. Không đổi skill catalog, drop quantity, asset hoặc save. Chạy focused regression, full gate, leak-aware log scan và cập nhật contract/checkpoint.
+Tiếp tục bằng đúng một package nhỏ U1.10a: audit roster/captured pet dictionaries và tạo contract `PetInstance` tối thiểu với unique instance ID + stable species ID. Giữ party/reward/summon behavior hiện tại qua adapter; chưa mở rộng job, save schema hoặc UI. Chạy focused regression, full gate, leak-aware log scan và cập nhật contract/checkpoint.

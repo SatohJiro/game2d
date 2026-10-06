@@ -1,34 +1,33 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.9t — remaining creature defeat drops
+## U1.9u — burn tick combat boundary
 
 Trạng thái: `VERIFIED` ngày 2026-10-06.
 
 ### Mục tiêu và invariant
 
-- Route Slime/Mushroom/Beast/Dragon drops qua deterministic result và atomic commit.
-- Giữ quantity, elite/alpha bonus, RNG ordering, capture/duplicate guards và presentation.
-- Không đổi asset, save hoặc EXP reward.
+- Xóa direct HP mutation của burn tick và route damage/defeat qua combat result boundary.
+- Giữ cadence 0,8 giây, damage 8, capture pause, text/flash và killer compatibility.
+- Không đổi status stacking/duration, skill catalog, drop, asset hoặc save.
 
 ### Kết quả đã triển khai
 
-- `die()` dùng cùng request/resolver/commit cho đủ năm stable species.
-- Xóa localized legacy drop spawn writer.
-- Primary item lấy từ typed creature definition; bonus giữ `item.pal_ore`.
+- `create_burn_tick_damage_request()` tạo snapshot với stable tags `status`, `burn`, `fire`.
+- `resolve_burn_tick_damage()` commit qua `apply_damage_request`; presentation chỉ đọc `DamageResult`.
+- Lethal tick đặt `defeat_committed` trước death side effects; duplicate tick bị chặn.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh.
-- Focused resolver/actor regression xanh và teardown sạch leak.
-- Khóa mapping Slime berry, Mushroom seed, Beast meat, Dragon Pal ingot cùng quantity/guard parity.
+- Focused combat regression xanh cho damage/tag/HP mutation và duplicate-defeat guard.
 - Full final gate `tools/check_project.ps1` xanh; documentation, domain validators, editor load và main-scene smoke đều đạt.
 
 ### Compatibility, asset và giới hạn
 
 - Save/data breaking change: none. Asset/provenance: none.
-- EXP reward và burn/status defeat writer chưa migrate.
-- Rollback: revert U1.9t để khôi phục legacy branch; không cần migration.
+- Status duration/stacking vẫn là state actor legacy; package này chỉ đóng damage writer.
+- Rollback: revert U1.9u để khôi phục direct burn HP mutation; không cần migration.
 
 ### Gói tiếp theo
 
-U1.9u audit và migrate burn tick damage/defeat path qua combat result boundary, giữ tick timing/damage/presentation. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.10a audit roster/pet identity hiện tại và tạo `PetInstance` contract tối thiểu bằng stable ID, chưa thay summon/job gameplay. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

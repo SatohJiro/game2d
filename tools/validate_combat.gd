@@ -78,13 +78,23 @@ func _test_actor_adapters() -> void:
 		player.set("hp", player_hp)
 
 	var creature := get_first_node_in_group("wild_creatures")
-	_expect(creature != null and creature.has_method("apply_damage_request"), "Creature combat adapter is missing")
+	_expect(creature != null and creature.has_method("apply_damage_request") and creature.has_method("resolve_burn_tick_damage"), "Creature combat adapter is missing")
 	if creature != null:
 		var creature_hp := int(creature.get("hp"))
 		var creature_max_hp := int(creature.get("max_hp"))
 		var request := DamageRequest.new(&"player", &"wild", creature_hp, creature_max_hp, 4)
 		var result: DamageResult = creature.call("apply_damage_request", request)
 		_expect(result.is_applied() and int(creature.get("hp")) == creature_hp - 4, "Creature adapter HP mutation mismatch")
+		creature.set("hp", creature_hp)
+		var burn_request: DamageRequest = creature.call("create_burn_tick_damage_request")
+		_expect(burn_request.base_damage == 8 and burn_request.tags.has("status") and burn_request.tags.has("burn") and burn_request.tags.has("fire"), "Burn tick request must preserve damage and stable tags")
+		var burn_result: DamageResult = creature.call("resolve_burn_tick_damage")
+		_expect(burn_result.is_applied() and burn_result.applied_damage == 8 and int(creature.get("hp")) == creature_hp - 8, "Burn tick must commit through combat result")
+		creature.set("hp", creature_hp)
+		creature.set("defeat_committed", true)
+		var duplicate_burn: DamageResult = creature.call("resolve_burn_tick_damage")
+		_expect(duplicate_burn.status == DamageResult.Status.ALREADY_DEFEATED and int(creature.get("hp")) == creature_hp, "Committed defeat must reject a duplicate burn tick")
+		creature.set("defeat_committed", false)
 		creature.set("hp", creature_hp)
 
 

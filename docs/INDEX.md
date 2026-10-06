@@ -86,6 +86,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.9r Beast charge | Hoàn tất | `ChargeSkillDefinition` typed range/timing/movement/stun; FSM ownership giữ nguyên |
 | U1.9s melee boundary | Hoàn tất | Beast/Dragon melee có stable identity riêng; range/timing/lunge/contact parity được giữ |
 | U1.9t remaining drops | Hoàn tất | Đủ năm species dùng deterministic typed drop result và atomic commit |
+| U1.9u burn tick boundary | Hoàn tất | Burn damage dùng deterministic combat result; cadence, capture pause và presentation giữ nguyên |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |
