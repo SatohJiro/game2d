@@ -24,13 +24,14 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 17. `docs/architecture/CREATURE_DROP_CONTRACT.md`: deterministic defeat drop, capture guard và atomic Flam commit.
 18. `docs/architecture/CREATURE_ECOLOGY_CONTRACT.md`: pure damage-panic policy, stable ecology event và transition ownership.
 19. `docs/architecture/PET_INSTANCE_CONTRACT.md`: unique pet identity, typed projection và capture-to-roster boundary.
-20. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
-21. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
-22. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
-23. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
-24. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
-25. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
-26. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
+20. `docs/architecture/SAVE_CONTRACT.md`: versioned Save v1 envelope, JSON-safe DTO và validation boundary.
+21. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
+22. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
+23. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
+24. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
+25. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
+26. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+27. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 
@@ -92,6 +93,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.10b summon lifecycle | Hoàn tất | Active selection theo instance ID; same-slot no-op và replace chỉ giữ một node trong tree |
 | U1.10c pet command boundary | Hoàn tất | Stable cycle command và deterministic three-stance policy; invalid intent không mutate |
 | U1.10d explicit pet commands | Hoàn tất | Direct work/combat/follow intents và idempotent no-change qua cùng policy |
+| U1.11a Save v1 schema | Hoàn tất | Versioned JSON-safe envelope, stable-ID/reference/range validation và round-trip regression |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

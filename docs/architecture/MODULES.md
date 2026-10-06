@@ -35,7 +35,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
 | WORLD | Zone, chunks, spawn, day/night, raid | `main.gd`, scene tĩnh | Chunk admission + persistent delta | U2 |
 | NAV | Navigation/path requests | Chưa có | Navigation adapter theo chunk | U2.3 |
-| SAVE | Versioned persistence | Chưa có | DTO thuần, atomic write, migrations | U1.11 |
+| SAVE | Versioned persistence | Save v1 envelope + pure JSON-safe validator; chưa có runtime adapter/file repository | DTO thuần, atomic write, migrations | U1.11 |
 | UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
 | PRESENT | Animation/VFX/camera/audio | Trộn trong actor; `AudioManager` autoload | Event-driven adapters, pooling, accessibility scale | U4 |
 | ASSET | Vendoring/provenance/import | File rời, nguồn chưa biết | Manifest, package receipt, immutable vendor source | U0.2, U4.1 |
@@ -123,6 +123,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - Spawn budget theo biome/time; không respawn entity đã captured/harvested trước cooldown đã lưu.
 - Save gồm `schema_version`, metadata và DTO theo module; ghi file tạm rồi replace để tránh corrupt.
 - Load migration tuần tự `vN → vN+1`; thiếu content ID trả lỗi có ngữ cảnh hoặc dùng fallback đã ghi rõ.
+- U1.11a thêm `SaveV1Schema`/`SaveValidationResult`: validate player/inventory/pets/world bằng stable ID, unique reference và JSON-safe values; chưa đọc/ghi file.
 
 ### UI và PRESENTATION
 
