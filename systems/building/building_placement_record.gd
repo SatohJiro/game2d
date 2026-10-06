@@ -13,12 +13,16 @@ func _init(p_instance_id: StringName, p_building_id: StringName, p_transform: Tr
 	state = p_state.duplicate(true)
 	if building_id == &"building.chest" and state.is_empty():
 		state = {"inventory": {}}
+	elif building_id == &"building.furnace" and state.is_empty():
+		state = FurnacePlacementState.new().to_dto()
 
 func is_valid() -> bool:
 	if ContentId.domain_of(instance_id) != &"building" or not BuildingPlacementCatalog.is_supported(building_id) or not transform.is_finite():
 		return false
 	if building_id == &"building.chest":
 		return ChestPlacementState.from_dto(state) != null
+	if building_id == &"building.furnace":
+		return FurnacePlacementState.from_dto(state) != null
 	return state.is_empty()
 
 func to_dto() -> Dictionary:

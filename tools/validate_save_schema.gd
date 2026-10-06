@@ -92,7 +92,10 @@ func _test_identity_and_shape_guards() -> void:
 	_expect(not Schema.validate(over_capacity_chest).is_valid(), "over-capacity chest state must fail before runtime mutation")
 	var state_on_furnace := Schema.create_empty(&"save.slot_1", 1)
 	state_on_furnace["world"]["entity_deltas"] = [{"instance_id": "building.instance_furnace", "building_id": "building.furnace", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"inventory": {}}}]
-	_expect(not Schema.validate(state_on_furnace).is_valid(), "unadmitted building subtypes must reject mutable state")
+	_expect(not Schema.validate(state_on_furnace).is_valid(), "furnace must reject state from another subtype")
+	var invalid_furnace_progress := Schema.create_empty(&"save.slot_1", 1)
+	invalid_furnace_progress["world"]["entity_deltas"] = [{"instance_id": "building.instance_furnace", "building_id": "building.furnace", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"ore_count": 0, "wood_count": 0, "iron_ingots_ready": 0, "pal_ingots_ready": 0, "smelt_timer": 2.0}}]
+	_expect(not Schema.validate(invalid_furnace_progress).is_valid(), "furnace progress without a committed batch must fail before mutation")
 
 
 func _test_non_serializable_guards() -> void:
@@ -222,6 +225,20 @@ func _test_runtime_apply_adapter() -> void:
 		var reloaded_buildings := get_nodes_in_group("persistent_player_buildings")
 		var reloaded_chest: BuildingChest = reloaded_buildings[0] as BuildingChest if reloaded_buildings.size() == 1 else null
 		_expect(reloaded.is_applied() and reloaded_chest != null and LegacyItemAdapter.get_count(reloaded_chest.stored_items, &"item.wood") == 17 and LegacyItemAdapter.get_count(reloaded_chest.stored_items, &"item.berry") == 4, "chest save/load must preserve committed counts exactly once")
+		loaded_pet = player.get("active_pet_node")
+	var furnace_save := save.duplicate(true)
+	furnace_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_furnace", "building_id": "building.furnace", "position": {"x": 30.0, "y": 40.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"ore_count": 4, "wood_count": 2, "iron_ingots_ready": 3, "pal_ingots_ready": 1, "smelt_timer": 2.25}}]
+	var furnace_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, furnace_save)
+	var furnace_nodes := get_nodes_in_group("persistent_player_buildings")
+	var loaded_furnace: Variant = furnace_nodes[0] if furnace_nodes.size() == 1 else null
+	_expect(furnace_applied.is_applied() and is_instance_valid(loaded_furnace) and loaded_furnace.get("ore_count") == 4 and loaded_furnace.get("wood_count") == 2 and loaded_furnace.get("iron_ingots_ready") == 3 and loaded_furnace.get("pal_ingots_ready") == 1 and is_equal_approx(loaded_furnace.get("smelt_timer"), 2.25), "furnace committed batch apply mismatch")
+	var furnace_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2002, 321.5)
+	_expect(furnace_snapshot.is_accepted(), "mid-batch furnace must snapshot with typed state")
+	if furnace_snapshot.is_accepted():
+		var furnace_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, furnace_snapshot.snapshot)
+		var reloaded_furnace_nodes := get_nodes_in_group("persistent_player_buildings")
+		var reloaded_furnace: Variant = reloaded_furnace_nodes[0] if reloaded_furnace_nodes.size() == 1 else null
+		_expect(furnace_reloaded.is_applied() and is_instance_valid(reloaded_furnace) and reloaded_furnace.get("ore_count") == 4 and reloaded_furnace.get("wood_count") == 2 and reloaded_furnace.get("iron_ingots_ready") == 3 and reloaded_furnace.get("pal_ingots_ready") == 1 and is_equal_approx(reloaded_furnace.get("smelt_timer"), 2.25), "furnace save/load must preserve inputs, outputs and progress exactly once")
 		loaded_pet = player.get("active_pet_node")
 
 	var position_before: Vector2 = player.global_position

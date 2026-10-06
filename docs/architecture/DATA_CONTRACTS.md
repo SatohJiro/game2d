@@ -48,6 +48,8 @@ U1.12e admit stable subtype cho chín placement reachable và instance namespace
 
 U1.12f admit `ChestPlacementState` cho đúng `building.chest`. Inventory DTO dùng stable item ID thay vì localized legacy key; item ngoài contract chest và state gắn lên subtype khác đều bị reject.
 
+U1.12g admit `FurnacePlacementState` cho đúng `building.furnace`. Các count và timer là scalar JSON-safe; active/boost presentation không trở thành identity hoặc persisted authority.
+
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.

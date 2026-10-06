@@ -738,7 +738,7 @@ func place_current_building() -> void:
 		b_node.add_to_group("persistent_player_buildings")
 		get_parent().add_child(b_node)
 		var state: Dictionary = {}
-		if building_id == &"building.chest" and b_node.has_method("create_persistence_state"):
+		if (building_id == &"building.chest" or building_id == &"building.furnace") and b_node.has_method("create_persistence_state"):
 			state = b_node.call("create_persistence_state").to_dto()
 		placed_buildings.append(BuildingPlacementRecord.new(instance_id, building_id, b_node.transform, state).to_dto())
 		spawn_floating_text("Đã xây dựng thành công!", Color(0.4, 1.0, 0.5))
@@ -760,6 +760,10 @@ func replace_persistent_buildings(records: Array[BuildingPlacementRecord]) -> bo
 			for staged_node in staged: staged_node.free()
 			return false
 		if record.building_id == &"building.chest" and (not node.has_method("apply_persistence_state") or not bool(node.call("apply_persistence_state", ChestPlacementState.from_dto(record.state)))):
+			for staged_node in staged: staged_node.free()
+			node.free()
+			return false
+		if record.building_id == &"building.furnace" and (not node.has_method("apply_persistence_state") or not bool(node.call("apply_persistence_state", FurnacePlacementState.from_dto(record.state)))):
 			for staged_node in staged: staged_node.free()
 			node.free()
 			return false
@@ -785,6 +789,8 @@ func create_building_placement_snapshot() -> Array[Dictionary]:
 		if is_instance_valid(node):
 			record.transform = node.transform
 			if record.building_id == &"building.chest" and node.has_method("create_persistence_state"):
+				record.state = node.call("create_persistence_state").to_dto()
+			elif record.building_id == &"building.furnace" and node.has_method("create_persistence_state"):
 				record.state = node.call("create_persistence_state").to_dto()
 		snapshot.append(record.to_dto())
 	return snapshot

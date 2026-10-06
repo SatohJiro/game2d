@@ -108,6 +108,24 @@ func update_display() -> void:
 		status = "\nTrống (Cần Quặng + Gỗ) [E nạp]"
 	label.text = "Lò Luyện Kim" + status
 
+
+func create_persistence_state() -> FurnacePlacementState:
+	return FurnacePlacementState.new(ore_count, wood_count, iron_ingots_ready, pal_ingots_ready, smelt_timer)
+
+
+func apply_persistence_state(state: FurnacePlacementState) -> bool:
+	if state == null or not state.is_valid():
+		return false
+	ore_count = state.ore_count
+	wood_count = state.wood_count
+	iron_ingots_ready = state.iron_ingots_ready
+	pal_ingots_ready = state.pal_ingots_ready
+	smelt_timer = state.smelt_timer
+	is_smelting = ore_count >= 2 and wood_count >= 1
+	has_fire_pet_boost = false
+	update_display()
+	return true
+
 func spawn_floating_text(text: String, color: Color) -> void:
 	var ft = FLOATING_TEXT_SCENE.instantiate()
 	ft.global_position = global_position + Vector2(0, -28)

@@ -121,3 +121,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12f chest subtype state
 
 `BuildingPlacementRecord.state` được validate theo subtype. Chỉ `building.chest` nhận `ChestPlacementState.inventory` với ba stable item ID do chest quản lý; subtype khác bắt buộc state rỗng. Snapshot đọc committed chest store tại lúc save; apply kiểm tra capacity trên shadow store trước khi thay node, vì vậy load không cộng dồn hoặc làm mất item. Chest record U1.12e thiếu state được hiểu là rỗng.
+
+## U1.12g furnace subtype state
+
+`building.furnace` nhận `FurnacePlacementState` gồm committed ore/wood input, iron/pal output chờ nhận và progress timer hữu hạn trong một chu kỳ 5 giây. Timer dương không được tồn tại nếu input không đủ một batch. `is_smelting` được suy ra khi apply; Flam boost không serialize. Snapshot/apply lặp lại giữ nguyên input, output và progress thay vì trừ hoặc cộng item lần nữa.
