@@ -2,6 +2,7 @@ class_name CaptureOwnershipResolver
 extends RefCounted
 
 const PetInstanceModel = preload("res://systems/pet/pet_instance.gd")
+const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
 
 const CAPTURE_REWARD_EXP := 75
 const LEGENDARY_THRESHOLD := 0.05
@@ -63,6 +64,8 @@ static func resolve(request: CaptureOwnershipRequest) -> CaptureOwnershipResult:
 		request.species_id,
 		boosted_snapshot,
 		request.level,
+		rarity["rarity_id"],
+		rarity["trait_id"],
 		rarity["rarity_badge"],
 		rarity["trait_name"]
 	)
@@ -78,6 +81,8 @@ static func resolve(request: CaptureOwnershipRequest) -> CaptureOwnershipResult:
 		request.capture_token,
 		request.species_id,
 		party_entry,
+		rarity["rarity_id"],
+		rarity["trait_id"],
 		rarity["rarity_badge"],
 		rarity["trait_name"],
 		rarity["stat_multiplier"],
@@ -106,23 +111,31 @@ static func _is_unit_roll(value: float) -> bool:
 static func _resolve_rarity(rarity_roll: float, trait_roll: float) -> Dictionary:
 	if rarity_roll < LEGENDARY_THRESHOLD:
 		return {
+			"rarity_id": PetMetadata.RARITY_LEGENDARY,
+			"trait_id": PetMetadata.TRAIT_DRAGON_BLESSING,
 			"rarity_badge": LEGENDARY_BADGE,
 			"trait_name": LEGENDARY_TRAIT,
 			"stat_multiplier": 1.5,
 		}
 	if rarity_roll < EPIC_THRESHOLD:
 		return {
+			"rarity_id": PetMetadata.RARITY_EPIC,
+			"trait_id": [PetMetadata.TRAIT_WARLORD, PetMetadata.TRAIT_SWIFT, PetMetadata.TRAIT_GUARDIAN][_roll_index(trait_roll, EPIC_TRAITS.size())],
 			"rarity_badge": EPIC_BADGE,
 			"trait_name": EPIC_TRAITS[_roll_index(trait_roll, EPIC_TRAITS.size())],
 			"stat_multiplier": 1.3,
 		}
 	if rarity_roll < RARE_THRESHOLD:
 		return {
+			"rarity_id": PetMetadata.RARITY_RARE,
+			"trait_id": [PetMetadata.TRAIT_BRAVE, PetMetadata.TRAIT_AGILE][_roll_index(trait_roll, RARE_TRAITS.size())],
 			"rarity_badge": RARE_BADGE,
 			"trait_name": RARE_TRAITS[_roll_index(trait_roll, RARE_TRAITS.size())],
 			"stat_multiplier": 1.15,
 		}
 	return {
+		"rarity_id": PetMetadata.RARITY_COMMON,
+		"trait_id": PetMetadata.TRAIT_NORMAL,
 		"rarity_badge": COMMON_BADGE,
 		"trait_name": COMMON_TRAIT,
 		"stat_multiplier": 1.0,

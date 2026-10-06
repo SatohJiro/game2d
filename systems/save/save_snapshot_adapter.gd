@@ -3,6 +3,8 @@ extends RefCounted
 
 const Schema = preload("res://systems/save/save_v1_schema.gd")
 const SnapshotResult = preload("res://systems/save/save_snapshot_result.gd")
+const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
+const PetCommandPolicy = preload("res://systems/pet/pet_command_policy.gd")
 const DEFAULT_STANCE_ID := &"pet.stance.auto_work"
 
 
@@ -72,14 +74,27 @@ static func _project_pets(source: Array, active_pet_node: Variant, errors: Packe
 			continue
 		var entry: Dictionary = value
 		var instance_id := StringName(entry.get("instance_id", &""))
-		var stance_id := DEFAULT_STANCE_ID
+		var rarity_id := StringName(entry.get("rarity_id", &""))
+		var trait_id := StringName(entry.get("trait_id", &""))
+		var stance_id := StringName(entry.get("stance_id", DEFAULT_STANCE_ID))
 		if is_instance_valid(active_pet_node) and StringName(active_pet_node.get("pet_instance_id")) == instance_id and active_pet_node.has_method("get_stance_id"):
 			stance_id = active_pet_node.get_stance_id()
+		if not PetMetadata.is_valid_rarity(rarity_id):
+			errors.append("unsupported pet rarity ID: %s" % rarity_id)
+			continue
+		if not PetMetadata.is_valid_trait(trait_id):
+			errors.append("unsupported pet trait ID: %s" % trait_id)
+			continue
+		if not PetCommandPolicy.VALID_STANCES.has(stance_id):
+			errors.append("unsupported pet stance ID: %s" % stance_id)
+			continue
 		projected.append({
 			"instance_id": String(instance_id),
 			"species_id": String(entry.get("species_id", &"")),
 			"level": int(entry.get("level", 0)),
 			"exp": int(entry.get("exp", 0)),
+			"rarity_id": String(rarity_id),
+			"trait_id": String(trait_id),
 			"stance_id": String(stance_id),
 		})
 	return projected

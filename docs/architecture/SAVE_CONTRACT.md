@@ -53,7 +53,7 @@ Save/data breaking change: schema v1 mới được định nghĩa nhưng chưa 
 
 - Player: position được project `{x,y}`; level/EXP/HP/stamina và needs scalar được snapshot, không giữ `PlayerNeedsSnapshot` object.
 - Inventory: mọi legacy key phải map hai chiều rõ ràng qua `LegacyItemAdapter`; unknown key trả `UNMAPPED_ITEM` và không trả partial snapshot.
-- Pets: party dictionary được project về instance/species/level/EXP; active CompanionPet cung cấp stance hiện tại, pet không active mặc định `pet.stance.auto_work` vì roster hiện chưa giữ stance mutable.
+- Pets: party dictionary được project về instance/species/level/EXP. Từ U1.12c, rarity/trait/stance dùng stable IDs; active CompanionPet cung cấp stance hiện tại và roster giữ stance của pet inactive.
 - World: package chỉ inject `day_time`/clock scalar từ caller; entity delta vẫn rỗng.
 - Snapshot/result deep-copy dữ liệu. Mutation snapshot sau đó không đổi inventory hoặc roster runtime.
 
@@ -68,7 +68,7 @@ U1.11b admit `item.stone` và `item.iron_ingot` cùng definitions/mapping để 
 - Apply result trả `world_clock_seconds` cho world owner tương lai; adapter không tự tìm hoặc mutate world clock Node.
 - Position/progression/HP/stamina/needs được commit sau validation. HUD chỉ được refresh sau commit.
 
-Giới hạn v1 hiện hữu: rarity/trait và stance mutable của pet không active chưa nằm trong envelope; apply dùng badge `★`, trait rỗng, còn snapshot kế tiếp chiếu pet không active về auto-work. File repository, atomic disk replace, autosave, checksum, backup, migration và UI slot vẫn ngoài U1.11c.
+Giới hạn tại thời điểm U1.11c là rarity/trait và stance mutable của pet không active chưa nằm trong envelope; gap này được đóng ở U1.12c. File repository, atomic disk replace, autosave, checksum, backup, migration và UI slot vẫn ngoài U1.11c.
 
 ## U1.11d atomic JSON repository
 
@@ -96,8 +96,14 @@ Repository chưa tự gọi migration trong U1.11e: repository tiếp tục ch�
 
 Load success phân biệt `LOADED_PRIMARY` với `LOADED_BACKUP`, đồng thời trả `world_clock_seconds` để world owner commit. Coordinator không giữ state gameplay, không tự pause và không phát UI; caller sở hữu thời điểm gọi và feedback. Scene-level regression dùng Player thật chứng minh primary round-trip, backup recovery và corrupt-both no-mutation.
 
-U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO, checksum hoặc persistence pet rarity/trait/inactive stance.
+U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure
 
 `RuntimeInventoryManifest` phân nhóm toàn bộ 25 localized key reachable ở runtime. Mười bốn identity còn thiếu đã có stable `item.*`, typed definition và reverse mapping; snapshot Player được regression riêng cho core/crafting/farming/ranch/cooking nên các output hợp lệ không còn chặn toàn save bằng `UNMAPPED_ITEM`. Adapter vẫn fail closed với key ngoài tập admit và vẫn dùng đúng một legacy backing dictionary. Save v1 shape/economy không đổi.
+
+## U1.12c pet metadata persistence
+
+Mỗi `pets[]` entry bắt buộc có `rarity_id`, `trait_id`, `stance_id` thuộc allowlist stable. Snapshot không ghi badge/trait localized; apply dựng lại presentation bằng `PetMetadataCatalog`. Active actor là authority stance khi snapshot, roster là authority cho pet inactive; Player ghi stance về roster trước khi replace và áp stance roster khi summon.
+
+Đây là thay đổi shape của Save v1 nhưng không tăng `schema_version`: dự án chưa phát hành và chưa có save tương thích được cam kết. Vì vậy migration table vẫn không có pre-v1 route; snapshot thiếu field mới fail validation thay vì tự đoán metadata. Sau bản phát hành đầu tiên, mọi thay đổi shape tiếp theo phải tăng version và có migration step.

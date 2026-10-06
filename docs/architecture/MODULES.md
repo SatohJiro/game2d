@@ -132,6 +132,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.11f thêm `SaveCoordinator/Result`: snapshot→repository và repository→migration→apply, phân biệt primary/backup recovery và handoff world clock.
 - U1.12a audit xác nhận SAVE mới phủ Player/core roster; inventory key chưa admit có thể block toàn snapshot, còn base/building/crop/world delta chưa có owner DTO. Ma trận ở `PERSISTENCE_COVERAGE_AUDIT.md`.
 - U1.12b đóng blocker inventory đã audit: snapshot regression theo core/crafting/farming/ranch/cooking; unknown key vẫn fail closed. Pet metadata và world/base coverage chưa đổi.
+- U1.12c thêm `PetMetadataCatalog`, stable rarity/trait/stance trong roster và Save v1; Player persist stance trước node replacement và restore khi summon. Presentation text/behavior giữ nguyên.
 
 ### UI và PRESENTATION
 

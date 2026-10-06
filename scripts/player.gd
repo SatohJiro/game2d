@@ -792,6 +792,7 @@ func swap_active_pet(idx: int) -> RefCounted:
 	if not summon_result.should_spawn():
 		return summon_result
 
+	_persist_active_pet_stance()
 	var pets = get_tree().get_nodes_in_group("companion_pets")
 	for p in pets:
 		if p.is_inside_tree() and p.get_parent() != null:
@@ -806,6 +807,10 @@ func swap_active_pet(idx: int) -> RefCounted:
 	pet_inst.player_target = self
 	pet_inst.global_position = global_position + Vector2(25, 25)
 	get_parent().add_child(pet_inst)
+	var saved_stance_id := StringName(data.get("stance_id", PetCommandPolicyModel.STANCE_AUTO_WORK))
+	var saved_stance_command := _command_for_pet_stance(saved_stance_id)
+	if not saved_stance_command.is_empty():
+		pet_inst.apply_pet_command(saved_stance_command)
 	active_pet_node = pet_inst
 	active_pet_instance_id = summon_result.instance_id
 	
@@ -818,6 +823,24 @@ func swap_active_pet(idx: int) -> RefCounted:
 		var display_name = "[%s] %s (%s)" % [badge, data["species_data"]["name"], trait_str]
 		hud_ref.update_pet_stats(display_name, data["level"], pet_inst.hp, pet_inst.max_hp, "Tự do Tấn công")
 	return summon_result
+
+
+func _persist_active_pet_stance() -> void:
+	if not is_instance_valid(active_pet_node) or not active_pet_node.has_method("get_stance_id"):
+		return
+	var stance_id: StringName = active_pet_node.get_stance_id()
+	for entry: Dictionary in pet_party:
+		if StringName(entry.get("instance_id", &"")) == active_pet_instance_id:
+			entry["stance_id"] = stance_id
+			return
+
+
+func _command_for_pet_stance(stance_id: StringName) -> StringName:
+	match stance_id:
+		PetCommandPolicyModel.STANCE_AUTO_WORK: return PetCommandPolicyModel.COMMAND_AUTO_WORK
+		PetCommandPolicyModel.STANCE_COMBAT_ASSIST: return PetCommandPolicyModel.COMMAND_COMBAT_ASSIST
+		PetCommandPolicyModel.STANCE_FOLLOW_PROTECT: return PetCommandPolicyModel.COMMAND_FOLLOW_PROTECT
+	return &""
 
 func on_pet_captured(
 	pet_data: Dictionary,
@@ -922,6 +945,7 @@ func command_pets() -> void:
 			var command_result: RefCounted = pet.apply_pet_command(PetCommandPolicyModel.COMMAND_CYCLE_STANCE)
 			if not command_result.is_applied():
 				continue
+			_persist_active_pet_stance()
 			var stance_str = "Tự do Tấn công" if command_result.next_stance_id == PetCommandPolicyModel.STANCE_COMBAT_ASSIST else "Theo sát & Phòng thủ"
 			if hud_ref:
 				hud_ref.update_pet_stats(pet.species_data.get("name", "Pet"), pet.level, pet.hp, pet.max_hp, stance_str)

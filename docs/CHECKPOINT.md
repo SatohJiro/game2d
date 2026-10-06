@@ -1,35 +1,37 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.12b — runtime inventory identity closure
+## U1.12c — pet metadata persistence
 
 Trạng thái: `VERIFIED` ngày 2026-10-07.
 
 ### Mục tiêu và invariant
 
-- Mọi localized inventory key reachable hiện tại phải map hai chiều sang stable `item.*` và có typed `ItemDefinition`.
-- Snapshot Player sau output core/crafting/farming/ranch/cooking không được fail `UNMAPPED_ITEM`.
-- Giữ nguyên economy, Save v1 shape và legacy dictionary duy nhất; unknown key vẫn fail closed.
+- Rarity, trait và stance của mỗi roster pet dùng stable identity; localized badge/name không đi vào save làm identity.
+- Snapshot/apply giữ metadata và stance của cả pet active lẫn inactive.
+- Không đổi rarity roll, stat multiplier, pet combat/job behavior hoặc HUD text.
 
 ### Kết quả đã triển khai
 
-- Thêm `RuntimeInventoryManifest` bao phủ 25 key theo năm nhóm runtime.
-- Admit 14 definition/mapping còn thiếu cho fertilizer, elixir, crop/ranch material và cooked food; catalog tăng từ 26 lên 40 definition.
-- Content validator khóa mapping hai chiều + typed definition; save validator instantiate Player và snapshot từng nhóm output.
+- Thêm `PetMetadataCatalog` với bốn `pet.rarity.*`, bảy `pet.trait.*` và projection presentation cũ.
+- Capture/PetInstance phát và validate stable metadata; pet mới có `pet.stance.auto_work` trong roster.
+- Player ghi stance active về roster trước node replacement và restore stance khi summon.
+- Save v1 bắt buộc rarity/trait/stance allowlist; snapshot/apply round-trip active + inactive pet và dựng lại presentation text từ catalog.
 
 ### Validation hiện tại
 
-- Godot editor import/load headless xanh sau thay đổi.
-- `validate_content.gd` và `validate_save_schema.gd` xanh; không có parse/script/missing dependency trong hai validator trọng tâm.
-- Full `tools/check_project.ps1` xanh: documentation, 166 asset integrity/action records, editor load, toàn bộ content/item/combat/player/creature/capture/pet/save validators.
-- Leak-aware scan `build/checks` không có `SCRIPT ERROR`, `Parse Error`, missing dependency, invalid node path hoặc orphan/leak warning.
+- Godot editor import/load headless xanh.
+- `validate_capture.gd`, `validate_pet_summon.gd`, `validate_save_schema.gd` xanh.
+- Full `tools/check_project.ps1` xanh: documentation, asset integrity/action, editor load và toàn bộ gameplay/save validators.
+- Leak-aware scan `build/checks` không có script/parse/missing dependency/invalid node path hoặc orphan/leak warning.
 
 ### Compatibility, asset và giới hạn
 
-- Save/data breaking change: none; Save v1 shape không đổi và chưa có save phát hành.
-- Không thêm asset ngoài. Các definition mới chỉ tham chiếu icon baseline đã có; provenance giữ `QUARANTINE/UNKNOWN`.
-- Manifest ngăn drift ở contract đã khai báo nhưng chưa tự phân tích source để phát hiện producer key mới.
-- Rollback: revert manifest, 14 definition, adapter mappings và regression/docs U1.12b; runtime economy không đổi.
+- Save v1 shape đổi tại `pets[]` nhưng version giữ 1 vì chưa có save phát hành; snapshot thiếu metadata mới fail closed. Sau release phải tăng version + migration.
+- Runtime roster vẫn là single source; field badge/trait legacy được giữ cho HUD/ranch compatibility.
+- Asset/provenance: none.
+- Base/quest, building/crop/world delta và autosave/UI ngoài phạm vi.
+- Rollback: revert catalog, stable roster fields, Player stance bridge, save schema/adapters và regression/docs U1.12c.
 
 ### Gói tiếp theo
 
-Sau khi full gate xanh, U1.12c đóng stable identity và round-trip cho pet rarity/trait/inactive stance. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+Sau full gate xanh, U1.12d thiết kế typed stable persistence cho base/quest progress để chặn reset và reward lặp. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

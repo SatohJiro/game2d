@@ -82,8 +82,8 @@ func _test_player_adapter() -> void:
 		"max_hp": 100,
 		"speed": 100.0,
 	})
-	party.append({"instance_id": &"pet.one", "species_id": LegacySpeciesAdapter.FLAM_ID, "species_data": species, "level": 1, "rarity_badge": "★", "trait": "Test"})
-	party.append({"instance_id": &"pet.two", "species_id": LegacySpeciesAdapter.FLAM_ID, "species_data": species.duplicate(true), "level": 2, "rarity_badge": "★", "trait": "Test"})
+	party.append({"instance_id": &"pet.one", "species_id": LegacySpeciesAdapter.FLAM_ID, "species_data": species, "level": 1, "rarity_id": &"pet.rarity.rare", "trait_id": &"pet.trait.brave", "stance_id": CommandPolicy.STANCE_AUTO_WORK, "rarity_badge": "★★ Hiếm", "trait": "Dũng Cảm"})
+	party.append({"instance_id": &"pet.two", "species_id": LegacySpeciesAdapter.FLAM_ID, "species_data": species.duplicate(true), "level": 2, "rarity_id": &"pet.rarity.epic", "trait_id": &"pet.trait.guardian", "stance_id": CommandPolicy.STANCE_COMBAT_ASSIST, "rarity_badge": "★★★ Sử Thi", "trait": "Hộ Vệ"})
 
 	var first: RefCounted = player.call("swap_active_pet", 0)
 	var first_node: Node2D = player.get("active_pet_node")
@@ -110,7 +110,9 @@ func _test_player_adapter() -> void:
 	var replacement: RefCounted = player.call("swap_active_pet", 1)
 	var second_node: Node2D = player.get("active_pet_node")
 	_expect(replacement.status == SummonResult.Status.REPLACE, "second slot must replace active instance")
+	_expect(party[0]["stance_id"] == CommandPolicy.STANCE_FOLLOW_PROTECT, "replacing active pet must persist its stance into roster")
 	_expect(second_node != first_node and second_node.get("pet_instance_id") == &"pet.two", "replacement node must carry selected instance ID")
+	_expect(second_node.call("get_stance_id") == CommandPolicy.STANCE_COMBAT_ASSIST, "summon must restore the selected roster stance")
 	_expect(player.get("active_pet_instance_id") == &"pet.two", "Player active identity must follow accepted replacement")
 	_expect(get_nodes_in_group("companion_pets").size() == 1, "replacement must leave exactly one companion node in tree")
 

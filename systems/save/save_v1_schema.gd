@@ -2,6 +2,8 @@ class_name SaveV1Schema
 extends RefCounted
 
 const ValidationResult = preload("res://systems/save/save_validation_result.gd")
+const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
+const PetCommandPolicy = preload("res://systems/pet/pet_command_policy.gd")
 const SCHEMA_VERSION := 1
 
 
@@ -108,8 +110,12 @@ static func _validate_pets(value: Variant, player_value: Variant, errors: Packed
 			errors.append("pet level must be a positive integer")
 		if not _is_non_negative_integer(entry.get("exp")):
 			errors.append("pet exp must be a non-negative integer")
-		if ContentId.domain_of(StringName(entry.get("stance_id", ""))) != &"pet":
-			errors.append("pet stance_id must use pet.*")
+		if not PetMetadata.is_valid_rarity(StringName(entry.get("rarity_id", ""))):
+			errors.append("pet rarity_id must be supported")
+		if not PetMetadata.is_valid_trait(StringName(entry.get("trait_id", ""))):
+			errors.append("pet trait_id must be supported")
+		if not PetCommandPolicy.VALID_STANCES.has(StringName(entry.get("stance_id", ""))):
+			errors.append("pet stance_id must be supported")
 	if typeof(player_value) == TYPE_DICTIONARY:
 		var active_id := StringName((player_value as Dictionary).get("active_pet_instance_id", ""))
 		if not active_id.is_empty() and not seen.has(active_id):

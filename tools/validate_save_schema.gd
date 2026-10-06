@@ -7,6 +7,7 @@ const SnapshotResult = preload("res://systems/save/save_snapshot_result.gd")
 const ApplyAdapter = preload("res://systems/save/save_apply_adapter.gd")
 const ApplyResult = preload("res://systems/save/save_apply_result.gd")
 const RuntimeInventoryManifest = preload("res://data/runtime_inventory_manifest.gd")
+const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
 
 var _failures := PackedStringArray()
 
@@ -39,6 +40,8 @@ func _test_valid_envelope_and_round_trip() -> void:
 		"species_id": "creature.flam",
 		"level": 2,
 		"exp": 25,
+		"rarity_id": "pet.rarity.epic",
+		"trait_id": "pet.trait.guardian",
 		"stance_id": "pet.stance.follow_protect",
 	}]
 	var valid: RefCounted = Schema.validate(save)
@@ -58,8 +61,8 @@ func _test_identity_and_shape_guards() -> void:
 	_expect(not Schema.validate(localized_inventory).is_valid(), "localized inventory key must not become save identity")
 	var duplicate := Schema.create_empty(&"save.slot_1", 1)
 	duplicate["pets"] = [
-		{"instance_id": "pet.same", "species_id": "creature.flam", "level": 1, "exp": 0, "stance_id": "pet.stance.auto_work"},
-		{"instance_id": "pet.same", "species_id": "creature.slime", "level": 1, "exp": 0, "stance_id": "pet.stance.auto_work"},
+		{"instance_id": "pet.same", "species_id": "creature.flam", "level": 1, "exp": 0, "rarity_id": "pet.rarity.common", "trait_id": "pet.trait.normal", "stance_id": "pet.stance.auto_work"},
+		{"instance_id": "pet.same", "species_id": "creature.slime", "level": 1, "exp": 0, "rarity_id": "pet.rarity.common", "trait_id": "pet.trait.normal", "stance_id": "pet.stance.auto_work"},
 	]
 	_expect(not Schema.validate(duplicate).is_valid(), "duplicate pet instance ID must fail")
 	var stale_active := Schema.create_empty(&"save.slot_1", 1)
@@ -68,6 +71,9 @@ func _test_identity_and_shape_guards() -> void:
 	var negative_count := Schema.create_empty(&"save.slot_1", 1)
 	negative_count["inventory"] = {"item.wood": -1}
 	_expect(not Schema.validate(negative_count).is_valid(), "negative inventory count must fail")
+	var localized_metadata := Schema.create_empty(&"save.slot_1", 1)
+	localized_metadata["pets"] = [{"instance_id": "pet.one", "species_id": "creature.flam", "level": 1, "exp": 0, "rarity_id": "★★★★ Thần Thoại", "trait_id": "Hộ Vệ", "stance_id": "pet.stance.auto_work"}]
+	_expect(not Schema.validate(localized_metadata).is_valid(), "localized rarity/trait text must not become save identity")
 
 
 func _test_non_serializable_guards() -> void:
@@ -99,7 +105,8 @@ func _test_runtime_snapshot_adapter() -> void:
 	player.global_position = Vector2(12.5, -7.25)
 	var party: Array[Dictionary] = player.get("pet_party")
 	var species := LegacySpeciesAdapter.create_stable_snapshot(0, {"name": "Flam", "element": "Lửa", "power": 20, "max_hp": 100, "speed": 100.0})
-	party.append({"instance_id": &"pet.snapshot_1", "species_id": LegacySpeciesAdapter.FLAM_ID, "species_data": species, "level": 3, "rarity_badge": "★", "trait": "Test"})
+	party.append({"instance_id": &"pet.snapshot_1", "species_id": LegacySpeciesAdapter.FLAM_ID, "species_data": species, "level": 3, "exp": 9, "rarity_id": PetMetadata.RARITY_LEGENDARY, "trait_id": PetMetadata.TRAIT_DRAGON_BLESSING, "stance_id": &"pet.stance.auto_work", "rarity_badge": "★★★★ Thần Thoại", "trait": "Thần Long Hộ Mệnh"})
+	party.append({"instance_id": &"pet.snapshot_2", "species_id": LegacySpeciesAdapter.SLIME_ID, "species_data": LegacySpeciesAdapter.create_runtime_snapshot_for_id(LegacySpeciesAdapter.SLIME_ID), "level": 2, "exp": 4, "rarity_id": PetMetadata.RARITY_RARE, "trait_id": PetMetadata.TRAIT_AGILE, "stance_id": &"pet.stance.combat_assist", "rarity_badge": "★★ Hiếm", "trait": "Nhanh Nhẹn"})
 	player.call("swap_active_pet", 0)
 	var active_pet: Node = player.get("active_pet_node")
 	active_pet.call("apply_pet_command", &"pet.command.follow_protect")
@@ -112,6 +119,8 @@ func _test_runtime_snapshot_adapter() -> void:
 		var snapshot: Dictionary = result.snapshot
 		_expect(snapshot["inventory"].get("item.stone") == 8 and snapshot["inventory"].has("item.iron_ingot"), "legacy stone/iron must project to stable IDs")
 		_expect(snapshot["pets"][0]["stance_id"] == "pet.stance.follow_protect", "active pet stance projection mismatch")
+		_expect(snapshot["pets"][0]["rarity_id"] == "pet.rarity.legendary" and snapshot["pets"][0]["trait_id"] == "pet.trait.dragon_blessing", "active pet stable metadata projection mismatch")
+		_expect(snapshot["pets"][1]["stance_id"] == "pet.stance.combat_assist" and snapshot["pets"][1]["trait_id"] == "pet.trait.agile", "inactive pet metadata/stance projection mismatch")
 		_expect(snapshot["player"]["position"] == {"x": 12.5, "y": -7.25} and snapshot["world"]["clock_seconds"] == 45.5, "position/world clock projection mismatch")
 		snapshot["inventory"]["item.wood"] = 9999
 		_expect(source_inventory == inventory_before and party == party_before, "mutating snapshot must not mutate runtime source")
@@ -159,7 +168,10 @@ func _test_runtime_apply_adapter() -> void:
 	save["inventory"] = {"item.wood": 21, "item.stone": 13}
 	save["pets"] = [{
 		"instance_id": "pet.loaded_1", "species_id": "creature.flam",
-		"level": 5, "exp": 17, "stance_id": "pet.stance.combat_assist",
+		"level": 5, "exp": 17, "rarity_id": "pet.rarity.epic", "trait_id": "pet.trait.guardian", "stance_id": "pet.stance.combat_assist",
+	}, {
+		"instance_id": "pet.loaded_2", "species_id": "creature.slime",
+		"level": 3, "exp": 8, "rarity_id": "pet.rarity.rare", "trait_id": "pet.trait.agile", "stance_id": "pet.stance.follow_protect",
 	}]
 	save["world"]["clock_seconds"] = 321.5
 	var applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, save)
@@ -168,7 +180,9 @@ func _test_runtime_apply_adapter() -> void:
 	_expect(player.get("inventory") == {"Gỗ": 21, "Đá": 13}, "stable inventory must map back to the single legacy store")
 	var loaded_party: Array = player.get("pet_party")
 	var loaded_pet: Node = player.get("active_pet_node")
-	_expect(loaded_party.size() == 1 and loaded_party[0]["species_id"] == &"creature.flam" and loaded_party[0]["exp"] == 17, "pet roster apply mismatch")
+	_expect(loaded_party.size() == 2 and loaded_party[0]["species_id"] == &"creature.flam" and loaded_party[0]["exp"] == 17, "pet roster apply mismatch")
+	_expect(loaded_party[0]["rarity_id"] == PetMetadata.RARITY_EPIC and loaded_party[0]["trait_id"] == PetMetadata.TRAIT_GUARDIAN, "active pet stable metadata apply mismatch")
+	_expect(loaded_party[1]["stance_id"] == &"pet.stance.follow_protect" and loaded_party[1]["trait"] == "Nhanh Nhẹn", "inactive pet metadata/stance apply mismatch")
 	_expect(is_instance_valid(loaded_pet) and loaded_pet.call("get_stance_id") == &"pet.stance.combat_assist", "active pet and stance apply mismatch")
 
 	var position_before: Vector2 = player.global_position

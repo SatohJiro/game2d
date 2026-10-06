@@ -57,7 +57,7 @@ Resolver áp rule theo thứ tự:
 
 Trait index là `floor(trait_roll * option_count)`, clamp ở phần tử cuối để roll `1.0` hợp lệ. Power và max HP dùng phép nhân rồi cast `int`, giống behavior cũ. Reward accepted cố định là 75 EXP.
 
-Các chuỗi badge/trait còn là presentation data trong party dictionary legacy. Package sau phải chuyển chúng thành stable IDs trước khi save schema coi roster là dữ liệu bền vững.
+Từ U1.12c, resolver đồng thời phát stable `pet.rarity.*` và `pet.trait.*`; chuỗi badge/trait chỉ còn là presentation compatibility do `PetMetadataCatalog` chiếu ra. Roll threshold, multiplier và text hiển thị không đổi.
 
 ## Adapter và lifecycle
 
@@ -79,6 +79,10 @@ Party entry tương thích hiện tại:
   species_id: StringName,
   species_data: Dictionary, # deep copy, có id/power/max_hp đã boost
   level: int,
+  exp: int,
+  rarity_id: StringName,
+  trait_id: StringName,
+  stance_id: StringName,
   rarity_badge: String,
   trait: String
 }

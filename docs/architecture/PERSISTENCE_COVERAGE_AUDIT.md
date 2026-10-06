@@ -18,8 +18,7 @@ Transient animation, cooldown ngắn, target Node, tween và VFX không được
 | `Player` | position, level/EXP, HP/max HP, stamina, hunger/thirst/temperature | `save.*`; scalar DTO | Có regression end-to-end | Giữ được các field đã liệt kê | FULL |
 | `Player` | `max_exp`, `stat_points`, `stats`, weapon/armor, needs maxima và food buff/duration | Chưa có contract save | Không | Build nhân vật/progression phụ trở về mặc định | HIGH/PARTIAL |
 | `Player.inventory` | 25 key reachable trong manifest core/crafting/farming/ranch/cooking | `item.*`; localized key chỉ là compatibility storage | Có round-trip và snapshot regression theo nhóm | Các output đã audit giữ được; unknown key vẫn fail closed | FULL trong manifest (U1.12b) |
-| `Player.pet_party` | instance/species/level/exp và active instance | `pet.*`, `creature.*` | Có snapshot/apply | Core roster giữ được | PARTIAL |
-| `Player.pet_party` / `CompanionPet` | rarity badge, trait, stance pet không active | Localized String hoặc chỉ nằm trên active Node | Không; apply dùng badge/trait mặc định, inactive stance auto-work | Mất thuộc tính capture và command state | HIGH/PARTIAL |
+| `Player.pet_party` / `CompanionPet` | instance/species/level/exp, rarity, trait, stance từng pet và active instance | `pet.*`, `creature.*`; badge/name chỉ presentation | Có snapshot/apply regression active + inactive | Core roster và command state giữ được | FULL trong contract U1.12c |
 | `BuildingRanch` | assigned pets, food, production timer, health | Không có building instance ID; assignment dùng dictionary/name | Không | Assignment/output progress mất; starter pet tự sinh lại | CRITICAL/NONE |
 | `BaseManager` | base level, quest index/completion | Quest là array index + localized title | Không | Unlock/quest quay về đầu, có thể nhận reward lặp | CRITICAL/NONE |
 | Building placement | subtype, transform, health | Recipe dùng legacy `building_*`; node đặt không có instance ID | Không | Mọi công trình người chơi đặt biến mất | CRITICAL/NONE |
@@ -52,7 +51,7 @@ U1.12b đã tạo manifest gồm 25 key, admit 14 `item.*` definition/mapping c�
 
 ## Thứ tự sau U1.12b
 
-1. Pet rarity/trait/inactive stance dùng stable IDs và round-trip roster.
+1. Pet rarity/trait/inactive stance dùng stable IDs và round-trip roster — đóng ở U1.12c.
 2. Base/quest typed state để chặn reward lặp.
 3. Building instance identity + placement delta; sau đó mới snapshot subtype state/chest/processing.
 4. Farm plot/resource delta trên cùng world entity identity.

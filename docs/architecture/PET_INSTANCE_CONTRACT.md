@@ -11,7 +11,7 @@ U1.10a tạo identity bền vững cho từng pet được sở hữu mà không
 - Display name, rarity badge, trait text, array index, Node instance ID và asset path không phải identity.
 - `PetInstance` là typed `RefCounted` snapshot/projection. `to_party_entry()` deep-copy dữ liệu về dictionary compatibility hiện tại; không tạo roster thứ hai.
 
-Stats rolled, EXP, needs, skills và assignment sẽ được typed dần trước Save v1; package này không tuyên bố dictionary hiện tại là DTO save hoàn chỉnh.
+U1.12c bổ sung `rarity_id`, `trait_id` và `stance_id` stable vào projection. Badge/name localized vẫn tồn tại để UI legacy render nhưng được dựng từ `PetMetadataCatalog`, không đi vào Save v1 làm identity. Stats rolled, needs, skills và assignment vẫn cần typed dần; dictionary roster không phải DTO save trực tiếp.
 
 ## Capture → roster boundary
 
@@ -25,7 +25,7 @@ Capture token vẫn chỉ chống callback lặp trong runtime và không thay t
 
 ## Compatibility và validation
 
-- `pet_party` vẫn là single source of truth; field cũ `species_data`, `level`, `rarity_badge`, `trait` được giữ nguyên.
+- `pet_party` vẫn là single source of truth; field cũ `species_data`, `level`, `rarity_badge`, `trait` được giữ nguyên. U1.12c thêm stable metadata/stance mà không tạo roster thứ hai.
 - `swap_active_pet()` và ranch vẫn đọc dictionary theo index trong U1.10a; migrate active selection/lifecycle theo instance ID ở U1.10b.
 - `tools/validate_capture.gd` khóa domain validation, deterministic projection, deep-copy, unique ID giữa hai capture và atomic duplicate guard.
 - Save/data breaking change: none vì chưa có save schema. Asset/provenance: none.
@@ -62,3 +62,10 @@ Policy hỗ trợ thêm `pet.command.auto_work`, `pet.command.combat_assist` và
 - Nếu stance đích đã active, result là `NO_CHANGE`; actor không mutate, clear target hoặc phát lại presentation.
 - Pet instance ID sai domain, stance input sai hoặc command không hỗ trợ fail closed.
 - Target selection, job reservation và command wheel được hoãn sang U5/U3; U1.10 kết thúc với persistent identity, single-node summon và stable stance command boundary.
+
+## U1.12c roster metadata và stance
+
+- Capture resolver phát `pet.rarity.*`/`pet.trait.*`; `PetInstance` validate các ID trước khi project party entry.
+- Pet mới mặc định `pet.stance.auto_work`. Trước khi replace node, Player ghi stance active về đúng roster instance; pet được summon áp stance đã lưu.
+- Snapshot lấy stance trực tiếp từ active actor và từ roster cho pet inactive. Apply dựng lại badge/trait presentation từ catalog rồi khôi phục stance active; stance inactive được giữ trong roster cho lần summon sau.
+- Không thay đổi multiplier, trait roll, combat/job behavior hoặc HUD text.

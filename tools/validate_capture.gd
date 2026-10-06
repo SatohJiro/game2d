@@ -158,6 +158,7 @@ func _test_species_mapping_and_ownership_resolver() -> void:
 	_expect(legendary.is_accepted(), "valid legendary ownership request must be accepted")
 	_expect(legendary.rarity_badge == CaptureOwnershipResolver.LEGENDARY_BADGE, "legendary boundary mismatch")
 	_expect(legendary.trait_name == CaptureOwnershipResolver.LEGENDARY_TRAIT, "legendary trait mismatch")
+	_expect(legendary.rarity_id == &"pet.rarity.legendary" and legendary.trait_id == &"pet.trait.dragon_blessing", "legendary stable metadata mismatch")
 	_expect(int(legendary.party_entry["species_data"]["power"]) == 30, "legendary power multiplier mismatch")
 	_expect(int(legendary.party_entry["species_data"]["max_hp"]) == 150, "legendary HP multiplier mismatch")
 	_expect(int(source["power"]) == 20 and int(source["max_hp"]) == 100, "ownership resolver must not mutate source snapshot")
@@ -197,6 +198,8 @@ func _test_species_mapping_and_ownership_resolver() -> void:
 		0.5
 	))
 	_expect(common.rarity_badge == CaptureOwnershipResolver.COMMON_BADGE, "common lower boundary mismatch")
+	_expect(common.party_entry["rarity_id"] == &"pet.rarity.common" and common.party_entry["trait_id"] == &"pet.trait.normal", "common party entry stable metadata mismatch")
+	_expect(common.party_entry["stance_id"] == &"pet.stance.auto_work", "captured pet must start with stable auto-work stance")
 
 	var duplicate_request := CaptureOwnershipRequest.new(&"capture.duplicate", &"pet.duplicate_1", LegacySpeciesAdapter.FLAM_ID, source, 1, 0.5, 0.5)
 	duplicate_request.already_committed = true

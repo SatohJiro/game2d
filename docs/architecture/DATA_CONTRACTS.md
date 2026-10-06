@@ -40,6 +40,8 @@ U1.10a dùng domain `pet` cho identity cá thể sở hữu (`pet.instance_*`). 
 
 U1.10c–d dùng namespace `pet.command.*` và `pet.stance.*` cho runtime intent/state identity, gồm cycle cùng explicit auto-work/combat-assist/follow-protect. Đây chưa phải catalog definition hay save DTO; localized HUD text và enum số không được dùng thay các ID này tại boundary.
 
+U1.12c dành `pet.rarity.*` và `pet.trait.*` làm identity bền vững cho bốn rarity và bảy trait hiện hữu. `PetMetadataCatalog` là allowlist + projection sang badge/name legacy; Save v1 chỉ ghi ID. `pet.stance.*` được lưu trên từng roster entry, không suy ra pet inactive từ Node hay enum.
+
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.

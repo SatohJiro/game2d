@@ -4,6 +4,7 @@ extends RefCounted
 const Schema = preload("res://systems/save/save_v1_schema.gd")
 const ApplyPlan = preload("res://systems/save/save_apply_plan.gd")
 const ApplyResult = preload("res://systems/save/save_apply_result.gd")
+const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
 
 
 static func apply_player_snapshot(player: Node, snapshot: Variant) -> RefCounted:
@@ -36,13 +37,19 @@ static func _create_plan(snapshot: Dictionary, errors: PackedStringArray) -> Ref
 	for pet_value: Variant in snapshot["pets"]:
 		var pet: Dictionary = pet_value
 		var species_id := StringName(pet["species_id"])
+		var rarity_id := StringName(pet["rarity_id"])
+		var trait_id := StringName(pet["trait_id"])
+		var stance_id := StringName(pet["stance_id"])
 		var species_data := LegacySpeciesAdapter.create_runtime_snapshot_for_id(species_id)
-		var stance_command_id := _command_for_stance(StringName(pet["stance_id"]))
+		var stance_command_id := _command_for_stance(stance_id)
 		if species_data.is_empty():
 			errors.append("unsupported pet species ID: %s" % species_id)
 			continue
 		if stance_command_id.is_empty():
 			errors.append("unsupported pet stance ID: %s" % pet["stance_id"])
+			continue
+		if not PetMetadata.is_valid_rarity(rarity_id) or not PetMetadata.is_valid_trait(trait_id):
+			errors.append("unsupported pet rarity/trait ID: %s / %s" % [rarity_id, trait_id])
 			continue
 		var entry := {
 			"instance_id": StringName(pet["instance_id"]),
@@ -50,8 +57,11 @@ static func _create_plan(snapshot: Dictionary, errors: PackedStringArray) -> Ref
 			"species_data": species_data,
 			"level": int(pet["level"]),
 			"exp": int(pet["exp"]),
-			"rarity_badge": "★",
-			"trait": "",
+			"rarity_id": rarity_id,
+			"trait_id": trait_id,
+			"stance_id": stance_id,
+			"rarity_badge": PetMetadata.rarity_badge(rarity_id),
+			"trait": PetMetadata.trait_name(trait_id),
 		}
 		party.append(entry)
 		if entry["instance_id"] == active_id:
