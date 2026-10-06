@@ -1,34 +1,34 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.11d — atomic JSON save repository
+## U1.11e — fail-closed migration harness
 
 Trạng thái: `VERIFIED` ngày 2026-10-06.
 
 ### Mục tiêu và invariant
 
-- Chỉ ghi/promote Save v1 đã validate; temporary cũng phải đọc/validate lại trước commit.
-- Replacement giữ primary trước đó làm backup; primary hỏng không được ghi đè backup hợp lệ.
-- Read recovery không mutate file. Chưa autosave, migration hoặc UI slot.
+- Migration làm việc trên deep copy và chỉ trả snapshot đã tới current version + qua schema validation.
+- Future version, missing/ambiguous step, cycle hoặc invalid output đều fail closed.
+- Không tạo migration sản xuất giả khi chưa có save format pre-v1 phát hành.
 
 ### Kết quả đã triển khai
 
-- Thêm `SaveRepository/Result` với typed status cho save/load/not-found/invalid/I/O/recovered-backup.
-- Ghi temporary + flush + verify, rotate primary hợp lệ sang backup, promote bằng rename và có best-effort rollback.
-- Load ưu tiên primary; primary thiếu/hỏng dùng backup hợp lệ và trả trạng thái recovery rõ ràng.
-- Thêm focused validator cô lập vào full project gate.
+- Thêm `SaveMigrationStep/Registry/Result` với typed statuses và applied-version trace.
+- Registry route tuần tự theo declared version, phát hiện cycle và bắt output version khớp step.
+- Current v1 là validated no-op; repository chưa tự migrate hoặc apply gameplay.
+- Thêm focused migration validator vào full project gate.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh.
-- Focused repository regression xanh: first write/read, deep-copy, invalid no-mutation, replacement backup, corrupt-primary recovery và save-after-recovery.
-- Full final gate `tools/check_project.ps1` xanh: documentation, asset gates, editor import/load, gameplay validators, Save schema và Save repository đều đạt.
+- Focused regression xanh: v1 no-op/deep-copy, injected route và future/missing/cycle/invalid/ambiguous failures.
+- Full final gate `tools/check_project.ps1` xanh: documentation, asset gates, editor import/load, gameplay validators và toàn bộ Save validators đều đạt.
 
 ### Compatibility, asset và giới hạn
 
-- Save schema vẫn v1; chưa có file phát hành cần migration. Không thêm/thay asset.
-- Chưa checksum/encryption; atomicity dựa trên same-directory rename và một backup.
-- Rollback: revert U1.11d; schema và runtime adapters U1.11a–c không phụ thuộc repository.
+- Save schema vẫn v1; production registry rỗng vì không có pre-v1 release. Không thêm/thay asset.
+- Transform dùng Callable nội bộ registry, không serialize vào save DTO.
+- Rollback: revert U1.11e; repository và runtime adapters U1.11a–d vẫn hoạt động độc lập.
 
 ### Gói tiếp theo
 
-U1.11e tạo migration registry/harness fail-closed cho version routing, chưa thêm migration dữ liệu giả hoặc UI/autosave. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.11f tạo SaveCoordinator explicit save/load cho Player + world clock bằng snapshot/repository/migration/apply hiện có; chưa autosave hoặc UI slot. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

@@ -1,4 +1,4 @@
-# U1.11a–d — Save v1 schema, runtime adapters and repository
+# U1.11a–e — Save v1 schema, runtime adapters, repository and migration harness
 
 ## Phạm vi
 
@@ -81,3 +81,11 @@ Giới hạn v1 hiện hữu: rarity/trait và stance mutable của pet không a
 `load_snapshot()` ưu tiên primary hợp lệ. Khi primary thiếu/hỏng và backup hợp lệ, result trả `RECOVERED_BACKUP` cùng deep-copied DTO nhưng không tự ghi lại primary; read vì thế không có side effect. Không có cả hai file trả `NOT_FOUND`; JSON/schema hỏng trả `INVALID_DATA`; lỗi filesystem trả `IO_ERROR`.
 
 U1.11d chưa có checksum, encryption, migration version, autosave, slot UI hoặc runtime coordinator. Regression dùng thư mục `user://save_repository_test_*` cô lập và dọn primary/backup/temp sau test. Save v1 không đổi shape và chưa có file phát hành cần migration.
+
+## U1.11e migration registry/harness
+
+`SaveMigrationRegistry.migrate(source)` làm việc trên deep copy và trả `SaveMigrationResult`. Registry đọc integer `schema_version`, từ chối version tương lai, rồi đi từng `SaveMigrationStep(from_version, to_version, transform)` cho đến current version. Mỗi bước phải là route duy nhất, Callable hợp lệ và trả Dictionary có đúng declared `to_version`; registry phát hiện missing step, route mơ hồ, cycle và invalid output.
+
+Khi đã tới current version, output bắt buộc qua `SaveV1Schema.validate()`. Input v1 hiện tại là validated no-op (`CURRENT`), không alias source. Do chưa có save format trước v1 được phát hành, production registry hiện không đăng ký step nào; transform v0→v1 chỉ tồn tại trong validator để kiểm tra harness, không phải migration dữ liệu thật.
+
+Repository chưa tự gọi migration trong U1.11e: repository tiếp tục chỉ trả schema v1 hợp lệ. Wiring read → migrate → apply thuộc coordinator kế tiếp, tránh trộn I/O với mutation gameplay.
