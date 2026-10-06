@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.12a persistence coverage audit
+# Prompt cho model tiếp theo — U1.12b inventory identity closure
 
-Tiếp tục bằng đúng một package nhỏ U1.12a: audit state thực tế của inventory/pet/base/building/crop/quest/world so với Save v1, lập ma trận owner → stable identity → snapshot/apply coverage → data-loss risk, rồi chọn và đặc tả một gap ưu tiên cho package code kế tiếp. Không mở rộng schema hoặc sửa runtime trong cùng package audit. Chạy documentation/full baseline gate và cập nhật checkpoint/roadmap bằng bằng chứng file/API cụ thể.
+Tiếp tục bằng đúng một package U1.12b: tạo manifest/validator cho mọi localized inventory key mà producer/consumer runtime đang dùng; admit stable `item.*` definitions và mapping hai chiều cho các key reachable còn thiếu; chứng minh Player snapshot không còn `UNMAPPED_ITEM` sau farming/crafting/cooking/ranch output groups. Không migrate legacy backing dictionary, không đổi economy và không mở rộng world/base save DTO. Đọc `PERSISTENCE_COVERAGE_AUDIT.md`, chạy full gate, leak-aware log scan và cập nhật data/save/checkpoint docs.

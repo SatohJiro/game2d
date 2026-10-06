@@ -129,6 +129,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.11d thêm `SaveRepository/Result`: validate-before-write, temp verification, primary→backup rotation và read-only backup recovery; chưa nối gameplay/autosave/UI.
 - U1.11e thêm `SaveMigrationRegistry/Step/Result`: sequential injected route, cycle/missing/future/ambiguous/output guards; production chưa có pre-v1 step.
 - U1.11f thêm `SaveCoordinator/Result`: snapshot→repository và repository→migration→apply, phân biệt primary/backup recovery và handoff world clock.
+- U1.12a audit xác nhận SAVE mới phủ Player/core roster; inventory key chưa admit có thể block toàn snapshot, còn base/building/crop/world delta chưa có owner DTO. Ma trận ở `PERSISTENCE_COVERAGE_AUDIT.md`.
 
 ### UI và PRESENTATION
 

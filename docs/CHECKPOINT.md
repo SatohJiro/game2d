@@ -1,33 +1,33 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.11f — explicit runtime save coordinator
+## U1.12a — persistence coverage audit
 
 Trạng thái: `VERIFIED` ngày 2026-10-06.
 
 ### Mục tiêu và invariant
 
-- Kết nối snapshot → repository khi save và repository → migration → apply khi load.
-- Stage lỗi dừng pipeline; repository/migration failure không mutate runtime.
-- Phản ánh primary/backup source và handoff world clock. Chưa autosave/UI/pause policy.
+- Đối chiếu state runtime thực tế với stable identity, snapshot và apply coverage.
+- Phân loại data-loss risk; không mở rộng schema hoặc sửa runtime trong audit.
+- Chọn đúng một dependency ưu tiên cho package code kế tiếp.
 
 ### Kết quả đã triển khai
 
-- Thêm `SaveCoordinator/Result` với typed stage failure và upstream status/errors.
-- Explicit save/load không giữ state gameplay; caller sở hữu thời điểm gọi và world clock commit.
-- Thêm scene-level Player round-trip validator vào full project gate.
+- Thêm `architecture/PERSISTENCE_COVERAGE_AUDIT.md` với ma trận Player/inventory/pet/base/building/crop/resource/world.
+- Xác nhận core Player round-trip; pet metadata còn partial; base/building/crop/world delta chưa persist.
+- Chọn inventory identity closure làm ưu tiên vì output gameplay chưa map làm toàn bộ snapshot fail `UNMAPPED_ITEM`.
 
 ### Validation hiện tại
 
-- Baseline full gate xanh.
-- Focused regression xanh: primary round-trip, backup recovery/source/clock và corrupt-both no-mutation.
-- Full final gate `tools/check_project.ps1` xanh: documentation, asset gates, editor import/load, gameplay validators và toàn bộ Save validators đều đạt.
+- Full baseline gate xanh trước audit; không có code/scene/asset runtime thay đổi.
+- Documentation check xanh: 26 required files, 39 Markdown files được quét.
+- Full final gate `tools/check_project.ps1` xanh sau audit; toàn bộ gameplay/save validators giữ nguyên kết quả đạt.
 
 ### Compatibility, asset và giới hạn
 
-- Save schema vẫn v1; production migration registry rỗng. Không thêm/thay asset.
-- Chưa lưu world entity/base/building/crop/quest; pet rarity/trait và inactive stance vẫn là gap đã biết.
-- Rollback: revert U1.11f; các boundary U1.11a–e vẫn độc lập.
+- Save/data breaking change: none. Asset/provenance: none.
+- Audit tĩnh chưa chứng minh từng loop bằng playthrough; package code kế tiếp phải thêm regression producer-group → snapshot.
+- Rollback: revert tài liệu U1.12a; runtime U1.11 không đổi.
 
 ### Gói tiếp theo
 
-U1.12a audit persistence coverage của vertical slice và chốt typed ownership/ID cho gap có mất dữ liệu cao nhất trước khi mở U2. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.12b đóng tập stable identity cho inventory key runtime reachable và thêm coverage validator; không migrate backing dictionary/economy. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

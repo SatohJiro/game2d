@@ -25,13 +25,14 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 18. `docs/architecture/CREATURE_ECOLOGY_CONTRACT.md`: pure damage-panic policy, stable ecology event và transition ownership.
 19. `docs/architecture/PET_INSTANCE_CONTRACT.md`: unique pet identity, typed projection và capture-to-roster boundary.
 20. `docs/architecture/SAVE_CONTRACT.md`: versioned Save v1 envelope, JSON-safe DTO và validation boundary.
-21. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
-22. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
-23. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
-24. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
-25. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
-26. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
-27. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
+21. `docs/architecture/PERSISTENCE_COVERAGE_AUDIT.md`: ma trận owner/state/identity và data-loss risk sau U1.11.
+22. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
+23. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
+24. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
+25. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
+26. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
+27. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+28. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 
@@ -99,6 +100,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.11d save repository | Hoàn tất | Temp verification + primary/backup rotation; corrupt primary đọc fallback không side effect |
 | U1.11e migration harness | Hoàn tất | Deep-copy sequential registry; future/missing/cycle/ambiguous/invalid output fail closed |
 | U1.11f save coordinator | Hoàn tất | Explicit primary/backup round-trip pipeline; stage failure không chạy partial apply |
+| U1.12a persistence audit | Hoàn tất | Ma trận runtime owner/identity/coverage; inventory identity closure là blocker ưu tiên |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Hạ tầng | Save v1 explicit Player round-trip xanh; chưa autosave/UI và chưa phủ world/base delta |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |
