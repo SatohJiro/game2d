@@ -17,7 +17,7 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	if _failures.is_empty():
-		print("Creature drop validation passed: deterministic Flam drop result and atomic actor commit are valid.")
+		print("Creature drop validation passed: all typed species use deterministic results and atomic actor commit.")
 		quit.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -46,6 +46,15 @@ func _test_resolver_contract() -> void:
 
 	var repeat := CreatureDropResolver.resolve(CreatureDropRequest.new(&"creature.flam", &"item.pal_ore", true, false, false, true, false, 3, 2))
 	_expect(repeat.primary_count == 3 and repeat.bonus_count == 2, "same injected request must resolve deterministically")
+	var species_items := {
+		&"creature.slime": &"item.berry",
+		&"creature.mushroom": &"item.berry_seed",
+		&"creature.beast": &"item.fresh_meat",
+		&"creature.dragon": &"item.pal_ingot",
+	}
+	for species_id: StringName in species_items:
+		var species_result := CreatureDropResolver.resolve(CreatureDropRequest.new(species_id, species_items[species_id], true, false, false, false, false, 1, 0))
+		_expect(species_result.is_accepted() and species_result.primary_item_id == species_items[species_id], "%s typed drop mismatch" % species_id)
 
 
 func _test_actor_adapter() -> void:
@@ -86,6 +95,22 @@ func _test_actor_adapter() -> void:
 
 	var mismatched := CreatureDropResult.new(CreatureDropResult.Status.ACCEPTED, &"creature.slime", &"item.pal_ore", 1)
 	_expect(not bool(creature.call("commit_defeat_drop_result", mismatched)), "actor must reject a result for another species")
+
+	var slime := packed.instantiate()
+	slime.set("species_index", 1)
+	fixture.add_child(slime)
+	await process_frame
+	slime.set("is_elite", false)
+	slime.set("is_alpha", false)
+	slime.set("defeat_committed", true)
+	var slime_request: CreatureDropRequest = slime.call("create_defeat_drop_request", 1, 0)
+	_expect(slime_request.species_id == LegacySpeciesAdapter.SLIME_ID and slime_request.primary_item_id == &"item.berry", "Slime actor must source typed drop identity")
+	_expect(bool(slime.call("commit_defeat_drop_result", CreatureDropResolver.resolve(slime_request))), "Slime actor must commit deterministic drop")
+	await process_frame
+	root.remove_child(fixture)
+	fixture.free()
+	await process_frame
+	await process_frame
 
 
 func _expect(condition: bool, message: String) -> void:

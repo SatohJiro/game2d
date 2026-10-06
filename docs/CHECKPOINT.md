@@ -1,33 +1,34 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.9s — typed melee skill boundary
+## U1.9t — remaining creature defeat drops
 
 Trạng thái: `VERIFIED` ngày 2026-10-06.
 
 ### Mục tiêu và invariant
 
-- Typed melee tuning với identity riêng cho Beast/Dragon.
-- Giữ dispatch range, cooldown, lunge, contact, damage, tween và lifecycle.
-- Không migrate drops, asset hoặc save.
+- Route Slime/Mushroom/Beast/Dragon drops qua deterministic result và atomic commit.
+- Giữ quantity, elite/alpha bonus, RNG ordering, capture/duplicate guards và presentation.
+- Không đổi asset, save hoặc EXP reward.
 
 ### Kết quả đã triển khai
 
-- Thêm `MeleeSkillDefinition`, `skill.beast.melee`, `skill.dragon.melee`.
-- Creature references chứa primary skill và melee skill; adapter resolve từng role theo stable ID.
-- Actor giữ target guard/damage/recovery, đọc typed activation 38/48px và shared observed tuning.
+- `die()` dùng cùng request/resolver/commit cho đủ năm stable species.
+- Xóa localized legacy drop spawn writer.
+- Primary item lấy từ typed creature definition; bonus giữ `item.pal_ore`.
 
 ### Validation hiện tại
 
-- Baseline full gate xanh; headless import/load đăng ký subtype mới.
-- Focused content/actor regression xanh với 24 definitions và separate identity parity.
+- Baseline full gate xanh.
+- Focused resolver/actor regression xanh và teardown sạch leak.
+- Khóa mapping Slime berry, Mushroom seed, Beast meat, Dragon Pal ingot cùng quantity/guard parity.
 - Full final gate `tools/check_project.ps1` xanh; documentation, domain validators, editor load và main-scene smoke đều đạt.
 
 ### Compatibility, asset và giới hạn
 
 - Save/data breaking change: none. Asset/provenance: none.
-- Non-Flam defeat drop execution vẫn legacy.
-- Rollback: revert U1.9s; không cần migration.
+- EXP reward và burn/status defeat writer chưa migrate.
+- Rollback: revert U1.9t để khôi phục legacy branch; không cần migration.
 
 ### Gói tiếp theo
 
-U1.9t migrate defeat drop execution còn lại sang deterministic typed result/atomic commit. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+U1.9u audit và migrate burn tick damage/defeat path qua combat result boundary, giữ tick timing/damage/presentation. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
