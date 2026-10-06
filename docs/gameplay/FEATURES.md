@@ -184,6 +184,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.11c: load apply chỉ commit sau khi schema và mọi item/species/stance reference được resolve; lỗi giữ nguyên Player/inventory/roster/active pet, world clock trả về cho owner thay vì save module tự mutate scene.
 - U1.11d: repository chỉ promote JSON đã validate qua temporary; giữ một backup hợp lệ và đọc fallback không tự sửa file. Invalid/corrupt data không được apply vào gameplay.
 - U1.11e: migration chỉ chấp nhận route tuần tự duy nhất tới current schema và validate output cuối; version tương lai, missing/cycle/ambiguous step đều không được vào runtime.
+- U1.11f: explicit coordinator dừng pipeline ngay khi snapshot/repository/migration/apply lỗi; load success báo primary/backup và trả clock cho world owner. Chưa tự autosave hoặc gọi từ UI.
 - Acceptance: save → quit → load giữ inventory, roster, assignment, building, crop, quest và world clock; corrupt file trả lỗi an toàn.
 
 ## Thứ tự ưu tiên playable vertical slice

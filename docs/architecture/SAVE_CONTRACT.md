@@ -1,4 +1,4 @@
-# U1.11a–e — Save v1 schema, runtime adapters, repository and migration harness
+# U1.11a–f — Save v1 end-to-end foundation
 
 ## Phạm vi
 
@@ -89,3 +89,11 @@ U1.11d chưa có checksum, encryption, migration version, autosave, slot UI ho�
 Khi đã tới current version, output bắt buộc qua `SaveV1Schema.validate()`. Input v1 hiện tại là validated no-op (`CURRENT`), không alias source. Do chưa có save format trước v1 được phát hành, production registry hiện không đăng ký step nào; transform v0→v1 chỉ tồn tại trong validator để kiểm tra harness, không phải migration dữ liệu thật.
 
 Repository chưa tự gọi migration trong U1.11e: repository tiếp tục chỉ trả schema v1 hợp lệ. Wiring read → migrate → apply thuộc coordinator kế tiếp, tránh trộn I/O với mutation gameplay.
+
+## U1.11f explicit runtime coordinator
+
+`SaveCoordinator(primary_path, migration_registry)` là application boundary không phải Node/autoload. `save_player(...)` chạy `SnapshotAdapter → Repository`; `load_player(...)` chạy `Repository → MigrationRegistry → ApplyAdapter`. Mỗi stage fail trả `SaveCoordinatorResult` cùng upstream status/errors và không chạy stage sau.
+
+Load success phân biệt `LOADED_PRIMARY` với `LOADED_BACKUP`, đồng thời trả `world_clock_seconds` để world owner commit. Coordinator không giữ state gameplay, không tự pause và không phát UI; caller sở hữu thời điểm gọi và feedback. Scene-level regression dùng Player thật chứng minh primary round-trip, backup recovery và corrupt-both no-mutation.
+
+U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO, checksum hoặc persistence pet rarity/trait/inactive stance.

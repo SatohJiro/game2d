@@ -35,7 +35,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
 | WORLD | Zone, chunks, spawn, day/night, raid | `main.gd`, scene tĩnh | Chunk admission + persistent delta | U2 |
 | NAV | Navigation/path requests | Chưa có | Navigation adapter theo chunk | U2.3 |
-| SAVE | Versioned persistence | Save v1 schema, Player snapshot/apply, atomic repository và fail-closed migration registry | DTO thuần, runtime/autosave coordinator | U1.11 |
+| SAVE | Versioned persistence | Save v1 schema, Player adapters, atomic repository, migration registry và explicit coordinator | Autosave/UI scheduling, world/base DTO | U1.11 |
 | UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
 | PRESENT | Animation/VFX/camera/audio | Trộn trong actor; `AudioManager` autoload | Event-driven adapters, pooling, accessibility scale | U4 |
 | ASSET | Vendoring/provenance/import | File rời, nguồn chưa biết | Manifest, package receipt, immutable vendor source | U0.2, U4.1 |
@@ -128,6 +128,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.11c thêm `SaveApplyPlan/Result/Adapter`: validate và resolve mọi stable reference trước commit Player/inventory/party; lỗi giữ runtime source, world clock trả về caller.
 - U1.11d thêm `SaveRepository/Result`: validate-before-write, temp verification, primary→backup rotation và read-only backup recovery; chưa nối gameplay/autosave/UI.
 - U1.11e thêm `SaveMigrationRegistry/Step/Result`: sequential injected route, cycle/missing/future/ambiguous/output guards; production chưa có pre-v1 step.
+- U1.11f thêm `SaveCoordinator/Result`: snapshot→repository và repository→migration→apply, phân biệt primary/backup recovery và handoff world clock.
 
 ### UI và PRESENTATION
 

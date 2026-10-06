@@ -98,8 +98,9 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.11c runtime apply | Hoàn tất | Validated plan resolve item/species/stance trước atomic Player commit; failure giữ source |
 | U1.11d save repository | Hoàn tất | Temp verification + primary/backup rotation; corrupt primary đọc fallback không side effect |
 | U1.11e migration harness | Hoàn tất | Deep-copy sequential registry; future/missing/cycle/ambiguous/invalid output fail closed |
+| U1.11f save coordinator | Hoàn tất | Explicit primary/backup round-trip pipeline; stage failure không chạy partial apply |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
-| Save/load | Chưa có | Chưa có schema/version/migration |
+| Save/load | Hạ tầng | Save v1 explicit Player round-trip xanh; chưa autosave/UI và chưa phủ world/base delta |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |
 | UI system | Prototype | HUD lớn, style inline, chưa có Theme/accessibility settings |
 | Asset admission mới | Bị chặn | `game-dev` CLI chưa có trong PATH |

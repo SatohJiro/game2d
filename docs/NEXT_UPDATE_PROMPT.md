@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.11f runtime save coordinator
+# Prompt cho model tiếp theo — U1.12a persistence coverage audit
 
-Tiếp tục bằng đúng một package nhỏ U1.11f: tạo coordinator explicit save/load kết nối SnapshotAdapter → Repository và Repository → MigrationRegistry → ApplyAdapter, với typed result và world-clock handoff. Failure ở bất kỳ stage nào không apply partial runtime; recovery source phải được phản ánh. Chưa autosave, pause policy hoặc UI slot. Chạy scene-level round-trip regression trong path tạm, full gate, leak-aware log scan và cập nhật contract/checkpoint.
+Tiếp tục bằng đúng một package nhỏ U1.12a: audit state thực tế của inventory/pet/base/building/crop/quest/world so với Save v1, lập ma trận owner → stable identity → snapshot/apply coverage → data-loss risk, rồi chọn và đặc tả một gap ưu tiên cho package code kế tiếp. Không mở rộng schema hoặc sửa runtime trong cùng package audit. Chạy documentation/full baseline gate và cập nhật checkpoint/roadmap bằng bằng chứng file/API cụ thể.
