@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://data/definitions/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://assets/items/pal_elixir.png" id="2_icon"]
+[resource]
+script = ExtResource("1_item")
+content_id = &"item.elixir.stamina"
+display_name_key = &"item.elixir.stamina.name"
+developer_notes = "U1.12b stable identity for stamina elixir."
+max_stack = 99
+icon = ExtResource("2_icon")
+tags = PackedStringArray("consumable", "elixir")

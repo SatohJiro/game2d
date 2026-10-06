@@ -44,6 +44,8 @@ U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầ
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.
 
+U1.12b admit 14 identity còn thiếu cho fertilizer, stamina elixir, herb/wheat seed và harvest, ranch material cùng năm món ăn: `item.fertilizer.organic_pal`, `item.fertilizer.pal`, `item.elixir.stamina`, `item.pal_herb`, `item.slime_essence`, `item.golden_wheat`, `item.pal_herb_seed`, `item.golden_wheat_seed`, `item.flame_organ` và `item.food.*`. `RuntimeInventoryManifest` khóa 25 localized key reachable theo nhóm core/crafting/farming/ranch/cooking; validator bắt buộc mapping hai chiều và typed `ItemDefinition`. Toàn bộ icon chỉ tái sử dụng baseline, vẫn `QUARANTINE/UNKNOWN`; không admit asset mới và backing dictionary chưa migrate.
+
 U1.9l nối mapping hai chiều `item.berry_seed` ↔ `Hạt Giống Cây` trong `LegacyItemAdapter` để typed Mushroom drop reference giữ đúng storage/display key hiện hữu. Đây là compatibility mapping; inventory storage chưa migrate.
 
 U1.9m admit `item.fresh_meat` và mapping hai chiều `item.fresh_meat` ↔ `Thịt Tươi` để typed Beast drop reference giữ nguyên storage/display và cooking/ranch compatibility. Asset `beaf.png` chỉ được tham chiếu lại từ baseline, vẫn `QUARANTINE/UNKNOWN`; inventory storage chưa migrate.

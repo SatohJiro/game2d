@@ -13,6 +13,20 @@ const LEGACY_TO_CONTENT_ID: Dictionary = {
 	"Thỏi Pal": &"item.pal_ingot",
 	"Mega Sphere": &"item.pal_sphere.mega",
 	"Giga Sphere": &"item.pal_sphere.giga",
+	"Phân Bón Hữu Cơ Pal": &"item.fertilizer.organic_pal",
+	"Phân Bón Pal": &"item.fertilizer.pal",
+	"Bình Thuốc Tăng Thể Lực": &"item.elixir.stamina",
+	"Thảo Dược Pal": &"item.pal_herb",
+	"Tinh Chất Thạch Lam": &"item.slime_essence",
+	"Lúa Mì Hoàng Kim": &"item.golden_wheat",
+	"Hạt Thảo Dược": &"item.pal_herb_seed",
+	"Hạt Lúa Mì": &"item.golden_wheat_seed",
+	"Hạt Nhiệt Lửa": &"item.flame_organ",
+	"Thịt Nướng Xông Khói": &"item.food.smoked_meat",
+	"Súp Hầm Sơn Hào": &"item.food.hearty_stew",
+	"Nước Tinh Khiết Đun Sôi": &"item.food.purified_water",
+	"Mứt Dâu Rừng Dẻo": &"item.food.berry_jam",
+	"Bánh Mì Lúa Mì Nướng": &"item.food.golden_wheat_bread",
 }
 
 const CONTENT_ID_TO_LEGACY: Dictionary = {
@@ -27,6 +41,20 @@ const CONTENT_ID_TO_LEGACY: Dictionary = {
 	&"item.pal_ingot": "Thỏi Pal",
 	&"item.pal_sphere.mega": "Mega Sphere",
 	&"item.pal_sphere.giga": "Giga Sphere",
+	&"item.fertilizer.organic_pal": "Phân Bón Hữu Cơ Pal",
+	&"item.fertilizer.pal": "Phân Bón Pal",
+	&"item.elixir.stamina": "Bình Thuốc Tăng Thể Lực",
+	&"item.pal_herb": "Thảo Dược Pal",
+	&"item.slime_essence": "Tinh Chất Thạch Lam",
+	&"item.golden_wheat": "Lúa Mì Hoàng Kim",
+	&"item.pal_herb_seed": "Hạt Thảo Dược",
+	&"item.golden_wheat_seed": "Hạt Lúa Mì",
+	&"item.flame_organ": "Hạt Nhiệt Lửa",
+	&"item.food.smoked_meat": "Thịt Nướng Xông Khói",
+	&"item.food.hearty_stew": "Súp Hầm Sơn Hào",
+	&"item.food.purified_water": "Nước Tinh Khiết Đun Sôi",
+	&"item.food.berry_jam": "Mứt Dâu Rừng Dẻo",
+	&"item.food.golden_wheat_bread": "Bánh Mì Lúa Mì Nướng",
 }
 
 

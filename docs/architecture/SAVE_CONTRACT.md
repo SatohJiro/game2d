@@ -97,3 +97,7 @@ Repository chưa tự gọi migration trong U1.11e: repository tiếp tục ch�
 Load success phân biệt `LOADED_PRIMARY` với `LOADED_BACKUP`, đồng thời trả `world_clock_seconds` để world owner commit. Coordinator không giữ state gameplay, không tự pause và không phát UI; caller sở hữu thời điểm gọi và feedback. Scene-level regression dùng Player thật chứng minh primary round-trip, backup recovery và corrupt-both no-mutation.
 
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO, checksum hoặc persistence pet rarity/trait/inactive stance.
+
+## U1.12b runtime inventory identity closure
+
+`RuntimeInventoryManifest` phân nhóm toàn bộ 25 localized key reachable ở runtime. Mười bốn identity còn thiếu đã có stable `item.*`, typed definition và reverse mapping; snapshot Player được regression riêng cho core/crafting/farming/ranch/cooking nên các output hợp lệ không còn chặn toàn save bằng `UNMAPPED_ITEM`. Adapter vẫn fail closed với key ngoài tập admit và vẫn dùng đúng một legacy backing dictionary. Save v1 shape/economy không đổi.

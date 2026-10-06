@@ -17,8 +17,7 @@ Transient animation, cooldown ngắn, target Node, tween và VFX không được
 |---|---|---|---|---|---|
 | `Player` | position, level/EXP, HP/max HP, stamina, hunger/thirst/temperature | `save.*`; scalar DTO | Có regression end-to-end | Giữ được các field đã liệt kê | FULL |
 | `Player` | `max_exp`, `stat_points`, `stats`, weapon/armor, needs maxima và food buff/duration | Chưa có contract save | Không | Build nhân vật/progression phụ trở về mặc định | HIGH/PARTIAL |
-| `Player.inventory` | 11 key đã map trong `LegacyItemAdapter` | `item.*` | Có round-trip | Giữ được nếu dictionary chỉ chứa key đã admit | FULL trong tập đã map |
-| `Player.inventory` | fertilizer, stamina potion, cooked food, herb/wheat seed+harvest, ranch products | Localized String | Snapshot fail `UNMAPPED_ITEM` | Sau khi chơi farming/cooking/ranch, toàn bộ save bị chặn | BLOCKER |
+| `Player.inventory` | 25 key reachable trong manifest core/crafting/farming/ranch/cooking | `item.*`; localized key chỉ là compatibility storage | Có round-trip và snapshot regression theo nhóm | Các output đã audit giữ được; unknown key vẫn fail closed | FULL trong manifest (U1.12b) |
 | `Player.pet_party` | instance/species/level/exp và active instance | `pet.*`, `creature.*` | Có snapshot/apply | Core roster giữ được | PARTIAL |
 | `Player.pet_party` / `CompanionPet` | rarity badge, trait, stance pet không active | Localized String hoặc chỉ nằm trên active Node | Không; apply dùng badge/trait mặc định, inactive stance auto-work | Mất thuộc tính capture và command state | HIGH/PARTIAL |
 | `BuildingRanch` | assigned pets, food, production timer, health | Không có building instance ID; assignment dùng dictionary/name | Không | Assignment/output progress mất; starter pet tự sinh lại | CRITICAL/NONE |
@@ -49,7 +48,7 @@ Transient animation, cooldown ngắn, target Node, tween và VFX không được
 2. Nó là dependency cho chest, processing queue, crop harvest và quest snapshot sau này; nếu item chưa có stable ID thì các DTO domain đó cũng không thể hợp lệ.
 3. Có thể sửa trong một package data/validator độc lập, không cần vội thiết kế world entity identity.
 
-U1.12b phải tạo manifest/test liệt kê mọi localized inventory key được producer/consumer runtime dùng, admit stable `item.*` definition + mapping cho các key reachable còn thiếu, và chứng minh snapshot Player sau từng nhóm output không còn `UNMAPPED_ITEM`. Không migrate backing dictionary hoặc sửa economy trong cùng package.
+U1.12b đã tạo manifest gồm 25 key, admit 14 `item.*` definition/mapping còn thiếu và chứng minh snapshot Player cho từng nhóm không còn `UNMAPPED_ITEM`. Backing dictionary và economy không đổi. Rủi ro còn lại: source producer mới phải được thêm vào manifest bằng review; validator khóa tính toàn vẹn manifest nhưng chưa tự phân tích source để phát hiện key mới.
 
 ## Thứ tự sau U1.12b
 

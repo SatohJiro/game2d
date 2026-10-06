@@ -1,6 +1,7 @@
 extends SceneTree
 
 const CONTENT_ROOT := "res://data/definitions"
+const RuntimeInventoryManifest = preload("res://data/runtime_inventory_manifest.gd")
 
 var _failures := PackedStringArray()
 
@@ -181,7 +182,8 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 26, "registry must contain twenty-six definitions through U1.11b")
+	_expect(registry.size() == 40, "registry must contain forty definitions through U1.12b")
+	_validate_runtime_inventory_manifest(registry)
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -333,6 +335,22 @@ func _validate_project_content() -> void:
 		_expect(is_equal_approx(beast_melee.activation_range, 38.0) and is_equal_approx(dragon_melee.activation_range, 48.0), "melee activation range mismatch")
 		_expect(is_equal_approx(beast_melee.cooldown_seconds, 1.2) and is_equal_approx(beast_melee.lunge_speed, 180.0), "melee timing/movement mismatch")
 		_expect(is_equal_approx(beast_melee.contact_range, 55.0) and is_equal_approx(beast_melee.anticipation_seconds, 0.2), "melee contact mismatch")
+
+
+func _validate_runtime_inventory_manifest(registry: ContentRegistry) -> void:
+	for group_name: Variant in RuntimeInventoryManifest.GROUPS:
+		var group_keys: Variant = RuntimeInventoryManifest.GROUPS[group_name]
+		_expect(group_keys is Array and not group_keys.is_empty(), "runtime inventory group %s must not be empty" % group_name)
+		if not group_keys is Array:
+			continue
+		for legacy_key: Variant in group_keys:
+			var key := String(legacy_key)
+			var content_id := LegacyItemAdapter.to_content_id(key)
+			_expect(ContentId.domain_of(content_id) == &"item", "%s runtime key '%s' must map to an item ID" % [group_name, key])
+			_expect(LegacyItemAdapter.is_mapped(content_id), "%s runtime item '%s' must have a reverse mapping" % [group_name, content_id])
+			_expect(LegacyItemAdapter.to_legacy_key(content_id) == key, "%s runtime item '%s' must round-trip its legacy key" % [group_name, content_id])
+			var definition := registry.get_definition(content_id) as ItemDefinition
+			_expect(definition != null, "%s runtime item '%s' must have a typed ItemDefinition" % [group_name, content_id])
 
 
 func _contains_message(messages: PackedStringArray, fragment: String) -> bool:

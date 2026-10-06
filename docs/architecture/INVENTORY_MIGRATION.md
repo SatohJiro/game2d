@@ -39,6 +39,7 @@ Invariant U1.2:
 - Dictionary `Player.inventory` vẫn là nguồn sự thật duy nhất.
 - U1.11b snapshot adapter đọc nguồn này và project mọi key đã map sang String `item.*`; key chưa map làm snapshot thất bại nguyên khối. `item.stone`/`item.iron_ingot` đã phủ inventory mặc định, không tạo backing store mới.
 - U1.11c apply plan resolve toàn bộ `item.*` ngược về legacy key trước mutation; ID chưa admit làm cả apply thất bại và dictionary nguồn giữ nguyên.
+- U1.12b thêm `RuntimeInventoryManifest` làm tập coverage cho 25 key reachable thuộc core/crafting/farming/ranch/cooking. Mỗi key có mapping hai chiều và typed definition; snapshot regression theo từng nhóm ngăn output gameplay hợp lệ gây `UNMAPPED_ITEM`. Key tùy ý ngoài manifest vẫn fail closed.
 - Với gỗ, dictionary chỉ chứa key `Gỗ`; không tạo key `item.wood` song song.
 - Mutation thất bại không xóa drop khỏi world.
 - Amount rỗng/âm/0 và stable ID chưa map không làm đổi inventory.
@@ -56,7 +57,7 @@ Các consumer còn dùng key legacy trực tiếp gồm recipe/crafting, chest/s
 
 ## Kiểm thử và rollback
 
-`tools/validate_item_migration.gd` kiểm tra mapping hai chiều, single source of truth, invalid input, scene drop resolution và Player thật được instantiate từ `main.tscn`. Test tách player khỏi presentation sau bootstrap để API inventory không phụ thuộc audio/HUD.
+`tools/validate_item_migration.gd` kiểm tra transaction, single source of truth, invalid input, scene drop resolution và Player thật được instantiate từ `main.tscn`. `tools/validate_content.gd` kiểm tra toàn manifest có mapping/definition; `tools/validate_save_schema.gd` kiểm tra snapshot cho từng nhóm output. Test tách player khỏi presentation sau bootstrap để API inventory không phụ thuộc audio/HUD.
 
 `tools/check_project.ps1` chạy test này sau content registry validation và trước main smoke. Log nằm tại `build/checks/item-migration-validation.log`; mọi `SCRIPT ERROR`, `ERROR`, parse/resource failure đều làm gate thất bại.
 

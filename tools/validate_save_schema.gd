@@ -6,6 +6,7 @@ const SnapshotAdapter = preload("res://systems/save/save_snapshot_adapter.gd")
 const SnapshotResult = preload("res://systems/save/save_snapshot_result.gd")
 const ApplyAdapter = preload("res://systems/save/save_apply_adapter.gd")
 const ApplyResult = preload("res://systems/save/save_apply_result.gd")
+const RuntimeInventoryManifest = preload("res://data/runtime_inventory_manifest.gd")
 
 var _failures := PackedStringArray()
 
@@ -114,6 +115,18 @@ func _test_runtime_snapshot_adapter() -> void:
 		_expect(snapshot["player"]["position"] == {"x": 12.5, "y": -7.25} and snapshot["world"]["clock_seconds"] == 45.5, "position/world clock projection mismatch")
 		snapshot["inventory"]["item.wood"] = 9999
 		_expect(source_inventory == inventory_before and party == party_before, "mutating snapshot must not mutate runtime source")
+	for group_name: Variant in RuntimeInventoryManifest.GROUPS:
+		var group_inventory := inventory_before.duplicate(true)
+		for legacy_key: Variant in RuntimeInventoryManifest.GROUPS[group_name]:
+			group_inventory[String(legacy_key)] = 1
+		player.set("inventory", group_inventory)
+		var group_result: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 1234)
+		_expect(group_result.is_accepted(), "%s runtime inventory outputs must project to Save v1" % group_name)
+		if group_result.is_accepted():
+			for legacy_key: Variant in RuntimeInventoryManifest.GROUPS[group_name]:
+				var content_id := LegacyItemAdapter.to_content_id(String(legacy_key))
+				_expect(group_result.snapshot["inventory"].get(String(content_id)) == 1, "%s item '%s' must persist under its stable ID" % [group_name, content_id])
+	player.set("inventory", source_inventory)
 	source_inventory["Chưa Có Mapping"] = 1
 	var unmapped: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 1234)
 	_expect(unmapped.status == SnapshotResult.Status.UNMAPPED_ITEM and unmapped.snapshot.is_empty(), "unmapped inventory key must fail without partial snapshot")

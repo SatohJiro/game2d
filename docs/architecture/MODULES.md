@@ -51,6 +51,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - Registry fail sớm khi duplicate ID, resource thiếu, giá trị âm, recipe cycle hoặc asset path không tồn tại.
 - U1.3 cross-reference pass chạy sau register toàn catalog; schema và typed-mirror boundary ở `DOMAIN_DEFINITIONS.md`.
 - Contract thực thi hiện tại được mô tả tại `docs/architecture/DATA_CONTRACTS.md`. `tools/validate_content.gd` là gate cho grammar, duplicate và toàn bộ definition tree.
+- U1.12b thêm runtime inventory manifest: 25 key reachable phải có mapping hai chiều và typed item definition; localized key chỉ còn là compatibility storage.
 
 ### PLAYER
 
@@ -130,6 +131,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.11e thêm `SaveMigrationRegistry/Step/Result`: sequential injected route, cycle/missing/future/ambiguous/output guards; production chưa có pre-v1 step.
 - U1.11f thêm `SaveCoordinator/Result`: snapshot→repository và repository→migration→apply, phân biệt primary/backup recovery và handoff world clock.
 - U1.12a audit xác nhận SAVE mới phủ Player/core roster; inventory key chưa admit có thể block toàn snapshot, còn base/building/crop/world delta chưa có owner DTO. Ma trận ở `PERSISTENCE_COVERAGE_AUDIT.md`.
+- U1.12b đóng blocker inventory đã audit: snapshot regression theo core/crafting/farming/ranch/cooking; unknown key vẫn fail closed. Pet metadata và world/base coverage chưa đổi.
 
 ### UI và PRESENTATION
 
