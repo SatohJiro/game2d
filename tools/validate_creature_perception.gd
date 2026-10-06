@@ -441,7 +441,12 @@ func _test_creature_adapter() -> void:
 	_expect(int(beast_runtime.get("power", 0)) == 16, "Beast typed power compatibility mismatch")
 	_expect(bool(beast_runtime.get("is_predator", false)) and not bool(beast_runtime.get("is_prey", true)), "Beast typed predator role mismatch")
 	_expect(beast_runtime.get("drop_item", "") == LegacyItemAdapter.to_legacy_key(&"item.fresh_meat"), "Beast typed drop must preserve legacy runtime key")
-	_expect(beast.get("primary_skill_definition") == null, "Beast charge must remain on the legacy attack path")
+	var beast_skill := beast.get("primary_skill_definition") as ChargeSkillDefinition
+	_expect(beast_skill != null and beast_skill.content_id == LegacySpeciesAdapter.BEAST_CHARGE_ID, "Beast actor must resolve typed charge")
+	if beast_skill != null:
+		_expect(is_equal_approx(beast_skill.minimum_range, 70.0) and is_equal_approx(beast_skill.maximum_range, 220.0), "Beast charge range compatibility mismatch")
+		_expect(is_equal_approx(beast_skill.charge_speed, 330.0) and is_equal_approx(beast_skill.charge_seconds, 0.95), "Beast charge movement compatibility mismatch")
+		_expect(is_equal_approx(beast_skill.stun_seconds, 1.4), "Beast charge stun compatibility mismatch")
 	var beast_legacy_rows: Array = beast.get("species_data")
 	_expect(not (beast_legacy_rows[3] as Dictionary).has("max_hp"), "migrated Beast HP must not remain a parallel legacy source")
 	var dragon := packed.instantiate()

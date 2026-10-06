@@ -1,6 +1,6 @@
 # Creature skill contract
 
-Status: U1.9q projectile và Slime hop definitions, verified 2026-10-06.
+Status: U1.9r projectile và movement/charge definitions, verified 2026-10-06.
 
 ## Identity and ownership
 
@@ -38,6 +38,10 @@ Regression khóa stable ID riêng, toàn bộ tuning, dispatch sang `ATTACK`, ty
 
 `HopSkillDefinition` mở rộng `SkillDefinition` cho movement skill: `skill.slime.hop` giữ cooldown 1,15 giây, speed 260, height 12px và tween 0,15/0,12/0,15/0,10 giây. Scale keyframes và actor movement application không đổi.
 
+## U1.9r Beast charge
+
+`ChargeSkillDefinition` sở hữu range 70–220px, telegraph 0,45s, cooldown 3,5s, speed 330, duration 0,95s và stun 1,4s của `skill.beast.charge`. Actor FSM giữ `TELEGRAPH_CHARGE → CHARGING → STUNNED`, wall/timeout condition và presentation.
+
 - Projectile definitions require finite positive cooldown, damage multiplier, distance, travel time and hit radius. Anticipation/recovery must be finite and non-negative.
 - Missing skill references fail registry validation.
 - Animation, tween completion and floating text never select a skill or decide its tuning.
@@ -50,7 +54,7 @@ Regression khóa stable ID riêng, toàn bộ tuning, dispatch sang `ATTACK`, ty
 | Flam fireball dispatch and values | typed reference + actor adapter | U1.9b canary |
 | Slime hop | typed `HopSkillDefinition` + actor tween adapter | U1.9q |
 | Mushroom spore | typed reference + actor adapter | U1.9p |
-| Beast charge telegraph/charge | FSM species branch | deferred; needs transition/contact ownership together |
+| Beast charge tuning | typed `ChargeSkillDefinition`; actor FSM applies | U1.9r |
 | Dragon fireball values | typed Dragon reference + actor adapter | U1.9o; melee selection vẫn legacy |
 | Dragon melee selection/values | default species branch | deferred; cần melee contract riêng |
 | Prey melee and generic melee | actor methods | deferred; ecology/faction target policy must be separated first |

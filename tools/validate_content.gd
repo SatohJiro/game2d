@@ -179,7 +179,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 21, "registry must contain twenty-one definitions through U1.9q")
+	_expect(registry.size() == 22, "registry must contain twenty-two definitions through U1.9r")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -265,7 +265,7 @@ func _validate_project_content() -> void:
 		_expect(beast.base_attack_power == 16, "Beast base_attack_power mismatch")
 		_expect(beast.behavior_profile != null and beast.behavior_profile.is_predator and not beast.behavior_profile.is_prey, "Beast behavior profile mismatch")
 		_expect(beast.drop_item_id == &"item.fresh_meat", "Beast drop reference mismatch")
-		_expect(beast.skill_ids.is_empty(), "Beast charge must remain outside typed skill catalog in U1.9m")
+		_expect(beast.skill_ids == [&"skill.beast.charge"], "Beast charge reference mismatch")
 	var pal_ingot := registry.get_definition(&"item.pal_ingot") as ItemDefinition
 	_expect(pal_ingot != null and pal_ingot.icon != null and pal_ingot.tags.has("ingot"), "Pal ingot definition mismatch")
 	_expect(LegacyItemAdapter.to_content_id("Thỏi Pal") == &"item.pal_ingot", "Pal ingot legacy key must map to stable ID")
@@ -314,6 +314,13 @@ func _validate_project_content() -> void:
 		_expect(is_equal_approx(slime_hop.hop_speed, 260.0) and is_equal_approx(slime_hop.hop_height, 12.0), "Slime hop movement mismatch")
 		_expect(is_equal_approx(slime_hop.compress_seconds, 0.15) and is_equal_approx(slime_hop.launch_seconds, 0.12), "Slime hop launch timing mismatch")
 		_expect(is_equal_approx(slime_hop.land_seconds, 0.15) and is_equal_approx(slime_hop.settle_seconds, 0.1), "Slime hop landing timing mismatch")
+	var beast_charge := registry.get_definition(&"skill.beast.charge") as ChargeSkillDefinition
+	_expect(beast_charge != null, "skill.beast.charge must load as ChargeSkillDefinition")
+	if beast_charge != null:
+		_expect(is_equal_approx(beast_charge.minimum_range, 70.0) and is_equal_approx(beast_charge.maximum_range, 220.0), "Beast charge range mismatch")
+		_expect(is_equal_approx(beast_charge.anticipation_seconds, 0.45) and is_equal_approx(beast_charge.cooldown_seconds, 3.5), "Beast charge entry timing mismatch")
+		_expect(is_equal_approx(beast_charge.charge_speed, 330.0) and is_equal_approx(beast_charge.charge_seconds, 0.95), "Beast charge movement mismatch")
+		_expect(is_equal_approx(beast_charge.stun_seconds, 1.4), "Beast charge stun mismatch")
 
 
 func _contains_message(messages: PackedStringArray, fragment: String) -> bool:

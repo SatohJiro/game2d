@@ -392,16 +392,18 @@ func _physics_process(delta: float) -> void:
 			velocity = Vector2.ZERO
 			visual.position.x = sin(Time.get_ticks_msec() * 0.05) * 2.0
 			if state_timer <= 0:
+				var charge_skill := primary_skill_definition as ChargeSkillDefinition
 				state = State.CHARGING
-				charge_timer = 0.95
+				charge_timer = charge_skill.charge_seconds if charge_skill != null else 0.95
 				spawn_floating_text("HÚC CỰC MẠNH!", Color(1.0, 0.3, 0.1))
 		
 		State.CHARGING:
+			var charge_skill := primary_skill_definition as ChargeSkillDefinition
 			charge_timer -= delta
-			velocity = charge_dir * 330.0
+			velocity = charge_dir * (charge_skill.charge_speed if charge_skill != null else 330.0)
 			if charge_timer <= 0 or is_on_wall():
 				state = State.STUNNED
-				state_timer = 1.4
+				state_timer = charge_skill.stun_seconds if charge_skill != null else 1.4
 				spawn_floating_text("@_@ CHOÁNG VÁNG! (SƠ HỞ)", Color(1.0, 0.9, 0.2))
 				visual.rotation = 0.3
 		
@@ -685,11 +687,14 @@ func handle_smart_chase(delta: float) -> void:
 				perform_spore_attack(raw_dir, primary_skill_definition)
 		
 		3: # Beast (Đất) - Bull Charging Rush
-			if dist >= 70.0 and dist <= 220.0 and attack_cooldown <= 0:
+			var charge_skill := primary_skill_definition as ChargeSkillDefinition
+			var minimum_range := charge_skill.minimum_range if charge_skill != null else 70.0
+			var maximum_range := charge_skill.maximum_range if charge_skill != null else 220.0
+			if dist >= minimum_range and dist <= maximum_range and attack_cooldown <= 0:
 				state = State.TELEGRAPH_CHARGE
-				state_timer = 0.45
+				state_timer = charge_skill.anticipation_seconds if charge_skill != null else 0.45
 				charge_dir = raw_dir
-				attack_cooldown = 3.5
+				attack_cooldown = charge_skill.cooldown_seconds if charge_skill != null else 3.5
 				spawn_floating_text("! CHUẨN BỊ LAO TỚI", Color(1.0, 0.4, 0.1))
 			else:
 				velocity = attack_dir * move_speed

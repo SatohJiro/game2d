@@ -48,6 +48,8 @@ U1.9p admit `skill.mushroom.spore` làm typed projectile authority của `creatu
 
 U1.9q admit `skill.slime.hop` bằng subtype `HopSkillDefinition`, sở hữu cooldown, hop velocity/height và bốn nhịp squash/stretch; actor chỉ thực thi tween/movement.
 
+U1.9r admit `skill.beast.charge` bằng `ChargeSkillDefinition`, sở hữu range, telegraph/cooldown, charge speed/duration và stun recovery; actor FSM vẫn sở hữu transition/contact/wall response.
+
 `ContentId` tại `core/content_id.gd` là API duy nhất để validate, tạo và tách domain/local name. Không tự ghép hoặc parse ID trong gameplay system.
 
 ## Definition contract

@@ -10,12 +10,14 @@ const FLAM_FIREBALL_DEFINITION: SkillDefinition = preload("res://data/definition
 const DRAGON_FIREBALL_DEFINITION: SkillDefinition = preload("res://data/definitions/skills/dragon_fireball.tres")
 const MUSHROOM_SPORE_DEFINITION: SkillDefinition = preload("res://data/definitions/skills/mushroom_spore.tres")
 const SLIME_HOP_DEFINITION: HopSkillDefinition = preload("res://data/definitions/skills/slime_hop.tres")
+const BEAST_CHARGE_DEFINITION: ChargeSkillDefinition = preload("res://data/definitions/skills/beast_charge.tres")
 
 const FLAM_ID: StringName = &"creature.flam"
 const FLAM_FIREBALL_ID: StringName = &"skill.flam.fireball"
 const DRAGON_FIREBALL_ID: StringName = &"skill.dragon.fireball"
 const MUSHROOM_SPORE_ID: StringName = &"skill.mushroom.spore"
 const SLIME_HOP_ID: StringName = &"skill.slime.hop"
+const BEAST_CHARGE_ID: StringName = &"skill.beast.charge"
 const SLIME_ID: StringName = &"creature.slime"
 const MUSHROOM_ID: StringName = &"creature.mushroom"
 const BEAST_ID: StringName = &"creature.beast"
@@ -68,6 +70,9 @@ static func get_primary_skill_definition(species_id: StringName) -> SkillDefinit
 		SLIME_ID:
 			expected_skill_id = SLIME_HOP_ID
 			skill_definition = SLIME_HOP_DEFINITION
+		BEAST_ID:
+			expected_skill_id = BEAST_CHARGE_ID
+			skill_definition = BEAST_CHARGE_DEFINITION
 		_:
 			return null
 	var creature_definition := get_creature_definition(species_id)
