@@ -71,6 +71,7 @@ var prey_target: Node2D = null
 var home_pos: Vector2 = Vector2.ZERO
 var attack_cooldown: float = 0.0
 var primary_skill_definition: SkillDefinition
+var melee_skill_definition: MeleeSkillDefinition
 var is_enraged: bool = false
 var is_night_raider: bool = false
 var is_elite: bool = false
@@ -135,6 +136,7 @@ func setup_species() -> void:
 	species_index = species_index % species_data.size()
 	cur_data = LegacySpeciesAdapter.create_runtime_snapshot(species_index, species_data[species_index])
 	primary_skill_definition = LegacySpeciesAdapter.get_primary_skill_definition(cur_data.get("id", &"") as StringName)
+	melee_skill_definition = LegacySpeciesAdapter.get_melee_skill_definition(cur_data.get("id", &"") as StringName)
 	
 	# 18% chance to become an Elite monster (or 100% if night raider or dragon)
 	if is_night_raider or species_index == 4 or randf() < 0.18:
@@ -698,13 +700,13 @@ func handle_smart_chase(delta: float) -> void:
 				spawn_floating_text("! CHUẨN BỊ LAO TỚI", Color(1.0, 0.4, 0.1))
 			else:
 				velocity = attack_dir * move_speed
-				if dist <= 38.0 and attack_cooldown <= 0:
-					perform_melee_attack()
+				if dist <= (melee_skill_definition.activation_range if melee_skill_definition != null else 38.0) and attack_cooldown <= 0:
+					perform_melee_attack(melee_skill_definition)
 		
 		_: # Dragon Boss / Default
 			velocity = attack_dir * move_speed
-			if dist <= 48.0 and attack_cooldown <= 0:
-				perform_melee_attack()
+			if dist <= (melee_skill_definition.activation_range if melee_skill_definition != null else 48.0) and attack_cooldown <= 0:
+				perform_melee_attack(melee_skill_definition)
 			elif dist <= 180.0 and attack_cooldown <= 0:
 				perform_fireball_attack(raw_dir, primary_skill_definition)
 
@@ -794,22 +796,22 @@ func perform_spore_attack(dir: Vector2, skill: SkillDefinition = null) -> void:
 	await get_tree().create_timer(recovery_seconds).timeout
 	finish_legacy_attack_recovery()
 
-func perform_melee_attack() -> void:
+func perform_melee_attack(skill: MeleeSkillDefinition = null) -> void:
 	if not is_instance_valid(target): return
 	state = State.ATTACK
-	attack_cooldown = 1.2
+	attack_cooldown = skill.cooldown_seconds if skill != null else 1.2
 	
 	var dir = (target.global_position - global_position).normalized()
-	velocity = dir * 180.0
+	velocity = dir * (skill.lunge_speed if skill != null else 180.0)
 	
 	var tween = create_tween()
-	tween.tween_property(visual, "scale", Vector2(1.3, 0.7), 0.1)
-	tween.tween_property(visual, "scale", Vector2.ONE, 0.15)
+	tween.tween_property(visual, "scale", Vector2(1.3, 0.7), skill.squash_seconds if skill != null else 0.1)
+	tween.tween_property(visual, "scale", Vector2.ONE, skill.restore_seconds if skill != null else 0.15)
 	
-	await get_tree().create_timer(0.2).timeout
-	if is_instance_valid(target) and global_position.distance_to(target.global_position) < 55.0:
+	await get_tree().create_timer(skill.anticipation_seconds if skill != null else 0.2).timeout
+	if is_instance_valid(target) and global_position.distance_to(target.global_position) < (skill.contact_range if skill != null else 55.0):
 		if target.has_method("take_damage"):
-			target.take_damage(attack_power, global_position)
+			target.take_damage(int(attack_power * (skill.damage_multiplier if skill != null else 1.0)), global_position)
 	
 	finish_legacy_attack_recovery()
 

@@ -84,6 +84,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.9p Mushroom spore | Hoàn tất | `skill.mushroom.spore` typed tuning; kiting/escape và projectile parity được giữ |
 | U1.9q Slime hop | Hoàn tất | `HopSkillDefinition` typed movement/tween tuning; hop parity được khóa regression |
 | U1.9r Beast charge | Hoàn tất | `ChargeSkillDefinition` typed range/timing/movement/stun; FSM ownership giữ nguyên |
+| U1.9s melee boundary | Hoàn tất | Beast/Dragon melee có stable identity riêng; range/timing/lunge/contact parity được giữ |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

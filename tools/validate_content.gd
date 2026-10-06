@@ -179,7 +179,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 22, "registry must contain twenty-two definitions through U1.9r")
+	_expect(registry.size() == 24, "registry must contain twenty-four definitions through U1.9s")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -265,7 +265,7 @@ func _validate_project_content() -> void:
 		_expect(beast.base_attack_power == 16, "Beast base_attack_power mismatch")
 		_expect(beast.behavior_profile != null and beast.behavior_profile.is_predator and not beast.behavior_profile.is_prey, "Beast behavior profile mismatch")
 		_expect(beast.drop_item_id == &"item.fresh_meat", "Beast drop reference mismatch")
-		_expect(beast.skill_ids == [&"skill.beast.charge"], "Beast charge reference mismatch")
+		_expect(beast.skill_ids == [&"skill.beast.charge", &"skill.beast.melee"], "Beast skill references mismatch")
 	var pal_ingot := registry.get_definition(&"item.pal_ingot") as ItemDefinition
 	_expect(pal_ingot != null and pal_ingot.icon != null and pal_ingot.tags.has("ingot"), "Pal ingot definition mismatch")
 	_expect(LegacyItemAdapter.to_content_id("Thỏi Pal") == &"item.pal_ingot", "Pal ingot legacy key must map to stable ID")
@@ -278,7 +278,7 @@ func _validate_project_content() -> void:
 		_expect(dragon.base_attack_power == 26, "Dragon base_attack_power mismatch")
 		_expect(dragon.behavior_profile != null and dragon.behavior_profile.is_predator and not dragon.behavior_profile.is_prey, "Dragon behavior profile mismatch")
 		_expect(dragon.drop_item_id == &"item.pal_ingot", "Dragon drop reference mismatch")
-		_expect(dragon.skill_ids == [&"skill.dragon.fireball"], "Dragon fireball reference mismatch")
+		_expect(dragon.skill_ids == [&"skill.dragon.fireball", &"skill.dragon.melee"], "Dragon skill references mismatch")
 	var fireball := registry.get_definition(&"skill.flam.fireball") as SkillDefinition
 	_expect(fireball != null, "skill.flam.fireball must load as SkillDefinition")
 	if fireball != null:
@@ -321,6 +321,14 @@ func _validate_project_content() -> void:
 		_expect(is_equal_approx(beast_charge.anticipation_seconds, 0.45) and is_equal_approx(beast_charge.cooldown_seconds, 3.5), "Beast charge entry timing mismatch")
 		_expect(is_equal_approx(beast_charge.charge_speed, 330.0) and is_equal_approx(beast_charge.charge_seconds, 0.95), "Beast charge movement mismatch")
 		_expect(is_equal_approx(beast_charge.stun_seconds, 1.4), "Beast charge stun mismatch")
+	var beast_melee := registry.get_definition(&"skill.beast.melee") as MeleeSkillDefinition
+	var dragon_melee := registry.get_definition(&"skill.dragon.melee") as MeleeSkillDefinition
+	_expect(beast_melee != null and dragon_melee != null, "species melee definitions must load")
+	if beast_melee != null and dragon_melee != null:
+		_expect(beast_melee.content_id != dragon_melee.content_id, "Beast and Dragon melee require separate identities")
+		_expect(is_equal_approx(beast_melee.activation_range, 38.0) and is_equal_approx(dragon_melee.activation_range, 48.0), "melee activation range mismatch")
+		_expect(is_equal_approx(beast_melee.cooldown_seconds, 1.2) and is_equal_approx(beast_melee.lunge_speed, 180.0), "melee timing/movement mismatch")
+		_expect(is_equal_approx(beast_melee.contact_range, 55.0) and is_equal_approx(beast_melee.anticipation_seconds, 0.2), "melee contact mismatch")
 
 
 func _contains_message(messages: PackedStringArray, fragment: String) -> bool:

@@ -11,6 +11,8 @@ const DRAGON_FIREBALL_DEFINITION: SkillDefinition = preload("res://data/definiti
 const MUSHROOM_SPORE_DEFINITION: SkillDefinition = preload("res://data/definitions/skills/mushroom_spore.tres")
 const SLIME_HOP_DEFINITION: HopSkillDefinition = preload("res://data/definitions/skills/slime_hop.tres")
 const BEAST_CHARGE_DEFINITION: ChargeSkillDefinition = preload("res://data/definitions/skills/beast_charge.tres")
+const BEAST_MELEE_DEFINITION: MeleeSkillDefinition = preload("res://data/definitions/skills/beast_melee.tres")
+const DRAGON_MELEE_DEFINITION: MeleeSkillDefinition = preload("res://data/definitions/skills/dragon_melee.tres")
 
 const FLAM_ID: StringName = &"creature.flam"
 const FLAM_FIREBALL_ID: StringName = &"skill.flam.fireball"
@@ -18,6 +20,8 @@ const DRAGON_FIREBALL_ID: StringName = &"skill.dragon.fireball"
 const MUSHROOM_SPORE_ID: StringName = &"skill.mushroom.spore"
 const SLIME_HOP_ID: StringName = &"skill.slime.hop"
 const BEAST_CHARGE_ID: StringName = &"skill.beast.charge"
+const BEAST_MELEE_ID: StringName = &"skill.beast.melee"
+const DRAGON_MELEE_ID: StringName = &"skill.dragon.melee"
 const SLIME_ID: StringName = &"creature.slime"
 const MUSHROOM_ID: StringName = &"creature.mushroom"
 const BEAST_ID: StringName = &"creature.beast"
@@ -76,13 +80,22 @@ static func get_primary_skill_definition(species_id: StringName) -> SkillDefinit
 		_:
 			return null
 	var creature_definition := get_creature_definition(species_id)
-	if creature_definition == null or creature_definition.skill_ids.size() != 1:
-		return null
-	if creature_definition.skill_ids[0] != expected_skill_id:
+	if creature_definition == null or not creature_definition.skill_ids.has(expected_skill_id):
 		return null
 	if skill_definition == null or not skill_definition.get_validation_errors().is_empty():
 		return null
 	return skill_definition
+
+static func get_melee_skill_definition(species_id: StringName) -> MeleeSkillDefinition:
+	var expected_id: StringName
+	var skill: MeleeSkillDefinition
+	match species_id:
+		BEAST_ID: expected_id = BEAST_MELEE_ID; skill = BEAST_MELEE_DEFINITION
+		DRAGON_ID: expected_id = DRAGON_MELEE_ID; skill = DRAGON_MELEE_DEFINITION
+		_: return null
+	var creature := get_creature_definition(species_id)
+	if creature == null or not creature.skill_ids.has(expected_id) or skill == null or not skill.get_validation_errors().is_empty(): return null
+	return skill
 
 
 static func get_drop_item_id(species_id: StringName, legacy_drop_name: String = "") -> StringName:

@@ -85,6 +85,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.9p: Mushroom spore giữ cooldown 2 giây, recovery 0,25 giây, damage ×1, travel 200 px/0,5 giây và radius 45 px qua typed definition; kiting/escape không đổi.
 - U1.9q: Slime hop giữ cooldown 1,15 giây, velocity 260, height 12px và tween 0,15/0,12/0,15/0,10 giây qua typed movement skill.
 - U1.9r: Beast charge giữ range 70–220px, telegraph 0,45s, cooldown 3,5s, speed 330, duration 0,95s và stun 1,4s qua typed charge skill.
+- U1.9s: Beast/Dragon melee dùng identity riêng, giữ activation 38/48px, cooldown 1,2s, lunge 180, contact 55px, damage ×1 và anticipation 0,2s.
 - Acceptance: một activation không multi-hit ngoài thiết kế; chết chỉ phát reward một lần; reduced shake không đổi damage.
 
 ### G05 — capture

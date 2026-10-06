@@ -50,6 +50,8 @@ U1.9q admit `skill.slime.hop` bằng subtype `HopSkillDefinition`, sở hữu co
 
 U1.9r admit `skill.beast.charge` bằng `ChargeSkillDefinition`, sở hữu range, telegraph/cooldown, charge speed/duration và stun recovery; actor FSM vẫn sở hữu transition/contact/wall response.
 
+U1.9s admit `skill.beast.melee` và `skill.dragon.melee` bằng `MeleeSkillDefinition`; identity tách riêng dù phần lớn tuning hiện giống nhau, với activation range 38/48px.
+
 `ContentId` tại `core/content_id.gd` là API duy nhất để validate, tạo và tách domain/local name. Không tự ghép hoặc parse ID trong gameplay system.
 
 ## Definition contract

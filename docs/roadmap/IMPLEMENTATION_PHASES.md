@@ -23,7 +23,7 @@ U0 chỉ hoàn tất khi baseline có thể khôi phục và asset mới không 
 6. **U1.6 Player components — VERIFIED:** needs, locomotion và stable action input boundary có pure regression; Player còn làm coordinator/presentation adapter. Build/craft/progression tiếp tục theo domain package, không quay lại gom vào Player.
 7. **U1.7 Capture service — VERIFIED:** U1.7a deterministic result, U1.7b stable sphere transaction và U1.7c atomic roster ownership có regression; persistent PetInstance/save thuộc U1.10–U1.11.
 8. **U1.8 Creature perception/FSM — VERIFIED:** U1.8a perception cadence, U1.8b core transition và U1.8c basic lifecycle closure có pure/actor regression; skill/ecology writer đã phân loại sang U1.9.
-9. **U1.9 Creature skills/drop — IN PROGRESS:** U1.9a–r đã VERIFIED gồm typed species/projectile/movement/charge; melee và remaining drop execution còn package sau.
+9. **U1.9 Creature skills/drop — IN PROGRESS:** U1.9a–s đã VERIFIED gồm typed species và toàn bộ species attack tuning; remaining drop execution còn package sau.
 10. **U1.10 Pet roster/command:** persistent ID và summon lifecycle.
 11. **U1.11 Save v1:** atomic save, DTO và migration harness.
 

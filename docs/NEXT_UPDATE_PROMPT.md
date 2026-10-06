@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.9s melee skill boundary
+# Prompt cho model tiếp theo — U1.9t remaining creature drops
 
-Tiếp tục bằng đúng một package nhỏ U1.9s: audit generic/Dragon/Beast melee writers và thiết kế typed melee tuning không chia sẻ identity sai. Giữ range, cooldown, lunge, contact damage, target guard và recovery. Không migrate drops, asset hoặc save. Chạy focused regression, full gate, leak-aware log scan và cập nhật contract/checkpoint.
+Tiếp tục bằng đúng một package nhỏ U1.9t: audit Slime/Mushroom/Beast/Dragon defeat drops và migrate chúng sang deterministic `CreatureDropResult` + atomic commit theo stable item ID. Giữ quantity, elite/alpha bonus, capture/duplicate guards và presentation. Không đổi asset/save. Chạy focused regression, full gate, leak-aware log scan và cập nhật contract/checkpoint.

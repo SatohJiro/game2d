@@ -1,6 +1,6 @@
 # Creature skill contract
 
-Status: U1.9r projectile và movement/charge definitions, verified 2026-10-06.
+Status: U1.9s projectile, movement, charge và melee definitions, verified 2026-10-06.
 
 ## Identity and ownership
 
@@ -42,6 +42,10 @@ Regression khóa stable ID riêng, toàn bộ tuning, dispatch sang `ATTACK`, ty
 
 `ChargeSkillDefinition` sở hữu range 70–220px, telegraph 0,45s, cooldown 3,5s, speed 330, duration 0,95s và stun 1,4s của `skill.beast.charge`. Actor FSM giữ `TELEGRAPH_CHARGE → CHARGING → STUNNED`, wall/timeout condition và presentation.
 
+## U1.9s Beast/Dragon melee
+
+Hai stable ID riêng `skill.beast.melee` và `skill.dragon.melee` dùng `MeleeSkillDefinition`. Activation range giữ 38/48px; cả hai giữ cooldown 1,2s, lunge 180, anticipation 0,2s, contact 55px, damage ×1 và squash/restore 0,1/0,15s. Target validity và lifecycle recovery vẫn thuộc actor.
+
 - Projectile definitions require finite positive cooldown, damage multiplier, distance, travel time and hit radius. Anticipation/recovery must be finite and non-negative.
 - Missing skill references fail registry validation.
 - Animation, tween completion and floating text never select a skill or decide its tuning.
@@ -56,7 +60,7 @@ Regression khóa stable ID riêng, toàn bộ tuning, dispatch sang `ATTACK`, ty
 | Mushroom spore | typed reference + actor adapter | U1.9p |
 | Beast charge tuning | typed `ChargeSkillDefinition`; actor FSM applies | U1.9r |
 | Dragon fireball values | typed Dragon reference + actor adapter | U1.9o; melee selection vẫn legacy |
-| Dragon melee selection/values | default species branch | deferred; cần melee contract riêng |
+| Beast/Dragon melee | typed species-specific definitions + actor adapter | U1.9s |
 | Prey melee and generic melee | actor methods | deferred; ecology/faction target policy must be separated first |
 
 ## Compatibility, save and rollback

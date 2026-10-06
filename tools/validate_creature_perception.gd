@@ -447,6 +447,8 @@ func _test_creature_adapter() -> void:
 		_expect(is_equal_approx(beast_skill.minimum_range, 70.0) and is_equal_approx(beast_skill.maximum_range, 220.0), "Beast charge range compatibility mismatch")
 		_expect(is_equal_approx(beast_skill.charge_speed, 330.0) and is_equal_approx(beast_skill.charge_seconds, 0.95), "Beast charge movement compatibility mismatch")
 		_expect(is_equal_approx(beast_skill.stun_seconds, 1.4), "Beast charge stun compatibility mismatch")
+	var beast_melee := beast.get("melee_skill_definition") as MeleeSkillDefinition
+	_expect(beast_melee != null and beast_melee.content_id == LegacySpeciesAdapter.BEAST_MELEE_ID and is_equal_approx(beast_melee.activation_range, 38.0), "Beast melee compatibility mismatch")
 	var beast_legacy_rows: Array = beast.get("species_data")
 	_expect(not (beast_legacy_rows[3] as Dictionary).has("max_hp"), "migrated Beast HP must not remain a parallel legacy source")
 	var dragon := packed.instantiate()
@@ -478,6 +480,9 @@ func _test_creature_adapter() -> void:
 		dragon.set("state", capturing_state)
 		await create_timer(0.31).timeout
 		_expect(int(dragon.get("state")) == capturing_state, "Dragon fireball stale recovery must preserve capture state")
+	var dragon_melee := dragon.get("melee_skill_definition") as MeleeSkillDefinition
+	_expect(dragon_melee != null and dragon_melee.content_id == LegacySpeciesAdapter.DRAGON_MELEE_ID and is_equal_approx(dragon_melee.activation_range, 48.0), "Dragon melee compatibility mismatch")
+	_expect(dragon_melee == null or dragon_melee.content_id != LegacySpeciesAdapter.BEAST_MELEE_ID, "Dragon must not share Beast melee identity")
 	var dragon_legacy_rows: Array = dragon.get("species_data")
 	_expect(not (dragon_legacy_rows[4] as Dictionary).has("max_hp"), "migrated Dragon HP must not remain a parallel legacy source")
 	_expect(LegacySpeciesAdapter.create_runtime_snapshot(5, {}).is_empty(), "out-of-range species snapshot must fail closed")
