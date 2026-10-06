@@ -81,6 +81,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.9m Beast definition | Hoàn tất | `creature.beast` typed authority; fresh-meat mapping, predator parity và Dragon fallback được khóa regression |
 | U1.9n Dragon definition | Hoàn tất | `creature.dragon` typed authority; Pal-ingot mapping và forced-elite parity được khóa regression |
 | U1.9o Dragon fireball | Hoàn tất | `skill.dragon.fireball` có balance identity riêng; dispatch/tuning/stale recovery được khóa regression |
+| U1.9p Mushroom spore | Hoàn tất | `skill.mushroom.spore` typed tuning; kiting/escape và projectile parity được giữ |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

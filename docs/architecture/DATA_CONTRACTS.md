@@ -44,6 +44,8 @@ U1.9n admit `item.pal_ingot` và mapping hai chiều `item.pal_ingot` ↔ `Thỏ
 
 U1.9o admit `skill.dragon.fireball` làm balance identity riêng và reference duy nhất của `creature.dragon`. Giá trị hiện giữ parity với Flam fireball nhưng hai species không chia sẻ ID/authority; melee selection và presentation vẫn thuộc actor adapter.
 
+U1.9p admit `skill.mushroom.spore` làm typed projectile authority của `creature.mushroom`; kiting/escape và presentation vẫn thuộc actor adapter.
+
 `ContentId` tại `core/content_id.gd` là API duy nhất để validate, tạo và tách domain/local name. Không tự ghép hoặc parse ID trong gameplay system.
 
 ## Definition contract

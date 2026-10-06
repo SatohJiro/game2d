@@ -1,6 +1,6 @@
 # Creature skill contract
 
-Status: U1.9o Flam/Dragon projectile definitions, verified 2026-10-06.
+Status: U1.9p Flam/Dragon/Mushroom projectile definitions, verified 2026-10-06.
 
 ## Identity and ownership
 
@@ -28,6 +28,10 @@ Status: U1.9o Flam/Dragon projectile definitions, verified 2026-10-06.
 
 Regression khóa stable ID riêng, toàn bộ tuning, dispatch sang `ATTACK`, typed cooldown và stale recovery không được ghi đè `CAPTURING`.
 
+## U1.9p Mushroom spore
+
+`creature.mushroom` reference `skill.mushroom.spore`: cooldown 2,0 giây, recovery 0,25 giây, damage ×1, travel 200 px/0,5 giây và hit radius 45 px. Kiting ở 120–170 px, low-HP escape, texture/modulate/scale/text và lifecycle guard không đổi.
+
 ## Validation and lifecycle invariants
 
 - Projectile definitions require finite positive cooldown, damage multiplier, distance, travel time and hit radius. Anticipation/recovery must be finite and non-negative.
@@ -41,7 +45,7 @@ Regression khóa stable ID riêng, toàn bộ tuning, dispatch sang `ATTACK`, ty
 |---|---|---|
 | Flam fireball dispatch and values | typed reference + actor adapter | U1.9b canary |
 | Slime hop | species-index branch | deferred; needs movement/contact skill contract |
-| Mushroom spore | species-index branch | deferred; next skill catalog expansion, not this canary |
+| Mushroom spore | typed reference + actor adapter | U1.9p |
 | Beast charge telegraph/charge | FSM species branch | deferred; needs transition/contact ownership together |
 | Dragon fireball values | typed Dragon reference + actor adapter | U1.9o; melee selection vẫn legacy |
 | Dragon melee selection/values | default species branch | deferred; cần melee contract riêng |

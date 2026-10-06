@@ -682,7 +682,7 @@ func handle_smart_chase(delta: float) -> void:
 				velocity = Vector2.ZERO
 			
 			if attack_cooldown <= 0:
-				perform_spore_attack(raw_dir)
+				perform_spore_attack(raw_dir, primary_skill_definition)
 		
 		3: # Beast (Đất) - Bull Charging Rush
 			if dist >= 70.0 and dist <= 220.0 and attack_cooldown <= 0:
@@ -749,8 +749,14 @@ func perform_fireball_attack(dir: Vector2, skill: SkillDefinition = null) -> voi
 	await get_tree().create_timer(recovery_seconds).timeout
 	finish_legacy_attack_recovery()
 
-func perform_spore_attack(dir: Vector2) -> void:
-	attack_cooldown = 2.0
+func perform_spore_attack(dir: Vector2, skill: SkillDefinition = null) -> void:
+	var cooldown_seconds := skill.cooldown_seconds if skill != null else 2.0
+	var travel_distance := skill.travel_distance if skill != null else 200.0
+	var travel_seconds := skill.travel_seconds if skill != null else 0.5
+	var hit_radius := skill.hit_radius if skill != null else 45.0
+	var recovery_seconds := skill.recovery_seconds if skill != null else 0.25
+	var damage_multiplier := skill.damage_multiplier if skill != null else 1.0
+	attack_cooldown = cooldown_seconds
 	state = State.ATTACK
 	velocity = Vector2.ZERO
 	
@@ -763,16 +769,16 @@ func perform_spore_attack(dir: Vector2) -> void:
 	get_parent().add_child(spore)
 	
 	var tween = create_tween()
-	var dest = spore.global_position + dir * 200.0
-	tween.tween_property(spore, "global_position", dest, 0.5)
+	var dest = spore.global_position + dir * travel_distance
+	tween.tween_property(spore, "global_position", dest, travel_seconds)
 	tween.tween_callback(func():
-		if is_instance_valid(target) and spore.global_position.distance_to(target.global_position) < 45.0:
+		if is_instance_valid(target) and spore.global_position.distance_to(target.global_position) < hit_radius:
 			if target.has_method("take_damage"):
-				target.take_damage(attack_power, global_position)
+				target.take_damage(int(attack_power * damage_multiplier), global_position)
 		spore.queue_free()
 	)
 	
-	await get_tree().create_timer(0.25).timeout
+	await get_tree().create_timer(recovery_seconds).timeout
 	finish_legacy_attack_recovery()
 
 func perform_melee_attack() -> void:

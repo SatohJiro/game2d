@@ -179,7 +179,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 19, "registry must contain nineteen definitions through U1.9o")
+	_expect(registry.size() == 20, "registry must contain twenty definitions through U1.9p")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -199,6 +199,7 @@ func _validate_project_content() -> void:
 	_expect(registry.has(&"creature.dragon"), "registry is missing creature.dragon")
 	_expect(registry.has(&"skill.flam.fireball"), "registry is missing skill.flam.fireball")
 	_expect(registry.has(&"skill.dragon.fireball"), "registry is missing skill.dragon.fireball")
+	_expect(registry.has(&"skill.mushroom.spore"), "registry is missing skill.mushroom.spore")
 	var wood := registry.get_definition(&"item.wood") as ItemDefinition
 	_expect(wood != null, "item.wood must load as ItemDefinition")
 	if wood != null:
@@ -251,7 +252,7 @@ func _validate_project_content() -> void:
 		_expect(mushroom.base_attack_power == 11, "Mushroom base_attack_power mismatch")
 		_expect(mushroom.behavior_profile != null and not mushroom.behavior_profile.is_predator and mushroom.behavior_profile.is_prey, "Mushroom behavior profile mismatch")
 		_expect(mushroom.drop_item_id == &"item.berry_seed", "Mushroom drop reference mismatch")
-		_expect(mushroom.skill_ids.is_empty(), "Mushroom spore must remain outside typed skill catalog in U1.9l")
+		_expect(mushroom.skill_ids == [&"skill.mushroom.spore"], "Mushroom spore reference mismatch")
 	var fresh_meat := registry.get_definition(&"item.fresh_meat") as ItemDefinition
 	_expect(fresh_meat != null and fresh_meat.icon != null and fresh_meat.tags.has("meat"), "fresh meat definition mismatch")
 	_expect(LegacyItemAdapter.to_content_id("Thịt Tươi") == &"item.fresh_meat", "fresh meat legacy key must map to stable ID")
@@ -298,6 +299,14 @@ func _validate_project_content() -> void:
 		_expect(is_equal_approx(dragon_fireball.travel_distance, 240.0), "Dragon fireball distance mismatch")
 		_expect(is_equal_approx(dragon_fireball.travel_seconds, 0.55), "Dragon fireball travel time mismatch")
 		_expect(is_equal_approx(dragon_fireball.hit_radius, 45.0), "Dragon fireball hit radius mismatch")
+	var mushroom_spore := registry.get_definition(&"skill.mushroom.spore") as SkillDefinition
+	_expect(mushroom_spore != null, "skill.mushroom.spore must load as SkillDefinition")
+	if mushroom_spore != null:
+		_expect(is_equal_approx(mushroom_spore.cooldown_seconds, 2.0), "Mushroom spore cooldown mismatch")
+		_expect(is_equal_approx(mushroom_spore.recovery_seconds, 0.25), "Mushroom spore recovery mismatch")
+		_expect(is_equal_approx(mushroom_spore.damage_multiplier, 1.0), "Mushroom spore damage mismatch")
+		_expect(is_equal_approx(mushroom_spore.travel_distance, 200.0) and is_equal_approx(mushroom_spore.travel_seconds, 0.5), "Mushroom spore travel mismatch")
+		_expect(is_equal_approx(mushroom_spore.hit_radius, 45.0), "Mushroom spore hit radius mismatch")
 
 
 func _contains_message(messages: PackedStringArray, fragment: String) -> bool:

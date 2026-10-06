@@ -82,6 +82,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.9m: Beast giữ nguyên 130 HP, speed 115, power 16, predator role và Thịt Tươi drop nhưng các giá trị gameplay lấy từ typed definition; charge/drop execution chưa đổi.
 - U1.9n: Dragon giữ nguyên 340 HP, speed 95, power 26, predator role, forced-elite scaling và Thỏi Pal drop nhưng base values lấy từ typed definition; melee/fireball/drop execution chưa đổi.
 - U1.9o: Dragon fireball giữ cooldown 2,2 giây, recovery 0,3 giây, damage ×1, travel 240 px/0,55 giây và radius 45 px qua `skill.dragon.fireball`; melee priority/range và presentation không đổi.
+- U1.9p: Mushroom spore giữ cooldown 2 giây, recovery 0,25 giây, damage ×1, travel 200 px/0,5 giây và radius 45 px qua typed definition; kiting/escape không đổi.
 - Acceptance: một activation không multi-hit ngoài thiết kế; chết chỉ phát reward một lần; reduced shake không đổi damage.
 
 ### G05 — capture

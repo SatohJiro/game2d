@@ -18,4 +18,4 @@ move_speed = 95.0
 base_attack_power = 11
 behavior_profile = SubResource("Resource_mushroom_behavior")
 drop_item_id = &"item.berry_seed"
-skill_ids = Array[StringName]([])
+skill_ids = Array[StringName]([&"skill.mushroom.spore"])

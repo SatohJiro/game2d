@@ -418,7 +418,11 @@ func _test_creature_adapter() -> void:
 	_expect(int(mushroom_runtime.get("power", 0)) == 11, "Mushroom typed power compatibility mismatch")
 	_expect(bool(mushroom_runtime.get("is_prey", false)) and not bool(mushroom_runtime.get("is_predator", true)), "Mushroom typed prey role mismatch")
 	_expect(mushroom_runtime.get("drop_item", "") == LegacyItemAdapter.to_legacy_key(&"item.berry_seed"), "Mushroom typed drop must preserve legacy runtime key")
-	_expect(mushroom.get("primary_skill_definition") == null, "Mushroom spore must remain on the legacy attack path")
+	var mushroom_skill := mushroom.get("primary_skill_definition") as SkillDefinition
+	_expect(mushroom_skill != null and mushroom_skill.content_id == LegacySpeciesAdapter.MUSHROOM_SPORE_ID, "Mushroom actor must resolve typed spore")
+	if mushroom_skill != null:
+		_expect(is_equal_approx(mushroom_skill.cooldown_seconds, 2.0) and is_equal_approx(mushroom_skill.recovery_seconds, 0.25), "Mushroom spore timing compatibility mismatch")
+		_expect(is_equal_approx(mushroom_skill.travel_distance, 200.0) and is_equal_approx(mushroom_skill.travel_seconds, 0.5), "Mushroom spore travel compatibility mismatch")
 	var mushroom_legacy_rows: Array = mushroom.get("species_data")
 	_expect(not (mushroom_legacy_rows[2] as Dictionary).has("max_hp"), "migrated Mushroom HP must not remain a parallel legacy source")
 	var beast := packed.instantiate()
