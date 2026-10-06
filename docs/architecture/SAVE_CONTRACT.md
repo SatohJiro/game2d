@@ -125,3 +125,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12g furnace subtype state
 
 `building.furnace` nhận `FurnacePlacementState` gồm committed ore/wood input, iron/pal output chờ nhận và progress timer hữu hạn trong một chu kỳ 5 giây. Timer dương không được tồn tại nếu input không đủ một batch. `is_smelting` được suy ra khi apply; Flam boost không serialize. Snapshot/apply lặp lại giữ nguyên input, output và progress thay vì trừ hoặc cộng item lần nữa.
+
+## U1.12h cooking-pot subtype state
+
+`building.cooking_pot` nhận `CookingPotPlacementState` gồm stable `recipe.cooking.*` và `remaining_seconds`. Active recipe bắt buộc thuộc `CookingRecipeCatalog` và timer nằm trong duration của recipe; idle bắt buộc recipe rỗng và timer 0. Apply resolve runtime recipe Dictionary từ catalog/legacy adapter, không serialize Dictionary hoặc trừ lại nguyên liệu đã commit.

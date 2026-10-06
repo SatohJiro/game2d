@@ -15,6 +15,8 @@ func _init(p_instance_id: StringName, p_building_id: StringName, p_transform: Tr
 		state = {"inventory": {}}
 	elif building_id == &"building.furnace" and state.is_empty():
 		state = FurnacePlacementState.new().to_dto()
+	elif building_id == &"building.cooking_pot" and state.is_empty():
+		state = CookingPotPlacementState.new().to_dto()
 
 func is_valid() -> bool:
 	if ContentId.domain_of(instance_id) != &"building" or not BuildingPlacementCatalog.is_supported(building_id) or not transform.is_finite():
@@ -23,6 +25,8 @@ func is_valid() -> bool:
 		return ChestPlacementState.from_dto(state) != null
 	if building_id == &"building.furnace":
 		return FurnacePlacementState.from_dto(state) != null
+	if building_id == &"building.cooking_pot":
+		return CookingPotPlacementState.from_dto(state) != null
 	return state.is_empty()
 
 func to_dto() -> Dictionary:

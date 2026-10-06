@@ -174,6 +174,34 @@ func finish_cooking() -> void:
 	tw.tween_property(visual, "scale", Vector2(1.3, 1.3), 0.15).set_trans(Tween.TRANS_BACK)
 	tw.tween_property(visual, "scale", Vector2.ONE, 0.2)
 
+
+func create_persistence_state() -> CookingPotPlacementState:
+	if not is_cooking:
+		return CookingPotPlacementState.new()
+	return CookingPotPlacementState.new(
+		CookingRecipeCatalog.from_legacy(String(current_recipe.get("id", ""))),
+		cooking_timer
+	)
+
+
+func apply_persistence_state(state: CookingPotPlacementState) -> bool:
+	if state == null or not state.is_valid():
+		return false
+	if state.recipe_id == &"":
+		is_cooking = false
+		cooking_timer = 0.0
+		current_recipe = {}
+		return true
+	var legacy_id := CookingRecipeCatalog.to_legacy(state.recipe_id)
+	for recipe: Dictionary in cooking_recipes:
+		if String(recipe.get("id", "")) == legacy_id:
+			current_recipe = recipe.duplicate(true)
+			cooking_duration = float(recipe.get("cook_time", 0.0))
+			cooking_timer = state.remaining_seconds
+			is_cooking = true
+			return true
+	return false
+
 func spawn_floating_text(txt: String, color: Color) -> void:
 	var float_node = FLOATING_TEXT_SCENE.instantiate()
 	float_node.global_position = global_position + Vector2(randf_range(-10, 10), -28)

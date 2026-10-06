@@ -144,7 +144,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Preview biểu diễn valid/invalid; placement kiểm tra terrain, collision, bounds, cost và unlock.
 - Build commit trừ cost và spawn entity trong một transaction logic; cancel không tốn cost.
 - Building có stable instance ID, health, repair/dismantle policy và state riêng theo subtype.
-- U1.12e: chín placement reachable có stable subtype/instance identity; U1.12f–g: save/load giữ đúng chest inventory và furnace input/output/progress mà không cộng dồn. Health cùng cooking/compost/ranch/crop state chưa persist.
+- U1.12e: chín placement reachable có stable subtype/instance identity; U1.12f–h: save/load giữ đúng chest inventory, furnace state và cooking recipe/progress mà không cộng dồn. Health cùng compost/ranch/crop state chưa persist.
 - Acceptance: không overlap vùng cấm; reload giữ transform/state; dismantle trả đúng bảng refund.
 
 ### G12 — progression và quests
@@ -190,7 +190,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.12b: 25 inventory key reachable trong core/crafting/farming/ranch/cooking đều project sang stable `item.*`; regression từng nhóm bảo đảm output gameplay hợp lệ không làm save thất bại. Unknown key vẫn bị từ chối nguyên khối.
 - U1.12c: rarity, trait và stance của từng pet dùng stable ID; save/load giữ metadata và command stance cho cả pet active lẫn inactive. Badge/name localized chỉ là presentation; roll, multiplier và hành vi pet không đổi.
 - U1.12d: Save v1 giữ base level, active stable quest ID và claimed quest IDs; state skip/mâu thuẫn hoặc localized title fail closed, apply không phát reward.
-- U1.12e: Save v1 giữ building instance/subtype/transform; U1.12f–g thêm subtype-tagged chest/furnace state và atomic staged restore. Duplicate/unknown/path/state sai subtype hoặc furnace progress bất nhất fail closed; starter scene nodes không bị replace.
+- U1.12e: Save v1 giữ building identity/transform; U1.12f–h thêm subtype-tagged chest/furnace/cooking state và staged restore. Unknown recipe, progress sai duration và state sai subtype fail closed; starter scene nodes không bị replace.
 - Acceptance: save → quit → load giữ inventory, roster, assignment, building, crop, quest và world clock; corrupt file trả lỗi an toàn.
 
 ## Thứ tự ưu tiên playable vertical slice

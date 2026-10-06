@@ -109,6 +109,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.12e building placement identity | Hoàn tất | Chín subtype có stable instance ID và transform round-trip; starter scene giữ nguyên |
 | U1.12f chest persistence | Hoàn tất | Typed chest inventory state giữ committed item chính xác qua save/load |
 | U1.12g furnace persistence | Hoàn tất | Typed furnace input/output/timer giữ chính xác mẻ đang luyện |
+| U1.12h cooking-pot persistence | Hoàn tất | Stable recipe ID và timer giữ chính xác mẻ đang nấu |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Hạ tầng | Save v1 explicit Player round-trip xanh; chưa autosave/UI và chưa phủ world/base delta |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

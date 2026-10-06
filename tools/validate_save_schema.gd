@@ -96,6 +96,12 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_furnace_progress := Schema.create_empty(&"save.slot_1", 1)
 	invalid_furnace_progress["world"]["entity_deltas"] = [{"instance_id": "building.instance_furnace", "building_id": "building.furnace", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"ore_count": 0, "wood_count": 0, "iron_ingots_ready": 0, "pal_ingots_ready": 0, "smelt_timer": 2.0}}]
 	_expect(not Schema.validate(invalid_furnace_progress).is_valid(), "furnace progress without a committed batch must fail before mutation")
+	var invalid_cooking_recipe := Schema.create_empty(&"save.slot_1", 1)
+	invalid_cooking_recipe["world"]["entity_deltas"] = [{"instance_id": "building.instance_pot", "building_id": "building.cooking_pot", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"recipe_id": "hearty_stew", "remaining_seconds": 1.5}}]
+	_expect(not Schema.validate(invalid_cooking_recipe).is_valid(), "legacy cooking recipe ID must not become persistence identity")
+	var invalid_cooking_progress := Schema.create_empty(&"save.slot_1", 1)
+	invalid_cooking_progress["world"]["entity_deltas"] = [{"instance_id": "building.instance_pot", "building_id": "building.cooking_pot", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"recipe_id": "recipe.cooking.hearty_stew", "remaining_seconds": 4.0}}]
+	_expect(not Schema.validate(invalid_cooking_progress).is_valid(), "cooking progress beyond recipe duration must fail before mutation")
 
 
 func _test_non_serializable_guards() -> void:
@@ -239,6 +245,20 @@ func _test_runtime_apply_adapter() -> void:
 		var reloaded_furnace_nodes := get_nodes_in_group("persistent_player_buildings")
 		var reloaded_furnace: Variant = reloaded_furnace_nodes[0] if reloaded_furnace_nodes.size() == 1 else null
 		_expect(furnace_reloaded.is_applied() and is_instance_valid(reloaded_furnace) and reloaded_furnace.get("ore_count") == 4 and reloaded_furnace.get("wood_count") == 2 and reloaded_furnace.get("iron_ingots_ready") == 3 and reloaded_furnace.get("pal_ingots_ready") == 1 and is_equal_approx(reloaded_furnace.get("smelt_timer"), 2.25), "furnace save/load must preserve inputs, outputs and progress exactly once")
+		loaded_pet = player.get("active_pet_node")
+	var cooking_save := save.duplicate(true)
+	cooking_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_pot", "building_id": "building.cooking_pot", "position": {"x": 18.0, "y": 24.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"recipe_id": "recipe.cooking.hearty_stew", "remaining_seconds": 1.75}}]
+	var cooking_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, cooking_save)
+	var cooking_nodes := get_nodes_in_group("persistent_player_buildings")
+	var loaded_pot: Variant = cooking_nodes[0] if cooking_nodes.size() == 1 else null
+	_expect(cooking_applied.is_applied() and is_instance_valid(loaded_pot) and loaded_pot.get("is_cooking") and is_equal_approx(loaded_pot.get("cooking_timer"), 1.75) and loaded_pot.get("current_recipe").get("id") == "hearty_stew", "cooking pot committed recipe/progress apply mismatch")
+	var cooking_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2003, 321.5)
+	_expect(cooking_snapshot.is_accepted(), "mid-batch cooking pot must snapshot with stable recipe state")
+	if cooking_snapshot.is_accepted():
+		var cooking_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, cooking_snapshot.snapshot)
+		var reloaded_cooking_nodes := get_nodes_in_group("persistent_player_buildings")
+		var reloaded_pot: Variant = reloaded_cooking_nodes[0] if reloaded_cooking_nodes.size() == 1 else null
+		_expect(cooking_reloaded.is_applied() and is_instance_valid(reloaded_pot) and reloaded_pot.get("is_cooking") and is_equal_approx(reloaded_pot.get("cooking_timer"), 1.75) and reloaded_pot.get("current_recipe").get("yield_item") == "Súp Hầm Sơn Hào", "cooking save/load must preserve committed recipe and output exactly once")
 		loaded_pet = player.get("active_pet_node")
 
 	var position_before: Vector2 = player.global_position
