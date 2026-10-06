@@ -131,9 +131,9 @@ func _test_dropped_item_resolution() -> void:
 	var drop: Node = packed_drop.instantiate()
 	drop.set("item_name", "Gỗ")
 	_expect(drop.call("get_resolved_item_id") == &"item.wood", "legacy wood drop should resolve to stable ID")
-	drop.set("item_name", "Đá")
+	drop.set("item_name", "Chưa Có Mapping")
 	drop.set("item_id", &"")
-	_expect(StringName(drop.call("get_resolved_item_id")).is_empty(), "unmigrated stone drop must stay on legacy fallback")
+	_expect(StringName(drop.call("get_resolved_item_id")).is_empty(), "unmapped drop must stay on legacy fallback")
 	drop.set("item_id", &"item.wood")
 	_expect(drop.call("get_resolved_item_id") == &"item.wood", "explicit stable drop ID should win")
 	drop.free()
@@ -187,11 +187,11 @@ func _test_chest_transfer_boundary() -> void:
 		return
 	var chest := packed_chest.instantiate()
 	chest.set("inventory_slots", 3)
-	var source := {"Gỗ": 2, "Quặng Pal": 1, "Quả Mọng Hồi Máu": 1, "Đá": 5}
+	var source := {"Gỗ": 2, "Quặng Pal": 1, "Quả Mọng Hồi Máu": 1, "Chưa Có Mapping": 5}
 	var deposit: InventoryTransactionResult = chest.call("deposit_mapped_from", source)
 	_expect(deposit.is_success() and deposit.applied_amount == 4, "chest mapped deposit should commit atomically")
 	_expect(source["Gỗ"] == 0 and source["Quặng Pal"] == 0 and source["Quả Mọng Hồi Máu"] == 0, "chest deposit source mismatch")
-	_expect(source["Đá"] == 5, "chest transaction must not touch unmigrated stone")
+	_expect(source["Chưa Có Mapping"] == 5, "chest transaction must not touch an unmapped item")
 	var stored: Dictionary = chest.get("stored_items")
 	_expect(stored["Gỗ"] == 2 and stored["Quặng Pal"] == 1 and stored["Quả Mọng Hồi Máu"] == 1, "chest deposit target mismatch")
 

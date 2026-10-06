@@ -42,6 +42,8 @@ U1.10c–d dùng namespace `pet.command.*` và `pet.stance.*` cho runtime intent
 
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
+U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.
+
 U1.9l nối mapping hai chiều `item.berry_seed` ↔ `Hạt Giống Cây` trong `LegacyItemAdapter` để typed Mushroom drop reference giữ đúng storage/display key hiện hữu. Đây là compatibility mapping; inventory storage chưa migrate.
 
 U1.9m admit `item.fresh_meat` và mapping hai chiều `item.fresh_meat` ↔ `Thịt Tươi` để typed Beast drop reference giữ nguyên storage/display và cooking/ranch compatibility. Asset `beaf.png` chỉ được tham chiếu lại từ baseline, vẫn `QUARANTINE/UNKNOWN`; inventory storage chưa migrate.

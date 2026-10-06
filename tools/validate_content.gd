@@ -41,6 +41,8 @@ func _test_content_ids() -> void:
 	_expect(ContentId.local_name_of(&"item.wood") == &"wood", "local-name extraction failed")
 	_expect(LegacyItemAdapter.to_content_id("Hạt Giống Cây") == &"item.berry_seed", "berry seed legacy key must map to stable ID")
 	_expect(LegacyItemAdapter.to_legacy_key(&"item.berry_seed") == "Hạt Giống Cây", "berry seed stable ID must preserve legacy key")
+	_expect(LegacyItemAdapter.to_content_id("Đá") == &"item.stone", "stone legacy key must map to stable ID")
+	_expect(LegacyItemAdapter.to_content_id("Thỏi Sắt") == &"item.iron_ingot", "iron ingot legacy key must map to stable ID")
 
 
 func _test_registry_contract() -> void:
@@ -179,7 +181,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 24, "registry must contain twenty-four definitions through U1.9s")
+	_expect(registry.size() == 26, "registry must contain twenty-six definitions through U1.11b")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -189,6 +191,8 @@ func _validate_project_content() -> void:
 	_expect(registry.has(&"item.berry"), "registry is missing item.berry")
 	_expect(registry.has(&"item.fresh_meat"), "registry is missing item.fresh_meat")
 	_expect(registry.has(&"item.pal_ingot"), "registry is missing item.pal_ingot")
+	_expect(registry.has(&"item.stone"), "registry is missing item.stone")
+	_expect(registry.has(&"item.iron_ingot"), "registry is missing item.iron_ingot")
 	_expect(registry.has(&"recipe.pal_sphere.basic"), "registry is missing recipe.pal_sphere.basic")
 	_expect(registry.has(&"building.workbench"), "registry is missing building.workbench")
 	_expect(registry.has(&"crop.berry"), "registry is missing crop.berry")

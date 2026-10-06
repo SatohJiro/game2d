@@ -3,6 +3,8 @@ extends RefCounted
 
 const LEGACY_TO_CONTENT_ID: Dictionary = {
 	"Gỗ": &"item.wood",
+	"Đá": &"item.stone",
+	"Thỏi Sắt": &"item.iron_ingot",
 	"Quặng Pal": &"item.pal_ore",
 	"Quả Mọng Hồi Máu": &"item.berry",
 	"Cầu Thu Phục": &"item.pal_sphere.basic",
@@ -15,6 +17,8 @@ const LEGACY_TO_CONTENT_ID: Dictionary = {
 
 const CONTENT_ID_TO_LEGACY: Dictionary = {
 	&"item.wood": "Gỗ",
+	&"item.stone": "Đá",
+	&"item.iron_ingot": "Thỏi Sắt",
 	&"item.pal_ore": "Quặng Pal",
 	&"item.berry": "Quả Mọng Hồi Máu",
 	&"item.pal_sphere.basic": "Cầu Thu Phục",

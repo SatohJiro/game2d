@@ -180,6 +180,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Save chứa schema version, slot metadata, world delta và DTO từng module; không chứa Node/Callable.
 - Atomic write, checksum/backup và migration tuần tự. Autosave tránh giữa transaction domain.
 - U1.11a: Save v1 envelope có version, metadata và player/inventory/pets/world DTO; validator từ chối localized identity, duplicate/stale pet reference và Node/Callable/Vector2.
+- U1.11b: runtime snapshot giữ player needs/progression/position, stable inventory, pet roster/active stance và world clock; source không mutate, unknown inventory key chặn snapshot.
 - Acceptance: save → quit → load giữ inventory, roster, assignment, building, crop, quest và world clock; corrupt file trả lỗi an toàn.
 
 ## Thứ tự ưu tiên playable vertical slice

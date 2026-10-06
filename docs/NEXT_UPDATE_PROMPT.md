@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.11b runtime snapshot adapter
+# Prompt cho model tiếp theo — U1.11c runtime load apply
 
-Tiếp tục bằng đúng một package nhỏ U1.11b: tạo adapter project Player needs/progression/position, legacy inventory qua explicit stable item mapping và pet roster/active stance sang Save v1 DTO; snapshot phải deep-copy, validate và không mutate Node/source dictionaries. Chưa apply load, ghi file, autosave, migration hoặc UI slot. Chạy focused regression, full gate, leak-aware log scan và cập nhật contract/checkpoint.
+Tiếp tục bằng đúng một package nhỏ U1.11c: tạo plan/result thuần và atomic adapter apply validated Save v1 player/inventory/pet roster state về runtime. Validate/mapping toàn bộ trước mutation; failure giữ source nguyên vẹn. Chưa ghi file, autosave, migration version hoặc UI slot. Chạy focused regression, full gate, leak-aware log scan và cập nhật contract/checkpoint.

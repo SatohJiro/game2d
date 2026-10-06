@@ -94,6 +94,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.10c pet command boundary | Hoàn tất | Stable cycle command và deterministic three-stance policy; invalid intent không mutate |
 | U1.10d explicit pet commands | Hoàn tất | Direct work/combat/follow intents và idempotent no-change qua cùng policy |
 | U1.11a Save v1 schema | Hoàn tất | Versioned JSON-safe envelope, stable-ID/reference/range validation và round-trip regression |
+| U1.11b runtime snapshot | Hoàn tất | Player/inventory/pets → validated deep-copied DTO; unknown legacy key fail closed |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

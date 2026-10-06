@@ -1,4 +1,4 @@
-# U1.11a — Save v1 schema foundation
+# U1.11a–b — Save v1 schema and runtime snapshot
 
 ## Phạm vi
 
@@ -46,3 +46,15 @@ Godot parse JSON number về float, nên validator chấp nhận integer hoặc 
 `tools/validate_save_schema.gd` khóa valid envelope, JSON round-trip, version/shape/range, localized inventory rejection, duplicate/stale pet reference và non-serializable types. Validator được gọi trong `tools/check_project.ps1`.
 
 Save/data breaking change: schema v1 mới được định nghĩa nhưng chưa có file save phát hành, nên không cần migration dữ liệu cũ. Asset/provenance: none. Rollback: revert U1.11a; runtime gameplay không bị ảnh hưởng.
+
+## U1.11b runtime snapshot adapter
+
+`SaveSnapshotAdapter.create_player_snapshot(player, save_id, saved_at_unix, world_clock_seconds)` đọc runtime owner và tạo deep-copied envelope, sau đó bắt buộc chạy `SaveV1Schema.validate()` trước khi trả `ACCEPTED`.
+
+- Player: position được project `{x,y}`; level/EXP/HP/stamina và needs scalar được snapshot, không giữ `PlayerNeedsSnapshot` object.
+- Inventory: mọi legacy key phải map hai chiều rõ ràng qua `LegacyItemAdapter`; unknown key trả `UNMAPPED_ITEM` và không trả partial snapshot.
+- Pets: party dictionary được project về instance/species/level/EXP; active CompanionPet cung cấp stance hiện tại, pet không active mặc định `pet.stance.auto_work` vì roster hiện chưa giữ stance mutable.
+- World: package chỉ inject `day_time`/clock scalar từ caller; entity delta vẫn rỗng.
+- Snapshot/result deep-copy dữ liệu. Mutation snapshot sau đó không đổi inventory hoặc roster runtime.
+
+U1.11b admit `item.stone` và `item.iron_ingot` cùng definitions/mapping để toàn bộ inventory mặc định project được. Food/fertilizer/crop key legacy chỉ phát sinh ở các loop khác chưa được admit; nếu tồn tại, snapshot fail closed cho tới package migration tương ứng, không silently drop.
