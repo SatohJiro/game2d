@@ -35,7 +35,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
 | WORLD | Zone, chunks, spawn, day/night, raid | `main.gd`, scene tĩnh | Chunk admission + persistent delta | U2 |
 | NAV | Navigation/path requests | Chưa có | Navigation adapter theo chunk | U2.3 |
-| SAVE | Versioned persistence | Save v1 schema, Player adapters, atomic repository, migration registry và explicit coordinator | Autosave/UI scheduling, world/base DTO | U1.11 |
+| SAVE | Versioned persistence | Save v1 schema, Player/base adapters, atomic repository, migration registry và explicit coordinator | Autosave/UI scheduling, world/building DTO | U1.11–U1.12 |
 | UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
 | PRESENT | Animation/VFX/camera/audio | Trộn trong actor; `AudioManager` autoload | Event-driven adapters, pooling, accessibility scale | U4 |
 | ASSET | Vendoring/provenance/import | File rời, nguồn chưa biết | Manifest, package receipt, immutable vendor source | U0.2, U4.1 |
@@ -133,6 +133,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.12a audit xác nhận SAVE mới phủ Player/core roster; inventory key chưa admit có thể block toàn snapshot, còn base/building/crop/world delta chưa có owner DTO. Ma trận ở `PERSISTENCE_COVERAGE_AUDIT.md`.
 - U1.12b đóng blocker inventory đã audit: snapshot regression theo core/crafting/farming/ranch/cooking; unknown key vẫn fail closed. Pet metadata và world/base coverage chưa đổi.
 - U1.12c thêm `PetMetadataCatalog`, stable rarity/trait/stance trong roster và Save v1; Player persist stance trước node replacement và restore khi summon. Presentation text/behavior giữ nguyên.
+- U1.12d thêm PROGRESSION boundary `BaseQuestCatalog`/`BaseProgressState`; BaseManager sở hữu claimed ledger, Save v1 snapshot/apply stable base state mà không phát reward. World/building DTO chưa đổi.
 
 ### UI và PRESENTATION
 

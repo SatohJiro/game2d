@@ -9,9 +9,11 @@ var max_base_level: int = 5
 
 var current_quest_idx: int = 0
 var quest_completed: bool = false
+var claimed_quest_ids: Array[StringName] = []
 
 var quests: Array[Dictionary] = [
 	{
+		"quest_id": &"quest.base.survival",
 		"title": "Giai Đoạn 1: Sinh Tồn Dã Ngoại & Ẩm Thực",
 		"desc": "Thu thập 8 Gỗ, 4 Đá, bắt 1 Pet và nấu 1 món ăn tại Bếp [E]",
 		"req_wood": 8,
@@ -21,6 +23,7 @@ var quests: Array[Dictionary] = [
 		"unlock_level": 2
 	},
 	{
+		"quest_id": &"quest.base.organic_farming",
 		"title": "Giai Đoạn 2: Nông Nghiệp Hữu Cơ & Luyện Kim",
 		"desc": "Ủ 1 túi Phân Bón tại Thùng Ủ, nung 3 Thỏi Sắt",
 		"req_iron": 3,
@@ -29,6 +32,7 @@ var quests: Array[Dictionary] = [
 		"unlock_level": 3
 	},
 	{
+		"quest_id": &"quest.base.automation",
 		"title": "Giai Đoạn 3: Tự Động Hóa Nông Nghiệp & Căn Cứ",
 		"desc": "Thu hoạch 6 Quả Mọng, luyện 4 Thỏi Pal",
 		"req_pal_ingot": 4,
@@ -37,6 +41,7 @@ var quests: Array[Dictionary] = [
 		"unlock_level": 4
 	},
 	{
+		"quest_id": &"quest.base.fortress",
 		"title": "Giai Đoạn 4: Pháo Đài Phòng Thủ & Đêm Xâm Lăng",
 		"desc": "Xây dựng Tháp Canh Bắn Đá, chế tạo Kiếm Sắt và Cầu Giga",
 		"req_turrets": 1,
@@ -45,6 +50,7 @@ var quests: Array[Dictionary] = [
 		"unlock_level": 5
 	},
 	{
+		"quest_id": &"quest.base.paloria_lord",
 		"title": "Giai Đoạn 5: Chúa Tể Paloria",
 		"desc": "Dựng Bệ Triệu Hồi, thức tỉnh và tiêu diệt Hỏa Long Thần!",
 		"req_boss": 1,
@@ -108,13 +114,20 @@ func check_quest_progress(player: CharacterBody2D) -> void:
 		advance_quest(player)
 
 func advance_quest(player: CharacterBody2D) -> void:
+	if current_quest_idx < 0 or current_quest_idx >= quests.size():
+		return
+	var quest_id := StringName(quests[current_quest_idx].get("quest_id", &""))
+	if claimed_quest_ids.has(quest_id):
+		return
 	quest_completed = true
 	var q = quests[current_quest_idx]
+	claimed_quest_ids.append(quest_id)
 	base_level = q["unlock_level"]
 	emit_signal("base_level_changed", base_level)
 	
-	if AudioManager:
-		AudioManager.play_sound("level_up")
+	var audio_manager := get_node_or_null("/root/AudioManager")
+	if audio_manager != null and audio_manager.has_method("play_sound"):
+		audio_manager.play_sound("level_up")
 	
 	var huds = get_tree().get_nodes_in_group("hud")
 	if huds.size() > 0:
@@ -126,3 +139,18 @@ func advance_quest(player: CharacterBody2D) -> void:
 	
 	current_quest_idx += 1
 	quest_completed = false
+
+
+func create_persistence_state() -> BaseProgressState:
+	return BaseProgressState.new(base_level, BaseQuestCatalog.quest_id_at(current_quest_idx), claimed_quest_ids)
+
+
+func apply_persistence_state(state: BaseProgressState) -> bool:
+	if state == null or not state.is_valid():
+		return false
+	base_level = state.base_level
+	claimed_quest_ids = state.claimed_quest_ids.duplicate()
+	current_quest_idx = claimed_quest_ids.size()
+	quest_completed = false
+	emit_signal("base_level_changed", base_level)
+	return true

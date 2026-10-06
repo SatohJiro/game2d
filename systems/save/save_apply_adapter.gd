@@ -5,6 +5,7 @@ const Schema = preload("res://systems/save/save_v1_schema.gd")
 const ApplyPlan = preload("res://systems/save/save_apply_plan.gd")
 const ApplyResult = preload("res://systems/save/save_apply_result.gd")
 const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
+const BaseProgressStateModel = preload("res://systems/progression/base_progress_state.gd")
 
 
 static func apply_player_snapshot(player: Node, snapshot: Variant) -> RefCounted:
@@ -14,13 +15,13 @@ static func apply_player_snapshot(player: Node, snapshot: Variant) -> RefCounted
 	if not validation.is_valid():
 		return ApplyResult.new(ApplyResult.Status.INVALID_SNAPSHOT, 0.0, validation.errors)
 	var errors := PackedStringArray()
-	var plan: RefCounted = _create_plan(snapshot, errors)
+	var plan: RefCounted = _create_plan(player, snapshot, errors)
 	if plan == null:
 		return ApplyResult.new(ApplyResult.Status.UNSUPPORTED_REFERENCE, 0.0, errors)
 	return _commit(player, plan)
 
 
-static func _create_plan(snapshot: Dictionary, errors: PackedStringArray) -> RefCounted:
+static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStringArray) -> RefCounted:
 	var legacy_inventory := {}
 	for item_key: Variant in snapshot["inventory"]:
 		var item_id := StringName(item_key)
@@ -70,6 +71,17 @@ static func _create_plan(snapshot: Dictionary, errors: PackedStringArray) -> Ref
 
 	if not errors.is_empty():
 		return null
+	var base_state := BaseProgressStateModel.from_dto(snapshot["base"])
+	var base_manager: Variant = player.get("base_manager_ref")
+	if base_state == null:
+		errors.append("unsupported base progression state")
+		return null
+	if not is_instance_valid(base_manager) and not _is_default_base_state(base_state):
+		errors.append("base progression owner is unavailable")
+		return null
+	if is_instance_valid(base_manager) and not base_manager.has_method("apply_persistence_state"):
+		errors.append("base progression owner lacks apply boundary")
+		return null
 	var player_data: Dictionary = snapshot["player"]
 	return ApplyPlan.new(
 		player_data,
@@ -78,6 +90,7 @@ static func _create_plan(snapshot: Dictionary, errors: PackedStringArray) -> Ref
 		active_id,
 		active_index,
 		active_command_id,
+		base_state,
 		float(snapshot["world"]["clock_seconds"])
 	)
 
@@ -111,7 +124,14 @@ static func _commit(player: Node, plan: RefCounted) -> RefCounted:
 			return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	if player.has_method("update_hud"):
 		player.call("update_hud")
+	var base_manager: Variant = player.get("base_manager_ref")
+	if is_instance_valid(base_manager) and not bool(base_manager.call("apply_persistence_state", plan.base_progress_state)):
+		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds)
+
+
+static func _is_default_base_state(state: BaseProgressState) -> bool:
+	return state.base_level == 1 and state.active_quest_id == &"quest.base.survival" and state.claimed_quest_ids.is_empty()
 
 
 static func _dismiss_active_pet(player: Node) -> void:

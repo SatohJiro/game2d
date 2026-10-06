@@ -1,37 +1,36 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.12c — pet metadata persistence
+## U1.12d — base/quest persistence contract
 
 Trạng thái: `VERIFIED` ngày 2026-10-07.
 
 ### Mục tiêu và invariant
 
-- Rarity, trait và stance của mỗi roster pet dùng stable identity; localized badge/name không đi vào save làm identity.
-- Snapshot/apply giữ metadata và stance của cả pet active lẫn inactive.
-- Không đổi rarity roll, stat multiplier, pet combat/job behavior hoặc HUD text.
+- Base level, active quest và claimed rewards phải dùng stable identity, không dùng localized title hoặc array index trong save.
+- Load không reset progression và không chạy reward flow; quest đã claim không thể nhận thưởng lần hai.
+- Giữ nguyên objective, EXP reward, unlock level và economy; không mở rộng building/crop/world delta.
 
 ### Kết quả đã triển khai
 
-- Thêm `PetMetadataCatalog` với bốn `pet.rarity.*`, bảy `pet.trait.*` và projection presentation cũ.
-- Capture/PetInstance phát và validate stable metadata; pet mới có `pet.stance.auto_work` trong roster.
-- Player ghi stance active về roster trước node replacement và restore stance khi summon.
-- Save v1 bắt buộc rarity/trait/stance allowlist; snapshot/apply round-trip active + inactive pet và dựng lại presentation text từ catalog.
+- Thêm `BaseQuestCatalog` với năm `quest.base.*` và typed `BaseProgressState`.
+- BaseManager có claimed ledger, typed create/apply boundary và duplicate guard trước mọi reward side effect.
+- Save v1 thêm DTO `base`; schema bắt prefix/order/level coherence, snapshot/apply resolve trước mutation.
+- Thêm validator base progression vào full project gate và regression Save active/claimed round-trip + failure atomicity.
 
 ### Validation hiện tại
 
-- Godot editor import/load headless xanh.
-- `validate_capture.gd`, `validate_pet_summon.gd`, `validate_save_schema.gd` xanh.
-- Full `tools/check_project.ps1` xanh: documentation, asset integrity/action, editor load và toàn bộ gameplay/save validators.
+- Baseline full gate xanh trước thay đổi.
+- Godot editor import/load, `validate_base_progression.gd` và `validate_save_schema.gd` xanh.
+- Full `tools/check_project.ps1` xanh: 40 Markdown files, asset gates, editor load, toàn bộ gameplay/save validators gồm base progression và coordinator repository round-trip.
 - Leak-aware scan `build/checks` không có script/parse/missing dependency/invalid node path hoặc orphan/leak warning.
 
 ### Compatibility, asset và giới hạn
 
-- Save v1 shape đổi tại `pets[]` nhưng version giữ 1 vì chưa có save phát hành; snapshot thiếu metadata mới fail closed. Sau release phải tăng version + migration.
-- Runtime roster vẫn là single source; field badge/trait legacy được giữ cho HUD/ranch compatibility.
-- Asset/provenance: none.
-- Base/quest, building/crop/world delta và autosave/UI ngoài phạm vi.
-- Rollback: revert catalog, stable roster fields, Player stance bridge, save schema/adapters và regression/docs U1.12c.
+- Save v1 shape thêm `base` nhưng version giữ 1 vì chưa có save phát hành; snapshot thiếu field mới fail closed. Sau release phải tăng version + migration.
+- BaseManager giữ quest dictionaries/presentation hiện hữu; stable catalog/state chỉ sở hữu identity/persistence boundary.
+- Asset/provenance: none. Autosave/UI và building/crop/world persistence ngoài phạm vi.
+- Rollback: revert progression catalog/state, BaseManager ledger, save DTO/adapters, gate/validator và docs U1.12d.
 
 ### Gói tiếp theo
 
-Sau full gate xanh, U1.12d thiết kế typed stable persistence cho base/quest progress để chặn reset và reward lặp. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+Sau full gate xanh, U1.12e thiết kế building instance identity và placement delta tối thiểu. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

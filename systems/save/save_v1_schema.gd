@@ -4,6 +4,7 @@ extends RefCounted
 const ValidationResult = preload("res://systems/save/save_validation_result.gd")
 const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
 const PetCommandPolicy = preload("res://systems/pet/pet_command_policy.gd")
+const BaseProgressStateModel = preload("res://systems/progression/base_progress_state.gd")
 const SCHEMA_VERSION := 1
 
 
@@ -26,6 +27,7 @@ static func create_empty(save_id: StringName, saved_at_unix: int) -> Dictionary:
 		},
 		"inventory": {},
 		"pets": [],
+		"base": {"base_level": 1, "active_quest_id": "quest.base.survival", "claimed_quest_ids": []},
 		"world": {"clock_seconds": 0.0, "entity_deltas": []},
 	}
 
@@ -48,6 +50,7 @@ static func validate(data: Variant) -> RefCounted:
 	_validate_player(root.get("player"), errors)
 	_validate_inventory(root.get("inventory"), errors)
 	_validate_pets(root.get("pets"), root.get("player"), errors)
+	_validate_base(root.get("base"), errors)
 	_validate_world(root.get("world"), errors)
 	return ValidationResult.new(ValidationResult.Status.VALID if errors.is_empty() else ValidationResult.Status.INVALID, errors)
 
@@ -131,6 +134,11 @@ static func _validate_world(value: Variant, errors: PackedStringArray) -> void:
 		errors.append("world.clock_seconds must be finite and non-negative")
 	if typeof(world.get("entity_deltas")) != TYPE_ARRAY:
 		errors.append("world.entity_deltas must be an Array")
+
+
+static func _validate_base(value: Variant, errors: PackedStringArray) -> void:
+	if BaseProgressStateModel.from_dto(value) == null:
+		errors.append("base must contain a coherent stable quest progression state")
 
 
 static func _is_finite_number(value: Variant) -> bool:

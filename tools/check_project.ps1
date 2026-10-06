@@ -26,6 +26,7 @@ $creatureDropLog = Join-Path $LogDirectory 'creature-drop-validation.log'
 $creatureEcologyLog = Join-Path $LogDirectory 'creature-ecology-validation.log'
 $captureLog = Join-Path $LogDirectory 'capture-validation.log'
 $petSummonLog = Join-Path $LogDirectory 'pet-summon-validation.log'
+$baseProgressionLog = Join-Path $LogDirectory 'base-progression-validation.log'
 $saveSchemaLog = Join-Path $LogDirectory 'save-schema-validation.log'
 $saveRepositoryLog = Join-Path $LogDirectory 'save-repository-validation.log'
 $saveMigrationLog = Join-Path $LogDirectory 'save-migration-validation.log'
@@ -88,6 +89,9 @@ Invoke-GodotCheck -Name 'Capture validation' -LogPath $captureLog -Arguments @(
 )
 Invoke-GodotCheck -Name 'Pet summon validation' -LogPath $petSummonLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_pet_summon.gd')
+)
+Invoke-GodotCheck -Name 'Base progression validation' -LogPath $baseProgressionLog -Arguments @(
+    '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_base_progression.gd')
 )
 Invoke-GodotCheck -Name 'Save schema validation' -LogPath $saveSchemaLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_save_schema.gd')

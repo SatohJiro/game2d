@@ -5,6 +5,7 @@ const Schema = preload("res://systems/save/save_v1_schema.gd")
 const SnapshotResult = preload("res://systems/save/save_snapshot_result.gd")
 const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
 const PetCommandPolicy = preload("res://systems/pet/pet_command_policy.gd")
+const BaseProgressStateModel = preload("res://systems/progression/base_progress_state.gd")
 const DEFAULT_STANCE_ID := &"pet.stance.auto_work"
 
 
@@ -24,6 +25,9 @@ static func create_player_snapshot(player: Node, save_id: StringName, saved_at_u
 	var pets_dto := _project_pets(party_value, player.get("active_pet_node"), errors)
 	if not errors.is_empty():
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE, {}, errors)
+	var base_state := _project_base(player.get("base_manager_ref"))
+	if base_state == null:
+		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE, {}, ["invalid base progression source"])
 
 	var needs_snapshot: Variant = needs.create_snapshot()
 	var dto := Schema.create_empty(save_id, saved_at_unix)
@@ -42,11 +46,19 @@ static func create_player_snapshot(player: Node, save_id: StringName, saved_at_u
 	}
 	dto["inventory"] = inventory_dto
 	dto["pets"] = pets_dto
+	dto["base"] = base_state.to_dto()
 	dto["world"]["clock_seconds"] = world_clock_seconds
 	var validation: RefCounted = Schema.validate(dto)
 	if not validation.is_valid():
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SNAPSHOT, {}, validation.errors)
 	return SnapshotResult.new(SnapshotResult.Status.ACCEPTED, dto)
+
+
+static func _project_base(base_manager: Variant) -> BaseProgressState:
+	if is_instance_valid(base_manager) and base_manager.has_method("create_persistence_state"):
+		var state: Variant = base_manager.call("create_persistence_state")
+		return state if state is BaseProgressState and state.is_valid() else null
+	return BaseProgressStateModel.new(1, &"quest.base.survival", [])
 
 
 static func _project_inventory(source: Dictionary, errors: PackedStringArray) -> Dictionary:

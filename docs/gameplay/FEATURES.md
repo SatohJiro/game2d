@@ -151,6 +151,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - EXP/unlock nhận event domain; objective không scan world liên tục.
 - QuestDefinition dùng objective IDs/counts và reward transaction. Claim một lần.
 - Base level mở capacity/building/biome rõ; không chỉ tăng số mà thiếu lựa chọn.
+- U1.12d: năm quest base có stable `quest.base.*`; claimed ledger được lưu để load không reset hoặc phát reward lặp. Objective/reward/unlock hiện hữu giữ nguyên.
 - Acceptance: event trước khi nhận quest theo policy đã định; save/load không claim lại; content thiếu ID báo lỗi validator.
 
 ### G13 — time, raid và boss
@@ -187,6 +188,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.11f: explicit coordinator dừng pipeline ngay khi snapshot/repository/migration/apply lỗi; load success báo primary/backup và trả clock cho world owner. Chưa tự autosave hoặc gọi từ UI.
 - U1.12b: 25 inventory key reachable trong core/crafting/farming/ranch/cooking đều project sang stable `item.*`; regression từng nhóm bảo đảm output gameplay hợp lệ không làm save thất bại. Unknown key vẫn bị từ chối nguyên khối.
 - U1.12c: rarity, trait và stance của từng pet dùng stable ID; save/load giữ metadata và command stance cho cả pet active lẫn inactive. Badge/name localized chỉ là presentation; roll, multiplier và hành vi pet không đổi.
+- U1.12d: Save v1 giữ base level, active stable quest ID và claimed quest IDs; state skip/mâu thuẫn hoặc localized title fail closed, apply không phát reward.
 - Acceptance: save → quit → load giữ inventory, roster, assignment, building, crop, quest và world clock; corrupt file trả lỗi an toàn.
 
 ## Thứ tự ưu tiên playable vertical slice

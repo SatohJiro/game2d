@@ -107,3 +107,9 @@ U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosa
 Mỗi `pets[]` entry bắt buộc có `rarity_id`, `trait_id`, `stance_id` thuộc allowlist stable. Snapshot không ghi badge/trait localized; apply dựng lại presentation bằng `PetMetadataCatalog`. Active actor là authority stance khi snapshot, roster là authority cho pet inactive; Player ghi stance về roster trước khi replace và áp stance roster khi summon.
 
 Đây là thay đổi shape của Save v1 nhưng không tăng `schema_version`: dự án chưa phát hành và chưa có save tương thích được cam kết. Vì vậy migration table vẫn không có pre-v1 route; snapshot thiếu field mới fail validation thay vì tự đoán metadata. Sau bản phát hành đầu tiên, mọi thay đổi shape tiếp theo phải tăng version và có migration step.
+
+## U1.12d base/quest progression
+
+Envelope thêm `base = {base_level, active_quest_id, claimed_quest_ids}`. `BaseProgressState` bắt buộc claimed IDs là prefix catalog, active quest là phần tử kế tiếp và level khớp reward đã claim. Snapshot đọc typed boundary của BaseManager; apply validate/resolve trước mutation và không gọi reward flow. Non-default base state thiếu runtime owner fail closed; Player scene độc lập có thể dùng pristine default.
+
+Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng version; không có migration cho save cũ chưa phát hành. Localized quest title và index không được chấp nhận làm identity.
