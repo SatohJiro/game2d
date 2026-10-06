@@ -113,3 +113,7 @@ Mỗi `pets[]` entry bắt buộc có `rarity_id`, `trait_id`, `stance_id` thu�
 Envelope thêm `base = {base_level, active_quest_id, claimed_quest_ids}`. `BaseProgressState` bắt buộc claimed IDs là prefix catalog, active quest là phần tử kế tiếp và level khớp reward đã claim. Snapshot đọc typed boundary của BaseManager; apply validate/resolve trước mutation và không gọi reward flow. Non-default base state thiếu runtime owner fail closed; Player scene độc lập có thể dùng pristine default.
 
 Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng version; không có migration cho save cũ chưa phát hành. Localized quest title và index không được chấp nhận làm identity.
+
+## U1.12e building placement delta
+
+`world.entity_deltas` hiện chỉ chấp nhận `BuildingPlacementRecord`: unique `building.instance_*`, admitted subtype `building.*` và finite transform. Snapshot đọc Player placement ledger; apply instantiate toàn bộ record trước mutation rồi thay đúng group player-created. Starter scene nodes và subtype state không thuộc DTO này. Shape v1 vẫn pre-release/version 1.

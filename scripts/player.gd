@@ -108,6 +108,7 @@ var attack_anim_timer: float = 0.0
 # Build Mode
 var is_building: bool = false
 var pending_build_id: String = ""
+var placed_buildings: Array[Dictionary] = []
 var ghost_preview: Node2D = null
 
 @onready var visual: Node2D = $Visual
@@ -726,42 +727,17 @@ func start_build_mode(building_id: String) -> void:
 
 func place_current_building() -> void:
 	var place_pos = get_global_mouse_position()
-	var b_node: Node2D = null
-	
-	match pending_build_id:
-		"building_furnace": b_node = FN_SCENE.instantiate()
-		"building_chest": b_node = CH_SCENE.instantiate()
-		"building_turret": b_node = TR_SCENE.instantiate()
-		"building_altar": b_node = AL_SCENE.instantiate()
-		"building_ranch": b_node = RANCH_SCENE.instantiate()
-		"building_cooking_pot": b_node = COOKING_POT_SCENE.instantiate()
-		"building_compost_bin": b_node = COMPOST_BIN_SCENE.instantiate()
-		"farm_plot":
-			var plot = RESOURCE_SCENE.instantiate()
-			plot.node_type = ResourceNode.NodeType.FARM_PLOT
-			b_node = plot
-		"wood_fence":
-			var body = StaticBody2D.new()
-			body.name = "Fence"
-			body.collision_layer = 1
-			body.collision_mask = 7
-			var col = CollisionShape2D.new()
-			var shape = RectangleShape2D.new()
-			shape.size = Vector2(24, 24)
-			col.shape = shape
-			body.add_child(col)
-			var spr = Sprite2D.new()
-			spr.texture = preload("res://assets/tilesets/tileset_house.png")
-			spr.region_enabled = true
-			spr.region_rect = Rect2(304, 304, 32, 32)
-			body.add_child(spr)
-			b_node = body
-		_:
-			b_node = WB_SCENE.instantiate()
+	var building_id := BuildingPlacementCatalog.from_legacy(pending_build_id)
+	var b_node := BuildingPlacementCatalog.instantiate(building_id)
 	
 	if b_node:
 		b_node.global_position = place_pos
+		var instance_id := StringName("building.instance_%d" % ResourceUID.create_id())
+		b_node.set_meta("building_instance_id", instance_id)
+		b_node.set_meta("building_id", building_id)
+		b_node.add_to_group("persistent_player_buildings")
 		get_parent().add_child(b_node)
+		placed_buildings.append(BuildingPlacementRecord.new(instance_id, building_id, b_node.transform).to_dto())
 		spawn_floating_text("Đã xây dựng thành công!", Color(0.4, 1.0, 0.5))
 		if AudioManager:
 			AudioManager.play_sound("pickup")
@@ -769,6 +745,26 @@ func place_current_building() -> void:
 	cancel_build_mode()
 	if base_manager_ref:
 		base_manager_ref.check_quest_progress(self)
+
+func replace_persistent_buildings(records: Array[BuildingPlacementRecord]) -> bool:
+	var staged: Array[Node2D] = []
+	for record in records:
+		if record == null or not record.is_valid():
+			for node in staged: node.free()
+			return false
+		var node := BuildingPlacementCatalog.instantiate(record.building_id)
+		if node == null:
+			for staged_node in staged: staged_node.free()
+			return false
+		node.transform = record.transform; node.set_meta("building_instance_id", record.instance_id); node.set_meta("building_id", record.building_id); node.add_to_group("persistent_player_buildings")
+		staged.append(node)
+	for existing in get_tree().get_nodes_in_group("persistent_player_buildings"):
+		if existing.get_parent() != null: existing.get_parent().remove_child(existing)
+		existing.queue_free()
+	placed_buildings.clear()
+	for index in staged.size():
+		get_parent().add_child(staged[index]); placed_buildings.append(records[index].to_dto())
+	return true
 
 func cancel_build_mode() -> void:
 	is_building = false

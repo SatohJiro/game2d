@@ -1,36 +1,36 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.12d — base/quest persistence contract
+## U1.12e — building instance identity và placement delta
 
 Trạng thái: `VERIFIED` ngày 2026-10-07.
 
 ### Mục tiêu và invariant
 
-- Base level, active quest và claimed rewards phải dùng stable identity, không dùng localized title hoặc array index trong save.
-- Load không reset progression và không chạy reward flow; quest đã claim không thể nhận thưởng lần hai.
-- Giữ nguyên objective, EXP reward, unlock level và economy; không mở rộng building/crop/world delta.
+- Player-created building dùng stable instance/subtype identity; không dùng Node name hoặc scene path.
+- Save/load giữ transform và chỉ thay player-created nodes; starter scene nodes không bị xóa.
+- Không persist health, chest, processing, ranch hoặc crop state; không đổi cost/placement gameplay.
 
 ### Kết quả đã triển khai
 
-- Thêm `BaseQuestCatalog` với năm `quest.base.*` và typed `BaseProgressState`.
-- BaseManager có claimed ledger, typed create/apply boundary và duplicate guard trước mọi reward side effect.
-- Save v1 thêm DTO `base`; schema bắt prefix/order/level coherence, snapshot/apply resolve trước mutation.
-- Thêm validator base progression vào full project gate và regression Save active/claimed round-trip + failure atomicity.
+- Thêm `BuildingPlacementCatalog` cho chín subtype reachable và typed `BuildingPlacementRecord`.
+- Player placement tạo `building.instance_*`, metadata/group và ledger `placed_buildings`.
+- Save v1 validate unique identity + finite transform; apply stage toàn bộ nodes trước khi replace group.
+- Regression snapshot/apply chứng minh stable subtype/transform và scene-path identity rejection.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh trước thay đổi.
-- Godot editor import/load, `validate_base_progression.gd` và `validate_save_schema.gd` xanh.
-- Full `tools/check_project.ps1` xanh: 40 Markdown files, asset gates, editor load, toàn bộ gameplay/save validators gồm base progression và coordinator repository round-trip.
+- Godot editor import/load và `validate_save_schema.gd` focused regression xanh.
+- Full `tools/check_project.ps1` xanh: 41 Markdown files, asset gates, editor load và toàn bộ gameplay/save validators.
 - Leak-aware scan `build/checks` không có script/parse/missing dependency/invalid node path hoặc orphan/leak warning.
 
 ### Compatibility, asset và giới hạn
 
-- Save v1 shape thêm `base` nhưng version giữ 1 vì chưa có save phát hành; snapshot thiếu field mới fail closed. Sau release phải tăng version + migration.
-- BaseManager giữ quest dictionaries/presentation hiện hữu; stable catalog/state chỉ sở hữu identity/persistence boundary.
-- Asset/provenance: none. Autosave/UI và building/crop/world persistence ngoài phạm vi.
-- Rollback: revert progression catalog/state, BaseManager ledger, save DTO/adapters, gate/validator và docs U1.12d.
+- Save v1 shape của `world.entity_deltas` được khóa cho placement record, version giữ 1 vì pre-release.
+- Asset/provenance: none; chỉ tham chiếu scene baseline hiện hữu.
+- Subtype mutable state và static starter placement chưa thuộc ledger.
+- Rollback: revert building catalog/record, Player ledger/factory bridge, Save adapter/schema và docs U1.12e.
 
 ### Gói tiếp theo
 
-Sau full gate xanh, U1.12e thiết kế building instance identity và placement delta tối thiểu. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.
+Sau full gate xanh, U1.12f audit subtype state và chọn một slice chest hoặc processing. Chi tiết ở `NEXT_UPDATE_PROMPT.md`.

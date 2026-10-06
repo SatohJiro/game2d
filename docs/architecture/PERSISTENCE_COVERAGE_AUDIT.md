@@ -21,7 +21,7 @@ Transient animation, cooldown ngắn, target Node, tween và VFX không được
 | `Player.pet_party` / `CompanionPet` | instance/species/level/exp, rarity, trait, stance từng pet và active instance | `pet.*`, `creature.*`; badge/name chỉ presentation | Có snapshot/apply regression active + inactive | Core roster và command state giữ được | FULL trong contract U1.12c |
 | `BuildingRanch` | assigned pets, food, production timer, health | Không có building instance ID; assignment dùng dictionary/name | Không | Assignment/output progress mất; starter pet tự sinh lại | CRITICAL/NONE |
 | `BaseManager` | base level, active quest, claimed reward ledger | `quest.base.*` + typed `BaseProgressState` | Snapshot/apply regression | Progress giữ được; claimed quest không phát reward lại | FULL trong contract U1.12d |
-| Building placement | subtype, transform, health | Recipe dùng legacy `building_*`; node đặt không có instance ID | Không | Mọi công trình người chơi đặt biến mất | CRITICAL/NONE |
+| Building placement | subtype + transform | `building.*` subtype và `building.instance_*` | Snapshot/apply placement regression | Player-created placement giữ được; subtype state chưa giữ | PARTIAL (U1.12e) |
 | `BuildingChest` | stored items, health | Không có building instance ID | Không | Kho đồ mất toàn bộ | CRITICAL/NONE |
 | Furnace/compost/cooking | input/output queue, timer, ready count, health | Không có order/instance ID | Không | Mất nguyên liệu hoặc tiến độ đang xử lý | CRITICAL/NONE |
 | `ResourceNode` farm plot | crop type/stage, growth timer, moisture, watered/fertilized | `crop.berry` chỉ là typed canary; plot không có instance ID | Không | Cây trồng và đầu tư nước/phân trở về mặc định | CRITICAL/NONE |
@@ -53,7 +53,7 @@ U1.12b đã tạo manifest gồm 25 key, admit 14 `item.*` definition/mapping c�
 
 1. Pet rarity/trait/inactive stance dùng stable IDs và round-trip roster — đóng ở U1.12c.
 2. Base/quest typed state để chặn reward lặp — đóng ở U1.12d.
-3. Building instance identity + placement delta; sau đó mới snapshot subtype state/chest/processing.
+3. Building instance identity + placement delta — đóng ở U1.12e; subtype state/chest/processing tiếp theo.
 4. Farm plot/resource delta trên cùng world entity identity.
 5. World owner commit clock và encounter persistence.
 

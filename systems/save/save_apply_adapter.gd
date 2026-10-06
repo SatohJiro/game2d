@@ -6,6 +6,7 @@ const ApplyPlan = preload("res://systems/save/save_apply_plan.gd")
 const ApplyResult = preload("res://systems/save/save_apply_result.gd")
 const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
 const BaseProgressStateModel = preload("res://systems/progression/base_progress_state.gd")
+const BuildingPlacementRecordModel = preload("res://systems/building/building_placement_record.gd")
 
 
 static func apply_player_snapshot(player: Node, snapshot: Variant) -> RefCounted:
@@ -82,6 +83,13 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 	if is_instance_valid(base_manager) and not base_manager.has_method("apply_persistence_state"):
 		errors.append("base progression owner lacks apply boundary")
 		return null
+	var placements: Array[BuildingPlacementRecord] = []
+	for value: Variant in snapshot["world"]["entity_deltas"]:
+		var record := BuildingPlacementRecordModel.from_dto(value)
+		if record == null:
+			errors.append("unsupported building placement record")
+			return null
+		placements.append(record)
 	var player_data: Dictionary = snapshot["player"]
 	return ApplyPlan.new(
 		player_data,
@@ -91,6 +99,7 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		active_index,
 		active_command_id,
 		base_state,
+		placements,
 		float(snapshot["world"]["clock_seconds"])
 	)
 
@@ -126,6 +135,8 @@ static func _commit(player: Node, plan: RefCounted) -> RefCounted:
 		player.call("update_hud")
 	var base_manager: Variant = player.get("base_manager_ref")
 	if is_instance_valid(base_manager) and not bool(base_manager.call("apply_persistence_state", plan.base_progress_state)):
+		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
+	if not bool(player.call("replace_persistent_buildings", plan.building_placements)):
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds)
 

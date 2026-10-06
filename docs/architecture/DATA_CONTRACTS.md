@@ -44,6 +44,8 @@ U1.12c dành `pet.rarity.*` và `pet.trait.*` làm identity bền vững cho b�
 
 U1.12d admit năm identity `quest.base.*` trong `BaseQuestCatalog`. Localized title, reward text và array index chỉ là compatibility/content ordering; Save v1 dùng `active_quest_id` cùng `claimed_quest_ids`. `BaseProgressState` validate prefix/order/base-level coherence trước snapshot hoặc apply.
 
+U1.12e admit stable subtype cho chín placement reachable và instance namespace `building.instance_*`. `BuildingPlacementCatalog` là compatibility map/factory; scene path không được serialize hoặc dùng làm identity. `BuildingPlacementRecord` validate subtype và transform trước Save apply.
+
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.

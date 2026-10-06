@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.12e building instance identity
+# Prompt cho model tiếp theo — U1.12f building subtype state audit
 
-Tiếp tục bằng đúng một package U1.12e: audit placement lifecycle và thiết kế stable `building.*` instance identity cùng typed placement delta tối thiểu (subtype + transform), làm dependency cho chest/processing/crop persistence. Không snapshot subtype mutable state trong cùng package, không dùng Node name/path/scene path làm identity và không thay cost/placement gameplay. Thêm deterministic identity/DTO validation cùng snapshot/apply regression phù hợp, ghi rõ Save v1 compatibility, chạy full gate + leak-aware log scan và cập nhật module/feature/checkpoint docs.
+Tiếp tục bằng đúng một package U1.12f: audit mutable state theo từng building subtype và chọn đúng một vertical slice ưu tiên (chest hoặc một processing station) để thêm typed state DTO trên `BuildingPlacementRecord`. Không gom toàn bộ subtype trong một package, không đổi economy/timer rule và không serialize Node/Callable. Chứng minh save/load giữa tiến trình không duplicate/mất committed item, chạy full gate + leak-aware log scan và cập nhật contract/checkpoint docs.

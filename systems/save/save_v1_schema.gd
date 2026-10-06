@@ -5,6 +5,7 @@ const ValidationResult = preload("res://systems/save/save_validation_result.gd")
 const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
 const PetCommandPolicy = preload("res://systems/pet/pet_command_policy.gd")
 const BaseProgressStateModel = preload("res://systems/progression/base_progress_state.gd")
+const BuildingPlacementRecordModel = preload("res://systems/building/building_placement_record.gd")
 const SCHEMA_VERSION := 1
 
 
@@ -134,6 +135,15 @@ static func _validate_world(value: Variant, errors: PackedStringArray) -> void:
 		errors.append("world.clock_seconds must be finite and non-negative")
 	if typeof(world.get("entity_deltas")) != TYPE_ARRAY:
 		errors.append("world.entity_deltas must be an Array")
+		return
+	var seen := {}
+	for delta_value: Variant in world["entity_deltas"]:
+		var record := BuildingPlacementRecordModel.from_dto(delta_value)
+		if record == null:
+			errors.append("world.entity_deltas must contain valid building placement records")
+			continue
+		if seen.has(record.instance_id): errors.append("building instance_id must be unique")
+		seen[record.instance_id] = true
 
 
 static func _validate_base(value: Variant, errors: PackedStringArray) -> void:

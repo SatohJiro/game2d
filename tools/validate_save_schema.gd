@@ -81,6 +81,9 @@ func _test_identity_and_shape_guards() -> void:
 	var skipped_claim := Schema.create_empty(&"save.slot_1", 1)
 	skipped_claim["base"] = {"base_level": 2, "active_quest_id": "quest.base.organic_farming", "claimed_quest_ids": ["quest.base.organic_farming"]}
 	_expect(not Schema.validate(skipped_claim).is_valid(), "non-prefix claimed quest state must fail")
+	var invalid_building := Schema.create_empty(&"save.slot_1", 1)
+	invalid_building["world"]["entity_deltas"] = [{"instance_id": "res://scenes/building_chest.tscn", "building_id": "building.chest", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}}]
+	_expect(not Schema.validate(invalid_building).is_valid(), "scene path must not become building instance identity")
 
 
 func _test_non_serializable_guards() -> void:
@@ -110,6 +113,8 @@ func _test_runtime_snapshot_adapter() -> void:
 	player.set("hud_ref", null)
 	var snapshot_base: BaseManager = player.get("base_manager_ref")
 	snapshot_base.apply_persistence_state(BaseProgressStateModel.new(3, &"quest.base.automation", [&"quest.base.survival", &"quest.base.organic_farming"]))
+	var snapshot_placements: Array[Dictionary] = player.get("placed_buildings")
+	snapshot_placements.append({"instance_id": "building.instance_snapshot", "building_id": "building.chest", "position": {"x": 25.5, "y": -4.0}, "rotation": 0.25, "scale": {"x": 1.0, "y": 1.0}})
 	player.global_position = Vector2(12.5, -7.25)
 	var party: Array[Dictionary] = player.get("pet_party")
 	var species := LegacySpeciesAdapter.create_stable_snapshot(0, {"name": "Flam", "element": "Lửa", "power": 20, "max_hp": 100, "speed": 100.0})
@@ -130,6 +135,7 @@ func _test_runtime_snapshot_adapter() -> void:
 		_expect(snapshot["pets"][0]["rarity_id"] == "pet.rarity.legendary" and snapshot["pets"][0]["trait_id"] == "pet.trait.dragon_blessing", "active pet stable metadata projection mismatch")
 		_expect(snapshot["pets"][1]["stance_id"] == "pet.stance.combat_assist" and snapshot["pets"][1]["trait_id"] == "pet.trait.agile", "inactive pet metadata/stance projection mismatch")
 		_expect(snapshot["base"] == {"base_level": 3, "active_quest_id": "quest.base.automation", "claimed_quest_ids": ["quest.base.survival", "quest.base.organic_farming"]}, "base/quest stable snapshot mismatch")
+		_expect(snapshot["world"]["entity_deltas"][0]["building_id"] == "building.chest", "building placement snapshot mismatch")
 		_expect(snapshot["player"]["position"] == {"x": 12.5, "y": -7.25} and snapshot["world"]["clock_seconds"] == 45.5, "position/world clock projection mismatch")
 		snapshot["inventory"]["item.wood"] = 9999
 		_expect(source_inventory == inventory_before and party == party_before, "mutating snapshot must not mutate runtime source")
@@ -184,6 +190,7 @@ func _test_runtime_apply_adapter() -> void:
 	}]
 	save["world"]["clock_seconds"] = 321.5
 	save["base"] = {"base_level": 4, "active_quest_id": "quest.base.fortress", "claimed_quest_ids": ["quest.base.survival", "quest.base.organic_farming", "quest.base.automation"]}
+	save["world"]["entity_deltas"] = [{"instance_id": "building.instance_loaded", "building_id": "building.furnace", "position": {"x": 44.0, "y": 55.0}, "rotation": 0.5, "scale": {"x": 1.0, "y": 1.0}}]
 	var applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, save)
 	_expect(applied.is_applied() and is_equal_approx(applied.world_clock_seconds, 321.5), "valid Save v1 must apply and return world clock")
 	_expect(player.global_position == Vector2(91.25, 42.5) and player.get("level") == 4 and player.get("hp") == 77, "player scalar apply mismatch")
@@ -195,6 +202,8 @@ func _test_runtime_apply_adapter() -> void:
 	_expect(loaded_party[1]["stance_id"] == &"pet.stance.follow_protect" and loaded_party[1]["trait"] == "Nhanh Nhẹn", "inactive pet metadata/stance apply mismatch")
 	_expect(is_instance_valid(loaded_pet) and loaded_pet.call("get_stance_id") == &"pet.stance.combat_assist", "active pet and stance apply mismatch")
 	_expect(apply_base.create_persistence_state().to_dto() == save["base"], "base/quest stable apply mismatch")
+	var loaded_buildings := get_nodes_in_group("persistent_player_buildings")
+	_expect(loaded_buildings.size() == 1 and loaded_buildings[0].get_meta("building_instance_id") == &"building.instance_loaded" and loaded_buildings[0].global_position == Vector2(44.0, 55.0), "building placement apply mismatch")
 
 	var position_before: Vector2 = player.global_position
 	var inventory_before: Dictionary = player.get("inventory").duplicate(true)
