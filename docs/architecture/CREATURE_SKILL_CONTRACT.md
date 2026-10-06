@@ -1,6 +1,6 @@
 # Creature skill contract
 
-Status: U1.9p Flam/Dragon/Mushroom projectile definitions, verified 2026-10-06.
+Status: U1.9q projectile và Slime hop definitions, verified 2026-10-06.
 
 ## Identity and ownership
 
@@ -34,6 +34,10 @@ Regression khóa stable ID riêng, toàn bộ tuning, dispatch sang `ATTACK`, ty
 
 ## Validation and lifecycle invariants
 
+## U1.9q Slime hop
+
+`HopSkillDefinition` mở rộng `SkillDefinition` cho movement skill: `skill.slime.hop` giữ cooldown 1,15 giây, speed 260, height 12px và tween 0,15/0,12/0,15/0,10 giây. Scale keyframes và actor movement application không đổi.
+
 - Projectile definitions require finite positive cooldown, damage multiplier, distance, travel time and hit radius. Anticipation/recovery must be finite and non-negative.
 - Missing skill references fail registry validation.
 - Animation, tween completion and floating text never select a skill or decide its tuning.
@@ -44,7 +48,7 @@ Regression khóa stable ID riêng, toàn bộ tuning, dispatch sang `ATTACK`, ty
 | Writer | Current owner | Disposition |
 |---|---|---|
 | Flam fireball dispatch and values | typed reference + actor adapter | U1.9b canary |
-| Slime hop | species-index branch | deferred; needs movement/contact skill contract |
+| Slime hop | typed `HopSkillDefinition` + actor tween adapter | U1.9q |
 | Mushroom spore | typed reference + actor adapter | U1.9p |
 | Beast charge telegraph/charge | FSM species branch | deferred; needs transition/contact ownership together |
 | Dragon fireball values | typed Dragon reference + actor adapter | U1.9o; melee selection vẫn legacy |

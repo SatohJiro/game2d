@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="HopSkillDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/hop_skill_definition.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+content_id = &"skill.slime.hop"
+display_name_key = &"skill.slime.hop.name"
+developer_notes = "U1.9q Slime hop movement and squash/stretch tuning."
+delivery = 2
+cooldown_seconds = 1.15
+damage_multiplier = 1.0
+hop_speed = 260.0
+hop_height = 12.0
+compress_seconds = 0.15
+launch_seconds = 0.12
+land_seconds = 0.15
+settle_seconds = 0.1

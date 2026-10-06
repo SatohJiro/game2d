@@ -179,7 +179,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 20, "registry must contain twenty definitions through U1.9p")
+	_expect(registry.size() == 21, "registry must contain twenty-one definitions through U1.9q")
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
 	_expect(registry.has(&"item.pal_sphere.basic"), "registry is missing item.pal_sphere.basic")
@@ -243,7 +243,7 @@ func _validate_project_content() -> void:
 		_expect(slime.base_attack_power == 9, "Slime base_attack_power mismatch")
 		_expect(slime.behavior_profile != null and not slime.behavior_profile.is_predator and slime.behavior_profile.is_prey, "Slime behavior profile mismatch")
 		_expect(slime.drop_item_id == &"item.berry", "Slime drop reference mismatch")
-		_expect(slime.skill_ids.is_empty(), "Slime hop must remain outside typed skill catalog in U1.9k")
+		_expect(slime.skill_ids == [&"skill.slime.hop"], "Slime hop reference mismatch")
 	var mushroom := registry.get_definition(&"creature.mushroom") as CreatureDefinition
 	_expect(mushroom != null, "creature.mushroom must load as CreatureDefinition")
 	if mushroom != null:
@@ -307,6 +307,13 @@ func _validate_project_content() -> void:
 		_expect(is_equal_approx(mushroom_spore.damage_multiplier, 1.0), "Mushroom spore damage mismatch")
 		_expect(is_equal_approx(mushroom_spore.travel_distance, 200.0) and is_equal_approx(mushroom_spore.travel_seconds, 0.5), "Mushroom spore travel mismatch")
 		_expect(is_equal_approx(mushroom_spore.hit_radius, 45.0), "Mushroom spore hit radius mismatch")
+	var slime_hop := registry.get_definition(&"skill.slime.hop") as HopSkillDefinition
+	_expect(slime_hop != null, "skill.slime.hop must load as HopSkillDefinition")
+	if slime_hop != null:
+		_expect(is_equal_approx(slime_hop.cooldown_seconds, 1.15), "Slime hop cooldown mismatch")
+		_expect(is_equal_approx(slime_hop.hop_speed, 260.0) and is_equal_approx(slime_hop.hop_height, 12.0), "Slime hop movement mismatch")
+		_expect(is_equal_approx(slime_hop.compress_seconds, 0.15) and is_equal_approx(slime_hop.launch_seconds, 0.12), "Slime hop launch timing mismatch")
+		_expect(is_equal_approx(slime_hop.land_seconds, 0.15) and is_equal_approx(slime_hop.settle_seconds, 0.1), "Slime hop landing timing mismatch")
 
 
 func _contains_message(messages: PackedStringArray, fragment: String) -> bool:

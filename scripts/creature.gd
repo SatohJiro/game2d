@@ -663,7 +663,7 @@ func handle_smart_chase(delta: float) -> void:
 				return
 			
 			if attack_cooldown <= 0:
-				perform_slime_hop(raw_dir)
+				perform_slime_hop(raw_dir, primary_skill_definition)
 			else:
 				velocity = velocity.move_toward(Vector2.ZERO, 200 * delta)
 		
@@ -703,17 +703,25 @@ func handle_smart_chase(delta: float) -> void:
 			elif dist <= 180.0 and attack_cooldown <= 0:
 				perform_fireball_attack(raw_dir, primary_skill_definition)
 
-func perform_slime_hop(dir: Vector2) -> void:
-	attack_cooldown = 1.15
+func perform_slime_hop(dir: Vector2, skill: SkillDefinition = null) -> void:
+	var hop_skill := skill as HopSkillDefinition
+	var cooldown_seconds := hop_skill.cooldown_seconds if hop_skill != null else 1.15
+	var hop_speed := hop_skill.hop_speed if hop_skill != null else 260.0
+	var hop_height := hop_skill.hop_height if hop_skill != null else 12.0
+	var compress_seconds := hop_skill.compress_seconds if hop_skill != null else 0.15
+	var launch_seconds := hop_skill.launch_seconds if hop_skill != null else 0.12
+	var land_seconds := hop_skill.land_seconds if hop_skill != null else 0.15
+	var settle_seconds := hop_skill.settle_seconds if hop_skill != null else 0.1
+	attack_cooldown = cooldown_seconds
 	var tween = create_tween()
-	tween.tween_property(visual, "scale", Vector2(1.4, 0.6), 0.15)
+	tween.tween_property(visual, "scale", Vector2(1.4, 0.6), compress_seconds)
 	tween.tween_callback(func():
-		velocity = dir * 260.0
-		visual.position.y = -12.0
+		velocity = dir * hop_speed
+		visual.position.y = -hop_height
 	)
-	tween.tween_property(visual, "scale", Vector2(0.8, 1.3), 0.12)
-	tween.tween_property(visual, "position:y", 0.0, 0.15)
-	tween.tween_property(visual, "scale", Vector2.ONE, 0.1)
+	tween.tween_property(visual, "scale", Vector2(0.8, 1.3), launch_seconds)
+	tween.tween_property(visual, "position:y", 0.0, land_seconds)
+	tween.tween_property(visual, "scale", Vector2.ONE, settle_seconds)
 
 func perform_fireball_attack(dir: Vector2, skill: SkillDefinition = null) -> void:
 	var cooldown_seconds := skill.cooldown_seconds if skill != null else 2.2

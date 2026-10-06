@@ -402,7 +402,11 @@ func _test_creature_adapter() -> void:
 	_expect(int(slime_runtime.get("power", 0)) == 9, "Slime typed power compatibility mismatch")
 	_expect(bool(slime_runtime.get("is_prey", false)) and not bool(slime_runtime.get("is_predator", true)), "Slime typed prey role mismatch")
 	_expect(slime_runtime.get("drop_item", "") == LegacyItemAdapter.to_legacy_key(&"item.berry"), "Slime typed drop must preserve legacy runtime key")
-	_expect(slime.get("primary_skill_definition") == null, "Slime hop must remain on the legacy attack path")
+	var slime_skill := slime.get("primary_skill_definition") as HopSkillDefinition
+	_expect(slime_skill != null and slime_skill.content_id == LegacySpeciesAdapter.SLIME_HOP_ID, "Slime actor must resolve typed hop")
+	if slime_skill != null:
+		_expect(is_equal_approx(slime_skill.cooldown_seconds, 1.15), "Slime hop cooldown compatibility mismatch")
+		_expect(is_equal_approx(slime_skill.hop_speed, 260.0) and is_equal_approx(slime_skill.hop_height, 12.0), "Slime hop movement compatibility mismatch")
 	var slime_legacy_rows: Array = slime.get("species_data")
 	_expect(not (slime_legacy_rows[1] as Dictionary).has("max_hp"), "migrated Slime HP must not remain a parallel legacy source")
 	_expect(LegacySpeciesAdapter.create_runtime_snapshot(-1, {}).is_empty(), "invalid species snapshot must fail closed")

@@ -46,6 +46,8 @@ U1.9o admit `skill.dragon.fireball` làm balance identity riêng và reference d
 
 U1.9p admit `skill.mushroom.spore` làm typed projectile authority của `creature.mushroom`; kiting/escape và presentation vẫn thuộc actor adapter.
 
+U1.9q admit `skill.slime.hop` bằng subtype `HopSkillDefinition`, sở hữu cooldown, hop velocity/height và bốn nhịp squash/stretch; actor chỉ thực thi tween/movement.
+
 `ContentId` tại `core/content_id.gd` là API duy nhất để validate, tạo và tách domain/local name. Không tự ghép hoặc parse ID trong gameplay system.
 
 ## Definition contract
