@@ -48,7 +48,9 @@ static func create_player_snapshot(player: Node, save_id: StringName, saved_at_u
 	dto["pets"] = pets_dto
 	dto["base"] = base_state.to_dto()
 	dto["world"]["clock_seconds"] = world_clock_seconds
-	dto["world"]["entity_deltas"] = (player.get("placed_buildings") as Array).duplicate(true)
+	if not player.has_method("create_building_placement_snapshot"):
+		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
+	dto["world"]["entity_deltas"] = player.call("create_building_placement_snapshot")
 	var validation: RefCounted = Schema.validate(dto)
 	if not validation.is_valid():
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SNAPSHOT, {}, validation.errors)

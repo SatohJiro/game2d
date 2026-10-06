@@ -4,17 +4,25 @@ extends RefCounted
 var instance_id: StringName
 var building_id: StringName
 var transform: Transform2D
+var state: Dictionary
 
-func _init(p_instance_id: StringName, p_building_id: StringName, p_transform: Transform2D) -> void:
+func _init(p_instance_id: StringName, p_building_id: StringName, p_transform: Transform2D, p_state: Dictionary = {}) -> void:
 	instance_id = p_instance_id
 	building_id = p_building_id
 	transform = p_transform
+	state = p_state.duplicate(true)
+	if building_id == &"building.chest" and state.is_empty():
+		state = {"inventory": {}}
 
 func is_valid() -> bool:
-	return ContentId.domain_of(instance_id) == &"building" and BuildingPlacementCatalog.is_supported(building_id) and transform.is_finite()
+	if ContentId.domain_of(instance_id) != &"building" or not BuildingPlacementCatalog.is_supported(building_id) or not transform.is_finite():
+		return false
+	if building_id == &"building.chest":
+		return ChestPlacementState.from_dto(state) != null
+	return state.is_empty()
 
 func to_dto() -> Dictionary:
-	return {"instance_id": String(instance_id), "building_id": String(building_id), "position": {"x": transform.origin.x, "y": transform.origin.y}, "rotation": transform.get_rotation(), "scale": {"x": transform.get_scale().x, "y": transform.get_scale().y}}
+	return {"instance_id": String(instance_id), "building_id": String(building_id), "position": {"x": transform.origin.x, "y": transform.origin.y}, "rotation": transform.get_rotation(), "scale": {"x": transform.get_scale().x, "y": transform.get_scale().y}, "state": state.duplicate(true)}
 
 static func from_dto(value: Variant) -> BuildingPlacementRecord:
 	if typeof(value) != TYPE_DICTIONARY:
@@ -31,5 +39,8 @@ static func from_dto(value: Variant) -> BuildingPlacementRecord:
 	if is_zero_approx(scale.x) or is_zero_approx(scale.y):
 		return null
 	var built_transform := Transform2D(float(data["rotation"]), scale, 0.0, Vector2(float(position["x"]), float(position["y"])))
-	var record := BuildingPlacementRecord.new(StringName(data.get("instance_id", "")), StringName(data.get("building_id", "")), built_transform)
+	var state_value: Variant = data.get("state", {})
+	if typeof(state_value) != TYPE_DICTIONARY:
+		return null
+	var record := BuildingPlacementRecord.new(StringName(data.get("instance_id", "")), StringName(data.get("building_id", "")), built_transform, state_value)
 	return record if record.is_valid() else null

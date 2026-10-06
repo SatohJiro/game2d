@@ -95,6 +95,38 @@ func _collect_positive_amounts(store: Dictionary, max_each: int) -> Dictionary:
 			amounts[item_id] = count if max_each < 0 else mini(count, max_each)
 	return amounts
 
+
+func create_persistence_state() -> ChestPlacementState:
+	var inventory: Dictionary = {}
+	for item_id in MANAGED_ITEM_IDS:
+		var count := LegacyItemAdapter.get_count(stored_items, item_id)
+		if count > 0:
+			inventory[item_id] = count
+	return ChestPlacementState.new(inventory)
+
+
+func apply_persistence_state(state: ChestPlacementState) -> bool:
+	if state == null or not state.is_valid():
+		return false
+	var shadow_store := stored_items.duplicate(true)
+	for item_id in MANAGED_ITEM_IDS:
+		if not LegacyItemAdapter.set_count(shadow_store, item_id, 0):
+			return false
+	var transaction := InventoryTransaction.new(
+		shadow_store,
+		InventoryTransaction.CapacityPolicy.STACK_SLOTS,
+		inventory_slots,
+		{&"item.wood": WOOD_DEFINITION.max_stack, &"item.pal_ore": PAL_ORE_DEFINITION.max_stack, &"item.berry": BERRY_DEFINITION.max_stack}
+	)
+	for raw_item_id: Variant in state.inventory:
+		var count := int(state.inventory[raw_item_id])
+		if count > 0 and not transaction.add(StringName(raw_item_id), count).is_success():
+			return false
+	stored_items.clear()
+	stored_items.merge(shadow_store, true)
+	update_display()
+	return true
+
 func update_display() -> void:
 	if not label: return
 	var total = 0

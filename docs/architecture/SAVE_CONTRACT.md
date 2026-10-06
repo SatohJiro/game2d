@@ -117,3 +117,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12e building placement delta
 
 `world.entity_deltas` hiện chỉ chấp nhận `BuildingPlacementRecord`: unique `building.instance_*`, admitted subtype `building.*` và finite transform. Snapshot đọc Player placement ledger; apply instantiate toàn bộ record trước mutation rồi thay đúng group player-created. Starter scene nodes và subtype state không thuộc DTO này. Shape v1 vẫn pre-release/version 1.
+
+## U1.12f chest subtype state
+
+`BuildingPlacementRecord.state` được validate theo subtype. Chỉ `building.chest` nhận `ChestPlacementState.inventory` với ba stable item ID do chest quản lý; subtype khác bắt buộc state rỗng. Snapshot đọc committed chest store tại lúc save; apply kiểm tra capacity trên shadow store trước khi thay node, vì vậy load không cộng dồn hoặc làm mất item. Chest record U1.12e thiếu state được hiểu là rỗng.

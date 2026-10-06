@@ -737,7 +737,10 @@ func place_current_building() -> void:
 		b_node.set_meta("building_id", building_id)
 		b_node.add_to_group("persistent_player_buildings")
 		get_parent().add_child(b_node)
-		placed_buildings.append(BuildingPlacementRecord.new(instance_id, building_id, b_node.transform).to_dto())
+		var state: Dictionary = {}
+		if building_id == &"building.chest" and b_node.has_method("create_persistence_state"):
+			state = b_node.call("create_persistence_state").to_dto()
+		placed_buildings.append(BuildingPlacementRecord.new(instance_id, building_id, b_node.transform, state).to_dto())
 		spawn_floating_text("Đã xây dựng thành công!", Color(0.4, 1.0, 0.5))
 		if AudioManager:
 			AudioManager.play_sound("pickup")
@@ -756,6 +759,10 @@ func replace_persistent_buildings(records: Array[BuildingPlacementRecord]) -> bo
 		if node == null:
 			for staged_node in staged: staged_node.free()
 			return false
+		if record.building_id == &"building.chest" and (not node.has_method("apply_persistence_state") or not bool(node.call("apply_persistence_state", ChestPlacementState.from_dto(record.state)))):
+			for staged_node in staged: staged_node.free()
+			node.free()
+			return false
 		node.transform = record.transform; node.set_meta("building_instance_id", record.instance_id); node.set_meta("building_id", record.building_id); node.add_to_group("persistent_player_buildings")
 		staged.append(node)
 	for existing in get_tree().get_nodes_in_group("persistent_player_buildings"):
@@ -765,6 +772,22 @@ func replace_persistent_buildings(records: Array[BuildingPlacementRecord]) -> bo
 	for index in staged.size():
 		get_parent().add_child(staged[index]); placed_buildings.append(records[index].to_dto())
 	return true
+
+func create_building_placement_snapshot() -> Array[Dictionary]:
+	var live_by_id: Dictionary = {}
+	for node in get_tree().get_nodes_in_group("persistent_player_buildings"):
+		if is_instance_valid(node): live_by_id[node.get_meta("building_instance_id", &"")] = node
+	var snapshot: Array[Dictionary] = []
+	for value: Variant in placed_buildings:
+		var record := BuildingPlacementRecord.from_dto(value)
+		if record == null: return []
+		var node: Variant = live_by_id.get(record.instance_id)
+		if is_instance_valid(node):
+			record.transform = node.transform
+			if record.building_id == &"building.chest" and node.has_method("create_persistence_state"):
+				record.state = node.call("create_persistence_state").to_dto()
+		snapshot.append(record.to_dto())
+	return snapshot
 
 func cancel_build_mode() -> void:
 	is_building = false
