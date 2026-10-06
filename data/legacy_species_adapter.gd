@@ -27,6 +27,14 @@ const MUSHROOM_ID: StringName = &"creature.mushroom"
 const BEAST_ID: StringName = &"creature.beast"
 const DRAGON_ID: StringName = &"creature.dragon"
 
+const LEGACY_PRESENTATION: Dictionary = {
+	FLAM_ID: {"name": "Flam", "element": "Lửa", "texture": preload("res://assets/monsters/flam_sheet.png")},
+	SLIME_ID: {"name": "Slime", "element": "Nước", "texture": preload("res://assets/monsters/slime_sheet.png")},
+	MUSHROOM_ID: {"name": "Mushroom", "element": "Thảo Mộc", "texture": preload("res://assets/monsters/mushroom_sheet.png")},
+	BEAST_ID: {"name": "Beast", "element": "Đất", "texture": preload("res://assets/monsters/beast_sheet.png")},
+	DRAGON_ID: {"name": "Dragon", "element": "Hỏa Long", "texture": preload("res://assets/monsters/dragon_sheet.png")},
+}
+
 const INDEX_TO_CONTENT_ID: Array[StringName] = [
 	FLAM_ID,
 	SLIME_ID,
@@ -132,6 +140,14 @@ static func create_runtime_snapshot(species_index: int, legacy_data: Dictionary)
 			return {}
 		snapshot["drop_item"] = legacy_drop
 	return snapshot
+
+
+static func create_runtime_snapshot_for_id(species_id: StringName) -> Dictionary:
+	var species_index := to_legacy_index(species_id)
+	var presentation: Dictionary = LEGACY_PRESENTATION.get(species_id, {})
+	if species_index < 0 or presentation.is_empty():
+		return {}
+	return create_runtime_snapshot(species_index, presentation)
 
 
 static func get_creature_definition(species_id: StringName) -> CreatureDefinition:

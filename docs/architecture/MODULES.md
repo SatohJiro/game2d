@@ -35,7 +35,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
 | WORLD | Zone, chunks, spawn, day/night, raid | `main.gd`, scene tĩnh | Chunk admission + persistent delta | U2 |
 | NAV | Navigation/path requests | Chưa có | Navigation adapter theo chunk | U2.3 |
-| SAVE | Versioned persistence | Save v1 schema + validated Player/inventory/pet snapshot adapter; chưa có load apply/file repository | DTO thuần, atomic write, migrations | U1.11 |
+| SAVE | Versioned persistence | Save v1 schema + validated Player snapshot/apply adapters; chưa có file repository | DTO thuần, atomic write, migrations | U1.11 |
 | UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
 | PRESENT | Animation/VFX/camera/audio | Trộn trong actor; `AudioManager` autoload | Event-driven adapters, pooling, accessibility scale | U4 |
 | ASSET | Vendoring/provenance/import | File rời, nguồn chưa biết | Manifest, package receipt, immutable vendor source | U0.2, U4.1 |
@@ -125,6 +125,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - Load migration tuần tự `vN → vN+1`; thiếu content ID trả lỗi có ngữ cảnh hoặc dùng fallback đã ghi rõ.
 - U1.11a thêm `SaveV1Schema`/`SaveValidationResult`: validate player/inventory/pets/world bằng stable ID, unique reference và JSON-safe values; chưa đọc/ghi file.
 - U1.11b thêm `SaveSnapshotAdapter`: runtime Player/inventory/party → deep-copied validated DTO; unknown legacy inventory key fail closed, không partial snapshot.
+- U1.11c thêm `SaveApplyPlan/Result/Adapter`: validate và resolve mọi stable reference trước commit Player/inventory/party; lỗi giữ runtime source, world clock trả về caller.
 
 ### UI và PRESENTATION
 

@@ -1,0 +1,122 @@
+class_name SaveApplyAdapter
+extends RefCounted
+
+const Schema = preload("res://systems/save/save_v1_schema.gd")
+const ApplyPlan = preload("res://systems/save/save_apply_plan.gd")
+const ApplyResult = preload("res://systems/save/save_apply_result.gd")
+
+
+static func apply_player_snapshot(player: Node, snapshot: Variant) -> RefCounted:
+	if player == null or not is_instance_valid(player) or not player.has_method("swap_active_pet"):
+		return ApplyResult.new(ApplyResult.Status.INVALID_TARGET)
+	var validation: RefCounted = Schema.validate(snapshot)
+	if not validation.is_valid():
+		return ApplyResult.new(ApplyResult.Status.INVALID_SNAPSHOT, 0.0, validation.errors)
+	var errors := PackedStringArray()
+	var plan: RefCounted = _create_plan(snapshot, errors)
+	if plan == null:
+		return ApplyResult.new(ApplyResult.Status.UNSUPPORTED_REFERENCE, 0.0, errors)
+	return _commit(player, plan)
+
+
+static func _create_plan(snapshot: Dictionary, errors: PackedStringArray) -> RefCounted:
+	var legacy_inventory := {}
+	for item_key: Variant in snapshot["inventory"]:
+		var item_id := StringName(item_key)
+		var legacy_key := LegacyItemAdapter.to_legacy_key(item_id)
+		if legacy_key.is_empty():
+			errors.append("unsupported inventory ID: %s" % item_key)
+			continue
+		legacy_inventory[legacy_key] = int(snapshot["inventory"][item_key])
+
+	var party: Array[Dictionary] = []
+	var active_id := StringName(snapshot["player"]["active_pet_instance_id"])
+	var active_index := -1
+	var active_command_id := &""
+	for pet_value: Variant in snapshot["pets"]:
+		var pet: Dictionary = pet_value
+		var species_id := StringName(pet["species_id"])
+		var species_data := LegacySpeciesAdapter.create_runtime_snapshot_for_id(species_id)
+		var stance_command_id := _command_for_stance(StringName(pet["stance_id"]))
+		if species_data.is_empty():
+			errors.append("unsupported pet species ID: %s" % species_id)
+			continue
+		if stance_command_id.is_empty():
+			errors.append("unsupported pet stance ID: %s" % pet["stance_id"])
+			continue
+		var entry := {
+			"instance_id": StringName(pet["instance_id"]),
+			"species_id": species_id,
+			"species_data": species_data,
+			"level": int(pet["level"]),
+			"exp": int(pet["exp"]),
+			"rarity_badge": "★",
+			"trait": "",
+		}
+		party.append(entry)
+		if entry["instance_id"] == active_id:
+			active_index = party.size() - 1
+			active_command_id = stance_command_id
+
+	if not errors.is_empty():
+		return null
+	var player_data: Dictionary = snapshot["player"]
+	return ApplyPlan.new(
+		player_data,
+		legacy_inventory,
+		party,
+		active_id,
+		active_index,
+		active_command_id,
+		float(snapshot["world"]["clock_seconds"])
+	)
+
+
+static func _commit(player: Node, plan: RefCounted) -> RefCounted:
+	_dismiss_active_pet(player)
+	player.global_position = Vector2(float(plan.player_state["position"]["x"]), float(plan.player_state["position"]["y"]))
+	player.set("level", int(plan.player_state["level"]))
+	player.set("exp_val", int(plan.player_state["exp"]))
+	player.set("max_hp", int(plan.player_state["max_hp"]))
+	player.set("hp", int(plan.player_state["hp"]))
+	player.set("stamina", float(plan.player_state["stamina"]))
+	player.set("hunger", float(plan.player_state["hunger"]))
+	player.set("thirst", float(plan.player_state["thirst"]))
+	player.set("body_temperature", float(plan.player_state["temperature"]))
+	var inventory: Dictionary = player.get("inventory")
+	inventory.clear()
+	inventory.merge(plan.legacy_inventory, true)
+	var party: Array = player.get("pet_party")
+	party.clear()
+	party.append_array(plan.pet_party.duplicate(true))
+	if plan.active_pet_index >= 0:
+		var summon_result: RefCounted = player.call("swap_active_pet", plan.active_pet_index)
+		if summon_result == null or not summon_result.should_spawn():
+			return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
+		var active_pet: Variant = player.get("active_pet_node")
+		if not is_instance_valid(active_pet):
+			return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
+		var stance_result: RefCounted = active_pet.call("apply_pet_command", plan.active_stance_command_id)
+		if stance_result == null or not stance_result.is_resolved():
+			return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
+	if player.has_method("update_hud"):
+		player.call("update_hud")
+	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds)
+
+
+static func _dismiss_active_pet(player: Node) -> void:
+	var active_pet: Variant = player.get("active_pet_node")
+	if is_instance_valid(active_pet):
+		if active_pet.is_inside_tree() and active_pet.get_parent() != null:
+			active_pet.get_parent().remove_child(active_pet)
+		active_pet.queue_free()
+	player.set("active_pet_node", null)
+	player.set("active_pet_instance_id", &"")
+
+
+static func _command_for_stance(stance_id: StringName) -> StringName:
+	match stance_id:
+		&"pet.stance.auto_work": return &"pet.command.auto_work"
+		&"pet.stance.combat_assist": return &"pet.command.combat_assist"
+		&"pet.stance.follow_protect": return &"pet.command.follow_protect"
+	return &""

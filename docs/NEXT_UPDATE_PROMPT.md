@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.11c runtime load apply
+# Prompt cho model tiếp theo — U1.11d atomic save repository
 
-Tiếp tục bằng đúng một package nhỏ U1.11c: tạo plan/result thuần và atomic adapter apply validated Save v1 player/inventory/pet roster state về runtime. Validate/mapping toàn bộ trước mutation; failure giữ source nguyên vẹn. Chưa ghi file, autosave, migration version hoặc UI slot. Chạy focused regression, full gate, leak-aware log scan và cập nhật contract/checkpoint.
+Tiếp tục bằng đúng một package nhỏ U1.11d: tạo repository JSON cho Save v1 với temp-write, atomic replace, backup và typed result; read phải parse + validate trước khi trả snapshot, corrupt primary có recovery policy rõ. Chưa autosave, migration version hoặc UI slot. Chạy focused regression trong thư mục tạm cô lập, full gate, leak-aware log scan và cập nhật contract/checkpoint.

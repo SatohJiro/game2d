@@ -38,6 +38,7 @@ Invariant U1.2:
 
 - Dictionary `Player.inventory` vẫn là nguồn sự thật duy nhất.
 - U1.11b snapshot adapter đọc nguồn này và project mọi key đã map sang String `item.*`; key chưa map làm snapshot thất bại nguyên khối. `item.stone`/`item.iron_ingot` đã phủ inventory mặc định, không tạo backing store mới.
+- U1.11c apply plan resolve toàn bộ `item.*` ngược về legacy key trước mutation; ID chưa admit làm cả apply thất bại và dictionary nguồn giữ nguyên.
 - Với gỗ, dictionary chỉ chứa key `Gỗ`; không tạo key `item.wood` song song.
 - Mutation thất bại không xóa drop khỏi world.
 - Amount rỗng/âm/0 và stable ID chưa map không làm đổi inventory.

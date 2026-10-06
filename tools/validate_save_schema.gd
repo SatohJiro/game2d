@@ -4,6 +4,8 @@ const Schema = preload("res://systems/save/save_v1_schema.gd")
 const ValidationResult = preload("res://systems/save/save_validation_result.gd")
 const SnapshotAdapter = preload("res://systems/save/save_snapshot_adapter.gd")
 const SnapshotResult = preload("res://systems/save/save_snapshot_result.gd")
+const ApplyAdapter = preload("res://systems/save/save_apply_adapter.gd")
+const ApplyResult = preload("res://systems/save/save_apply_result.gd")
 
 var _failures := PackedStringArray()
 
@@ -17,6 +19,7 @@ func _run() -> void:
 	_test_identity_and_shape_guards()
 	_test_non_serializable_guards()
 	await _test_runtime_snapshot_adapter()
+	await _test_runtime_apply_adapter()
 	if _failures.is_empty():
 		print("Save schema validation passed: v1 envelope is JSON-safe and stable-ID references are valid.")
 		quit.call_deferred(0)
@@ -115,6 +118,59 @@ func _test_runtime_snapshot_adapter() -> void:
 	var unmapped: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 1234)
 	_expect(unmapped.status == SnapshotResult.Status.UNMAPPED_ITEM and unmapped.snapshot.is_empty(), "unmapped inventory key must fail without partial snapshot")
 	source_inventory.erase("Chưa Có Mapping")
+	root.remove_child(fixture)
+	fixture.free()
+	await process_frame
+	await process_frame
+
+
+func _test_runtime_apply_adapter() -> void:
+	var packed_player := load("res://scenes/player.tscn") as PackedScene
+	if packed_player == null:
+		_failures.append("unable to load Player scene for save apply")
+		return
+	var fixture := Node2D.new()
+	root.add_child(fixture)
+	var player := packed_player.instantiate()
+	fixture.add_child(player)
+	await process_frame
+	player.set("hud_ref", null)
+	player.set("base_manager_ref", null)
+	var save := Schema.create_empty(&"save.slot_1", 2000)
+	save["player"] = {
+		"position": {"x": 91.25, "y": 42.5}, "level": 4, "exp": 33,
+		"hp": 77, "max_hp": 140, "stamina": 62.5,
+		"hunger": 51.0, "thirst": 49.0, "temperature": 36.5,
+		"active_pet_instance_id": "pet.loaded_1",
+	}
+	save["inventory"] = {"item.wood": 21, "item.stone": 13}
+	save["pets"] = [{
+		"instance_id": "pet.loaded_1", "species_id": "creature.flam",
+		"level": 5, "exp": 17, "stance_id": "pet.stance.combat_assist",
+	}]
+	save["world"]["clock_seconds"] = 321.5
+	var applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, save)
+	_expect(applied.is_applied() and is_equal_approx(applied.world_clock_seconds, 321.5), "valid Save v1 must apply and return world clock")
+	_expect(player.global_position == Vector2(91.25, 42.5) and player.get("level") == 4 and player.get("hp") == 77, "player scalar apply mismatch")
+	_expect(player.get("inventory") == {"Gỗ": 21, "Đá": 13}, "stable inventory must map back to the single legacy store")
+	var loaded_party: Array = player.get("pet_party")
+	var loaded_pet: Node = player.get("active_pet_node")
+	_expect(loaded_party.size() == 1 and loaded_party[0]["species_id"] == &"creature.flam" and loaded_party[0]["exp"] == 17, "pet roster apply mismatch")
+	_expect(is_instance_valid(loaded_pet) and loaded_pet.call("get_stance_id") == &"pet.stance.combat_assist", "active pet and stance apply mismatch")
+
+	var position_before: Vector2 = player.global_position
+	var inventory_before: Dictionary = player.get("inventory").duplicate(true)
+	var party_before: Array = player.get("pet_party").duplicate(true)
+	var unsupported := save.duplicate(true)
+	unsupported["inventory"] = {"item.not_admitted": 1}
+	var rejected: RefCounted = ApplyAdapter.apply_player_snapshot(player, unsupported)
+	_expect(rejected.status == ApplyResult.Status.UNSUPPORTED_REFERENCE, "valid-shape unsupported content must fail before commit")
+	_expect(player.global_position == position_before and player.get("inventory") == inventory_before and player.get("pet_party") == party_before and player.get("active_pet_node") == loaded_pet, "failed apply must preserve all runtime source state")
+	var malformed := save.duplicate(true)
+	malformed["player"]["hp"] = 999
+	var invalid: RefCounted = ApplyAdapter.apply_player_snapshot(player, malformed)
+	_expect(invalid.status == ApplyResult.Status.INVALID_SNAPSHOT, "invalid schema must fail before planning")
+	_expect(player.global_position == position_before and player.get("inventory") == inventory_before and player.get("pet_party") == party_before and player.get("active_pet_node") == loaded_pet, "invalid schema must preserve all runtime source state")
 	root.remove_child(fixture)
 	fixture.free()
 	await process_frame

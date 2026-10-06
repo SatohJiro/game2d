@@ -1,4 +1,4 @@
-# U1.11a–b — Save v1 schema and runtime snapshot
+# U1.11a–c — Save v1 schema, snapshot and runtime apply
 
 ## Phạm vi
 
@@ -58,3 +58,14 @@ Save/data breaking change: schema v1 mới được định nghĩa nhưng chưa 
 - Snapshot/result deep-copy dữ liệu. Mutation snapshot sau đó không đổi inventory hoặc roster runtime.
 
 U1.11b admit `item.stone` và `item.iron_ingot` cùng definitions/mapping để toàn bộ inventory mặc định project được. Food/fertilizer/crop key legacy chỉ phát sinh ở các loop khác chưa được admit; nếu tồn tại, snapshot fail closed cho tới package migration tương ứng, không silently drop.
+
+## U1.11c atomic runtime apply
+
+`SaveApplyAdapter.apply_player_snapshot(player, snapshot)` luôn chạy `SaveV1Schema.validate()`, sau đó lập `SaveApplyPlan` deep-copy và resolve toàn bộ item/species/stance reference trước mutation. Chỉ plan hoàn chỉnh mới được commit về Player; lỗi shape/version trả `INVALID_SNAPSHOT`, stable ID chưa được runtime admit trả `UNSUPPORTED_REFERENCE`, và nguồn runtime giữ nguyên.
+
+- Stable inventory ID map ngược về đúng một legacy dictionary; không tạo backing store thứ hai.
+- Pet DTO được dựng lại thành party entry bằng typed creature definition cùng presentation compatibility trong `LegacySpeciesAdapter`; active instance được summon qua public Player boundary và stance đi qua pet command API.
+- Apply result trả `world_clock_seconds` cho world owner tương lai; adapter không tự tìm hoặc mutate world clock Node.
+- Position/progression/HP/stamina/needs được commit sau validation. HUD chỉ được refresh sau commit.
+
+Giới hạn v1 hiện hữu: rarity/trait và stance mutable của pet không active chưa nằm trong envelope; apply dùng badge `★`, trait rỗng, còn snapshot kế tiếp chiếu pet không active về auto-work. File repository, atomic disk replace, autosave, checksum, backup, migration và UI slot vẫn ngoài U1.11c.
