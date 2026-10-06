@@ -1,4 +1,4 @@
-# U1.10a–b — PetInstance and summon lifecycle contract
+# U1.10a–c — PetInstance, summon and command contract
 
 ## Phạm vi
 
@@ -41,3 +41,15 @@ Capture token vẫn chỉ chống callback lặp trong runtime và không thay t
 - Khi replace, Player tháo mọi companion node cũ khỏi SceneTree trước khi add node mới; trong tree luôn có tối đa một active companion.
 - `CompanionPet.pet_instance_id` và `Player.active_pet_instance_id` là runtime identity projection; Node reference không phải dữ liệu save.
 - `tools/validate_pet_summon.gd` khóa pure status và scene-level single-node lifecycle. HUD/audio/species stats và pet AI giữ nguyên.
+
+## U1.10c command boundary
+
+Command hiện hữu dùng stable intent `pet.command.cycle_stance`. Ba state gameplay có identity `pet.stance.auto_work`, `pet.stance.combat_assist`, `pet.stance.follow_protect`; enum số chỉ là projection nội bộ của actor.
+
+`PetCommandPolicy` nhận command ID, pet instance ID và current stance ID, rồi trả `APPLIED`, `INVALID_REQUEST` hoặc `UNSUPPORTED_COMMAND` cùng previous/next stance. Policy không truy cập Node, SceneTree, HUD hay animation.
+
+- Chu kỳ giữ nguyên: auto work → combat assist → follow protect → auto work.
+- Unsupported/invalid result không mutate actor.
+- CompanionPet apply accepted result, clear enemy ở hai transition cũ và phát đúng floating text cũ.
+- Player phát stable command intent và render HUD từ result; không đọc enum giả `AGGRESSIVE` không tồn tại nữa.
+- Command wheel và explicit target/guard/work/return commands còn ngoài phạm vi; U1.10d mở rộng trên cùng boundary.

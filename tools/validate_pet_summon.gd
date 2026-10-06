@@ -3,6 +3,9 @@ extends SceneTree
 const SummonRequest = preload("res://systems/pet/pet_summon_request.gd")
 const SummonResult = preload("res://systems/pet/pet_summon_result.gd")
 const SummonPolicy = preload("res://systems/pet/pet_summon_policy.gd")
+const CommandRequest = preload("res://systems/pet/pet_command_request.gd")
+const CommandResult = preload("res://systems/pet/pet_command_result.gd")
+const CommandPolicy = preload("res://systems/pet/pet_command_policy.gd")
 
 var _failures := PackedStringArray()
 
@@ -13,13 +16,14 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_test_policy()
+	_test_command_policy()
 	await _test_player_adapter()
 	for child in root.get_children():
 		child.free()
 	await process_frame
 	await process_frame
 	if _failures.is_empty():
-		print("Pet summon validation passed: stable active identity and single-node lifecycle are valid.")
+		print("Pet validation passed: stable summon lifecycle and deterministic command stance transitions are valid.")
 		quit.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -35,6 +39,18 @@ func _test_policy() -> void:
 	_expect(SummonPolicy.resolve(SummonRequest.new(&"pet.one", &"pet.one", true, true)).status == SummonResult.Status.NO_CHANGE, "same live instance must not respawn")
 	_expect(SummonPolicy.resolve(SummonRequest.new(&"pet.two", &"pet.one", true, true)).status == SummonResult.Status.REPLACE, "different live instance must replace")
 	_expect(SummonPolicy.resolve(SummonRequest.new(&"pet.one", &"pet.one", true, false)).status == SummonResult.Status.REPLACE, "stale active identity must recover by replacement")
+
+
+func _test_command_policy() -> void:
+	_expect(CommandPolicy.resolve(null).status == CommandResult.Status.INVALID_REQUEST, "null command must be invalid")
+	_expect(CommandPolicy.resolve(CommandRequest.new(CommandPolicy.COMMAND_CYCLE_STANCE, &"creature.flam", CommandPolicy.STANCE_AUTO_WORK)).status == CommandResult.Status.INVALID_REQUEST, "command must require pet instance identity")
+	_expect(CommandPolicy.resolve(CommandRequest.new(&"pet.command.unknown", &"pet.one", CommandPolicy.STANCE_AUTO_WORK)).status == CommandResult.Status.UNSUPPORTED_COMMAND, "unknown command must fail closed")
+	var work_to_combat: RefCounted = CommandPolicy.resolve(CommandRequest.new(CommandPolicy.COMMAND_CYCLE_STANCE, &"pet.one", CommandPolicy.STANCE_AUTO_WORK))
+	var combat_to_follow: RefCounted = CommandPolicy.resolve(CommandRequest.new(CommandPolicy.COMMAND_CYCLE_STANCE, &"pet.one", CommandPolicy.STANCE_COMBAT_ASSIST))
+	var follow_to_work: RefCounted = CommandPolicy.resolve(CommandRequest.new(CommandPolicy.COMMAND_CYCLE_STANCE, &"pet.one", CommandPolicy.STANCE_FOLLOW_PROTECT))
+	_expect(work_to_combat.is_applied() and work_to_combat.next_stance_id == CommandPolicy.STANCE_COMBAT_ASSIST, "auto-work must cycle to combat-assist")
+	_expect(combat_to_follow.is_applied() and combat_to_follow.next_stance_id == CommandPolicy.STANCE_FOLLOW_PROTECT, "combat-assist must cycle to follow-protect")
+	_expect(follow_to_work.is_applied() and follow_to_work.next_stance_id == CommandPolicy.STANCE_AUTO_WORK, "follow-protect must cycle to auto-work")
 
 
 func _test_player_adapter() -> void:
@@ -66,6 +82,14 @@ func _test_player_adapter() -> void:
 	_expect(first.status == SummonResult.Status.SUMMON, "first slot must summon")
 	_expect(first_node != null and first_node.get("pet_instance_id") == &"pet.one", "summoned node must carry roster instance ID")
 	_expect(get_nodes_in_group("companion_pets").size() == 1, "first summon must create exactly one companion node")
+	var invalid_command: RefCounted = first_node.call("apply_pet_command", &"pet.command.unknown")
+	_expect(invalid_command.status == CommandResult.Status.UNSUPPORTED_COMMAND and first_node.call("get_stance_id") == CommandPolicy.STANCE_AUTO_WORK, "invalid command must not mutate actor stance")
+	var command_one: RefCounted = first_node.call("apply_pet_command", CommandPolicy.COMMAND_CYCLE_STANCE)
+	var command_two: RefCounted = first_node.call("apply_pet_command", CommandPolicy.COMMAND_CYCLE_STANCE)
+	var command_three: RefCounted = first_node.call("apply_pet_command", CommandPolicy.COMMAND_CYCLE_STANCE)
+	_expect(command_one.next_stance_id == CommandPolicy.STANCE_COMBAT_ASSIST, "actor first command mismatch")
+	_expect(command_two.next_stance_id == CommandPolicy.STANCE_FOLLOW_PROTECT, "actor second command mismatch")
+	_expect(command_three.next_stance_id == CommandPolicy.STANCE_AUTO_WORK and first_node.call("get_stance_id") == CommandPolicy.STANCE_AUTO_WORK, "actor command cycle must return to auto-work")
 
 	var same: RefCounted = player.call("swap_active_pet", 0)
 	_expect(same.status == SummonResult.Status.NO_CHANGE and player.get("active_pet_node") == first_node, "same slot must preserve the existing node")

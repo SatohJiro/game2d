@@ -1,6 +1,10 @@
 extends CharacterBody2D
 class_name CompanionPet
 
+const PetCommandRequestModel = preload("res://systems/pet/pet_command_request.gd")
+const PetCommandResultModel = preload("res://systems/pet/pet_command_result.gd")
+const PetCommandPolicyModel = preload("res://systems/pet/pet_command_policy.gd")
+
 var pet_instance_id: StringName = &""
 var species_data: Dictionary = {
 	"name": "Foxfire",
@@ -337,19 +341,37 @@ func gain_exp(amount: int) -> void:
 	setup_pet()
 	spawn_floating_text("PET LÊN CẤP! Lv.%d" % level, Color(1.0, 0.9, 0.1))
 
-func toggle_stance() -> void:
+func get_stance_id() -> StringName:
 	match stance:
-		Stance.AUTO_WORK:
+		Stance.AUTO_WORK: return PetCommandPolicyModel.STANCE_AUTO_WORK
+		Stance.COMBAT_ASSIST: return PetCommandPolicyModel.STANCE_COMBAT_ASSIST
+		Stance.FOLLOW_PROTECT: return PetCommandPolicyModel.STANCE_FOLLOW_PROTECT
+	return &""
+
+
+func apply_pet_command(command_id: StringName) -> RefCounted:
+	var result := PetCommandPolicyModel.resolve(PetCommandRequestModel.new(command_id, pet_instance_id, get_stance_id()))
+	if not result.is_applied():
+		return result
+	match result.next_stance_id:
+		PetCommandPolicyModel.STANCE_AUTO_WORK:
+			stance = Stance.AUTO_WORK
+			spawn_floating_text("Pet: Tự Do Lao Động (Nhặt đồ, tưới cây)!", Color(0.4, 1.0, 0.5))
+		PetCommandPolicyModel.STANCE_COMBAT_ASSIST:
 			stance = Stance.COMBAT_ASSIST
 			current_enemy = null
 			spawn_floating_text("Pet: Ưu Tiên Chiến Đấu!", Color(1.0, 0.4, 0.2))
-		Stance.COMBAT_ASSIST:
+		PetCommandPolicyModel.STANCE_FOLLOW_PROTECT:
 			stance = Stance.FOLLOW_PROTECT
 			current_enemy = null
 			spawn_floating_text("Pet: Bảo Vệ Sát Cánh!", Color(0.4, 0.85, 1.0))
-		Stance.FOLLOW_PROTECT:
-			stance = Stance.AUTO_WORK
-			spawn_floating_text("Pet: Tự Do Lao Động (Nhặt đồ, tưới cây)!", Color(0.4, 1.0, 0.5))
+		_:
+			return PetCommandResultModel.new(PetCommandResultModel.Status.INVALID_REQUEST)
+	return result
+
+
+func toggle_stance() -> RefCounted:
+	return apply_pet_command(PetCommandPolicyModel.COMMAND_CYCLE_STANCE)
 
 func activate_partner_skill(player_ref: CharacterBody2D) -> void:
 	if partner_cooldown > 0:

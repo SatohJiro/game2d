@@ -4,6 +4,7 @@ class_name Player
 const PetSummonRequestModel = preload("res://systems/pet/pet_summon_request.gd")
 const PetSummonResultModel = preload("res://systems/pet/pet_summon_result.gd")
 const PetSummonPolicyModel = preload("res://systems/pet/pet_summon_policy.gd")
+const PetCommandPolicyModel = preload("res://systems/pet/pet_command_policy.gd")
 
 @export var move_speed: float = 175.0
 @export var sprint_speed: float = 245.0
@@ -917,9 +918,11 @@ func command_pets() -> void:
 		return
 	
 	for pet in pets:
-		if pet.has_method("toggle_stance"):
-			pet.toggle_stance()
-			var stance_str = "Tự do Tấn công" if pet.stance == pet.Stance.AGGRESSIVE else "Theo sát & Phòng thủ"
+		if pet.has_method("apply_pet_command"):
+			var command_result: RefCounted = pet.apply_pet_command(PetCommandPolicyModel.COMMAND_CYCLE_STANCE)
+			if not command_result.is_applied():
+				continue
+			var stance_str = "Tự do Tấn công" if command_result.next_stance_id == PetCommandPolicyModel.STANCE_COMBAT_ASSIST else "Theo sát & Phòng thủ"
 			if hud_ref:
 				hud_ref.update_pet_stats(pet.species_data.get("name", "Pet"), pet.level, pet.hp, pet.max_hp, stance_str)
 

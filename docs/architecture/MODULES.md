@@ -103,6 +103,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.9u route burn tick qua `DamageRequest/CombatResolver`; actor giữ cadence và presentation nhưng không còn direct HP writer.
 - U1.10a thêm typed `PetInstance` projection với unique `pet.*` ID + stable species ID; capture resolver tạo party entry, roster dictionary vẫn là single source compatibility.
 - U1.10b thêm pure summon policy và active instance ID; replace tháo node cũ khỏi tree trước spawn, same-instance là no-op để không reset/duplicate.
+- U1.10c thêm stable cycle-stance command cùng pure policy/result; CompanionPet sở hữu apply, Player chỉ dispatch và render HUD result.
 - PetInstance lưu unique ID, species ID, level/EXP, stats rolled, needs, skills và assignment.
 - Pet command tối thiểu: follow, guard, attack target, work, return. Job và combat không đồng thời sở hữu locomotion.
 

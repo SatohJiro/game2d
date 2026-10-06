@@ -90,6 +90,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.9u burn tick boundary | Hoàn tất | Burn damage dùng deterministic combat result; cadence, capture pause và presentation giữ nguyên |
 | U1.10a PetInstance identity | Hoàn tất | Mỗi capture có unique `pet.*` ID và stable species ID qua typed projection |
 | U1.10b summon lifecycle | Hoàn tất | Active selection theo instance ID; same-slot no-op và replace chỉ giữ một node trong tree |
+| U1.10c pet command boundary | Hoàn tất | Stable cycle command và deterministic three-stance policy; invalid intent không mutate |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |
