@@ -25,6 +25,7 @@ $creaturePerceptionLog = Join-Path $LogDirectory 'creature-perception-validation
 $creatureDropLog = Join-Path $LogDirectory 'creature-drop-validation.log'
 $creatureEcologyLog = Join-Path $LogDirectory 'creature-ecology-validation.log'
 $captureLog = Join-Path $LogDirectory 'capture-validation.log'
+$petSummonLog = Join-Path $LogDirectory 'pet-summon-validation.log'
 $smokeLog = Join-Path $LogDirectory 'headless-smoke.log'
 $failurePattern = 'SCRIPT ERROR|Parse Error|Failed to load script|Cannot open file|Node not found|Invalid get index|^ERROR:'
 
@@ -80,6 +81,9 @@ Invoke-GodotCheck -Name 'Creature ecology validation' -LogPath $creatureEcologyL
 )
 Invoke-GodotCheck -Name 'Capture validation' -LogPath $captureLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_capture.gd')
+)
+Invoke-GodotCheck -Name 'Pet summon validation' -LogPath $petSummonLog -Arguments @(
+    '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_pet_summon.gd')
 )
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')

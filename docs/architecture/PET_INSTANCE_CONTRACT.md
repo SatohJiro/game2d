@@ -1,4 +1,4 @@
-# U1.10a — PetInstance identity contract
+# U1.10a–b — PetInstance and summon lifecycle contract
 
 ## Phạm vi
 
@@ -30,3 +30,14 @@ Capture token vẫn chỉ chống callback lặp trong runtime và không thay t
 - `tools/validate_capture.gd` khóa domain validation, deterministic projection, deep-copy, unique ID giữa hai capture và atomic duplicate guard.
 - Save/data breaking change: none vì chưa có save schema. Asset/provenance: none.
 - Rollback: revert U1.10a; roster runtime cũ không cần migration.
+
+## U1.10b summon lifecycle
+
+`PetSummonPolicy` nhận selected instance ID, active instance ID, roster-existence flag và active-node validity. Pure result là `SUMMON`, `REPLACE`, `NO_CHANGE` hoặc `INVALID_REQUEST`.
+
+- Slot input 1–3 vẫn map vào roster index để tương thích, nhưng accepted lifecycle dùng `instance_id`.
+- Chọn lại cùng instance còn node hợp lệ là `NO_CHANGE`, không reset HP/AI và không duplicate node.
+- Chọn instance khác hoặc active identity bị stale là `REPLACE`.
+- Khi replace, Player tháo mọi companion node cũ khỏi SceneTree trước khi add node mới; trong tree luôn có tối đa một active companion.
+- `CompanionPet.pet_instance_id` và `Player.active_pet_instance_id` là runtime identity projection; Node reference không phải dữ liệu save.
+- `tools/validate_pet_summon.gd` khóa pure status và scene-level single-node lifecycle. HUD/audio/species stats và pet AI giữ nguyên.

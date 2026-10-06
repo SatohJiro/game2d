@@ -1,6 +1,7 @@
 extends CharacterBody2D
 class_name CompanionPet
 
+var pet_instance_id: StringName = &""
 var species_data: Dictionary = {
 	"name": "Foxfire",
 	"element": "Lửa",

@@ -1,6 +1,10 @@
 extends CharacterBody2D
 class_name Player
 
+const PetSummonRequestModel = preload("res://systems/pet/pet_summon_request.gd")
+const PetSummonResultModel = preload("res://systems/pet/pet_summon_result.gd")
+const PetSummonPolicyModel = preload("res://systems/pet/pet_summon_policy.gd")
+
 @export var move_speed: float = 175.0
 @export var sprint_speed: float = 245.0
 
@@ -80,6 +84,7 @@ var has_armor: bool = false
 var pet_party: Array[Dictionary] = []
 var committed_capture_tokens: Dictionary = {}
 var active_pet_node: Node2D = null
+var active_pet_instance_id: StringName = &""
 
 # Combat Roll / Dash (Juice & Skill-based action)
 var is_rolling: bool:
@@ -770,23 +775,38 @@ func cancel_build_mode() -> void:
 	if ghost_preview:
 		ghost_preview.visible = false
 
-func swap_active_pet(idx: int) -> void:
-	if idx >= pet_party.size():
+func swap_active_pet(idx: int) -> RefCounted:
+	if idx < 0 or idx >= pet_party.size():
 		spawn_floating_text("Ô Pet số %d đang trống!" % (idx + 1), Color(0.8, 0.8, 0.8))
-		return
+		return PetSummonResultModel.new(PetSummonResultModel.Status.INVALID_REQUEST)
 	
-	var data = pet_party[idx]
+	var data: Dictionary = pet_party[idx]
+	var selected_instance_id := StringName(data.get("instance_id", &""))
+	var summon_result := PetSummonPolicyModel.resolve(PetSummonRequestModel.new(
+		selected_instance_id,
+		active_pet_instance_id,
+		true,
+		is_instance_valid(active_pet_node) and active_pet_node.is_inside_tree()
+	))
+	if not summon_result.should_spawn():
+		return summon_result
+
 	var pets = get_tree().get_nodes_in_group("companion_pets")
 	for p in pets:
+		if p.is_inside_tree() and p.get_parent() != null:
+			p.get_parent().remove_child(p)
 		p.queue_free()
+	active_pet_node = null
 	
 	var pet_inst = PET_SCENE.instantiate()
+	pet_inst.pet_instance_id = summon_result.instance_id
 	pet_inst.species_data = data["species_data"]
 	pet_inst.level = data["level"]
 	pet_inst.player_target = self
 	pet_inst.global_position = global_position + Vector2(25, 25)
 	get_parent().add_child(pet_inst)
 	active_pet_node = pet_inst
+	active_pet_instance_id = summon_result.instance_id
 	
 	var badge = data.get("rarity_badge", "★")
 	var trait_str = data.get("trait", "")
@@ -796,6 +816,7 @@ func swap_active_pet(idx: int) -> void:
 	if hud_ref:
 		var display_name = "[%s] %s (%s)" % [badge, data["species_data"]["name"], trait_str]
 		hud_ref.update_pet_stats(display_name, data["level"], pet_inst.hp, pet_inst.max_hp, "Tự do Tấn công")
+	return summon_result
 
 func on_pet_captured(
 	pet_data: Dictionary,
