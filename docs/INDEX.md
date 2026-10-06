@@ -23,9 +23,10 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 16. `docs/architecture/CREATURE_SKILL_CONTRACT.md`: stable skill ID, typed Flam fireball canary và remaining attack writer audit.
 17. `docs/architecture/CREATURE_DROP_CONTRACT.md`: deterministic defeat drop, capture guard và atomic Flam commit.
 18. `docs/architecture/CREATURE_ECOLOGY_CONTRACT.md`: pure damage-panic policy, stable ecology event và transition ownership.
-19. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
-20. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
-21. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
+19. `docs/architecture/PET_INSTANCE_CONTRACT.md`: unique pet identity, typed projection và capture-to-roster boundary.
+20. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
+21. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
+22. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
 22. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
 23. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
 24. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
@@ -87,6 +88,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.9s melee boundary | Hoàn tất | Beast/Dragon melee có stable identity riêng; range/timing/lunge/contact parity được giữ |
 | U1.9t remaining drops | Hoàn tất | Đủ năm species dùng deterministic typed drop result và atomic commit |
 | U1.9u burn tick boundary | Hoàn tất | Burn damage dùng deterministic combat result; cadence, capture pause và presentation giữ nguyên |
+| U1.10a PetInstance identity | Hoàn tất | Mỗi capture có unique `pet.*` ID và stable species ID qua typed projection |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Chưa có | Chưa có schema/version/migration |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

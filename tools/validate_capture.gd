@@ -147,6 +147,7 @@ func _test_species_mapping_and_ownership_resolver() -> void:
 	}
 	var legendary_request := CaptureOwnershipRequest.new(
 		&"capture.legendary",
+		&"pet.legendary_1",
 		LegacySpeciesAdapter.FLAM_ID,
 		source,
 		3,
@@ -160,11 +161,13 @@ func _test_species_mapping_and_ownership_resolver() -> void:
 	_expect(int(legendary.party_entry["species_data"]["power"]) == 30, "legendary power multiplier mismatch")
 	_expect(int(legendary.party_entry["species_data"]["max_hp"]) == 150, "legendary HP multiplier mismatch")
 	_expect(int(source["power"]) == 20 and int(source["max_hp"]) == 100, "ownership resolver must not mutate source snapshot")
+	_expect(legendary.party_entry["instance_id"] == &"pet.legendary_1", "party entry must carry injected persistent instance ID")
 	_expect(legendary.party_entry["species_id"] == LegacySpeciesAdapter.FLAM_ID, "party entry must carry stable species ID")
 	_expect(legendary.reward_exp == CaptureOwnershipResolver.CAPTURE_REWARD_EXP, "capture reward EXP mismatch")
 
 	var epic := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(
 		&"capture.epic",
+		&"pet.epic_1",
 		LegacySpeciesAdapter.FLAM_ID,
 		source,
 		1,
@@ -175,6 +178,7 @@ func _test_species_mapping_and_ownership_resolver() -> void:
 	_expect(epic.trait_name == CaptureOwnershipResolver.EPIC_TRAITS[2], "epic trait upper roll mismatch")
 	var rare := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(
 		&"capture.rare",
+		&"pet.rare_1",
 		LegacySpeciesAdapter.FLAM_ID,
 		source,
 		1,
@@ -185,6 +189,7 @@ func _test_species_mapping_and_ownership_resolver() -> void:
 	_expect(rare.trait_name == CaptureOwnershipResolver.RARE_TRAITS[0], "rare trait lower roll mismatch")
 	var common := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(
 		&"capture.common",
+		&"pet.common_1",
 		LegacySpeciesAdapter.FLAM_ID,
 		source,
 		1,
@@ -193,18 +198,19 @@ func _test_species_mapping_and_ownership_resolver() -> void:
 	))
 	_expect(common.rarity_badge == CaptureOwnershipResolver.COMMON_BADGE, "common lower boundary mismatch")
 
-	var duplicate_request := CaptureOwnershipRequest.new(&"capture.duplicate", LegacySpeciesAdapter.FLAM_ID, source, 1, 0.5, 0.5)
+	var duplicate_request := CaptureOwnershipRequest.new(&"capture.duplicate", &"pet.duplicate_1", LegacySpeciesAdapter.FLAM_ID, source, 1, 0.5, 0.5)
 	duplicate_request.already_committed = true
 	_expect(CaptureOwnershipResolver.resolve(duplicate_request).status == CaptureOwnershipResult.Status.DUPLICATE, "duplicate ownership status mismatch")
-	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"", LegacySpeciesAdapter.FLAM_ID, source, 1, 0.5, 0.5)).status == CaptureOwnershipResult.Status.INVALID_REQUEST, "empty capture token must be invalid")
-	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.unknown", &"creature.unknown", source, 1, 0.5, 0.5)).status == CaptureOwnershipResult.Status.UNKNOWN_SPECIES, "unknown species ownership status mismatch")
+	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"", &"pet.invalid_1", LegacySpeciesAdapter.FLAM_ID, source, 1, 0.5, 0.5)).status == CaptureOwnershipResult.Status.INVALID_REQUEST, "empty capture token must be invalid")
+	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.bad_instance", &"creature.not_a_pet", LegacySpeciesAdapter.FLAM_ID, source, 1, 0.5, 0.5)).status == CaptureOwnershipResult.Status.INVALID_REQUEST, "non-pet instance ID must be invalid")
+	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.unknown", &"pet.unknown_1", &"creature.unknown", source, 1, 0.5, 0.5)).status == CaptureOwnershipResult.Status.UNKNOWN_SPECIES, "unknown species ownership status mismatch")
 	var mismatched := source.duplicate(true)
 	mismatched["id"] = LegacySpeciesAdapter.SLIME_ID
-	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.mismatch", LegacySpeciesAdapter.FLAM_ID, mismatched, 1, 0.5, 0.5)).status == CaptureOwnershipResult.Status.INVALID_REQUEST, "mismatched snapshot species ID must be invalid")
-	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.bad_roll", LegacySpeciesAdapter.FLAM_ID, source, 1, 1.1, 0.5)).status == CaptureOwnershipResult.Status.INVALID_REQUEST, "out-of-range rarity roll must be invalid")
+	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.mismatch", &"pet.mismatch_1", LegacySpeciesAdapter.FLAM_ID, mismatched, 1, 0.5, 0.5)).status == CaptureOwnershipResult.Status.INVALID_REQUEST, "mismatched snapshot species ID must be invalid")
+	_expect(CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.bad_roll", &"pet.bad_roll_1", LegacySpeciesAdapter.FLAM_ID, source, 1, 1.1, 0.5)).status == CaptureOwnershipResult.Status.INVALID_REQUEST, "out-of-range rarity roll must be invalid")
 
-	var first := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.repeat", LegacySpeciesAdapter.FLAM_ID, source, 2, 0.19, 0.75))
-	var second := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.repeat", LegacySpeciesAdapter.FLAM_ID, source, 2, 0.19, 0.75))
+	var first := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.repeat", &"pet.repeat_1", LegacySpeciesAdapter.FLAM_ID, source, 2, 0.19, 0.75))
+	var second := CaptureOwnershipResolver.resolve(CaptureOwnershipRequest.new(&"capture.repeat", &"pet.repeat_1", LegacySpeciesAdapter.FLAM_ID, source, 2, 0.19, 0.75))
 	_expect(first.rarity_badge == second.rarity_badge and first.trait_name == second.trait_name, "ownership resolver must be deterministic")
 	_expect(first.party_entry == second.party_entry, "same ownership request must produce the same party entry")
 
@@ -351,6 +357,7 @@ func _test_ownership_lifecycle_adapter() -> void:
 	)
 	_expect(accepted.is_accepted(), "Player ownership adapter must accept valid request")
 	_expect(party.size() == 1 and int(player.get("exp_val")) == 75, "accepted ownership must append and reward exactly once")
+	_expect(ContentId.domain_of(party[0]["instance_id"]) == &"pet", "Player party entry must expose a valid pet instance ID")
 	_expect(party[0]["species_id"] == LegacySpeciesAdapter.FLAM_ID, "Player party entry must expose stable species ID")
 	var duplicate: CaptureOwnershipResult = player.call(
 		"on_pet_captured",
@@ -395,6 +402,7 @@ func _test_ownership_lifecycle_adapter() -> void:
 	var repeated_result: CaptureOwnershipResult = accepted_creature.call("capture_succeeded", player)
 	_expect(repeated_result.status == CaptureOwnershipResult.Status.DUPLICATE, "WildCreature repeated success callback must be duplicate")
 	_expect(party.size() == party_before_creature + 1, "WildCreature repeated callback must append exactly once")
+	_expect(party[party.size() - 1]["instance_id"] != party[0]["instance_id"], "separate captures must receive unique pet instance IDs")
 	_expect(int(player.get("exp_val")) == exp_before_creature + 75, "WildCreature repeated callback must reward exactly once")
 	await process_frame
 	_expect(not is_instance_valid(accepted_creature), "accepted WildCreature must despawn after commit")

@@ -1,6 +1,8 @@
 class_name CaptureOwnershipResolver
 extends RefCounted
 
+const PetInstanceModel = preload("res://systems/pet/pet_instance.gd")
+
 const CAPTURE_REWARD_EXP := 75
 const LEGENDARY_THRESHOLD := 0.05
 const EPIC_THRESHOLD := 0.20
@@ -21,6 +23,12 @@ static func resolve(request: CaptureOwnershipRequest) -> CaptureOwnershipResult:
 	if request == null:
 		return CaptureOwnershipResult.new(CaptureOwnershipResult.Status.INVALID_REQUEST)
 	if request.capture_token.is_empty():
+		return CaptureOwnershipResult.new(
+			CaptureOwnershipResult.Status.INVALID_REQUEST,
+			request.capture_token,
+			request.species_id
+		)
+	if ContentId.domain_of(request.pet_instance_id) != &"pet":
 		return CaptureOwnershipResult.new(
 			CaptureOwnershipResult.Status.INVALID_REQUEST,
 			request.capture_token,
@@ -50,13 +58,21 @@ static func resolve(request: CaptureOwnershipRequest) -> CaptureOwnershipResult:
 	boosted_snapshot["id"] = request.species_id
 	boosted_snapshot["power"] = int(float(boosted_snapshot["power"]) * float(rarity["stat_multiplier"]))
 	boosted_snapshot["max_hp"] = int(float(boosted_snapshot["max_hp"]) * float(rarity["stat_multiplier"]))
-	var party_entry := {
-		"species_id": request.species_id,
-		"species_data": boosted_snapshot,
-		"level": request.level,
-		"rarity_badge": rarity["rarity_badge"],
-		"trait": rarity["trait_name"],
-	}
+	var pet_instance := PetInstanceModel.new(
+		request.pet_instance_id,
+		request.species_id,
+		boosted_snapshot,
+		request.level,
+		rarity["rarity_badge"],
+		rarity["trait_name"]
+	)
+	var party_entry := pet_instance.to_party_entry()
+	if party_entry.is_empty():
+		return CaptureOwnershipResult.new(
+			CaptureOwnershipResult.Status.INVALID_REQUEST,
+			request.capture_token,
+			request.species_id
+		)
 	return CaptureOwnershipResult.new(
 		CaptureOwnershipResult.Status.ACCEPTED,
 		request.capture_token,

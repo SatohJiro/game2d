@@ -2,6 +2,7 @@ class_name CaptureOwnershipRequest
 extends RefCounted
 
 var capture_token: StringName
+var pet_instance_id: StringName
 var species_id: StringName
 var species_snapshot: Dictionary
 var level: int
@@ -12,6 +13,7 @@ var already_committed: bool = false
 
 func _init(
 	request_capture_token: StringName,
+	request_pet_instance_id: StringName,
 	request_species_id: StringName,
 	request_species_snapshot: Dictionary,
 	request_level: int,
@@ -19,6 +21,7 @@ func _init(
 	request_trait_roll: float
 ) -> void:
 	capture_token = request_capture_token
+	pet_instance_id = request_pet_instance_id
 	species_id = request_species_id
 	species_snapshot = request_species_snapshot.duplicate(true)
 	level = request_level

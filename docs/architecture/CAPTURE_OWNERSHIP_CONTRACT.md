@@ -16,7 +16,7 @@ U1.7c tạo ranh giới atomic giữa kết quả bắt thành công và quyền
 - Resolver có cùng input thì cho cùng result và không sửa species snapshot đầu vào.
 - Stable species ID đi xuyên request, result và party entry; display name và array index không phải identity lưu trữ.
 
-Ngoài phạm vi: party capacity/storage policy, persistent pet instance ID, summon lifecycle mới, command UI, save/load roster, typed `CreatureDefinition`, seeded replay service và thay đổi animation.
+Ngoài phạm vi U1.7c: party capacity/storage policy, summon lifecycle mới, command UI, save/load roster, typed `CreatureDefinition`, seeded replay service và thay đổi animation. Persistent pet instance ID được bổ sung ở U1.10a theo `PET_INSTANCE_CONTRACT.md`.
 
 ## Stable species compatibility mapping
 
@@ -70,7 +70,7 @@ Các chuỗi badge/trait còn là presentation data trong party dictionary legac
 7. Actor chỉ phát success feedback và `queue_free()` sau accepted.
 8. Rejection clear active attempt, phục hồi visual và chuyển sang CHASE nếu Player hợp lệ, nếu không về IDLE.
 
-`committed_capture_tokens` và token dựa trên instance đều transient. Chúng chặn callback lặp trong runtime, không phải save identity. U1.10 phải tạo persistent unique ID cho mỗi PetInstance; U1.11 phải lưu roster bằng DTO/versioned schema.
+`committed_capture_tokens` và token dựa trên wild instance đều transient. Chúng chặn callback lặp trong runtime, không phải save identity. U1.10a đã tạo unique `pet.*` ID riêng cho party entry; U1.11 phải lưu roster bằng DTO/versioned schema.
 
 Party entry tương thích hiện tại:
 

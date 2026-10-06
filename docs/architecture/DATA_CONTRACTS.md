@@ -36,6 +36,8 @@ U1.7c dành năm stable species ID `creature.flam`, `creature.slime`, `creature.
 
 U1.9a và U1.9k–n đã admit typed definitions cho toàn bộ năm species `creature.flam`, `creature.slime`, `creature.mushroom`, `creature.beast` và `creature.dragon`. Stable IDs không đổi; adapter chiếu stats/behavior/drop reference sang legacy-shaped runtime snapshot, còn localized name/element/texture vẫn là presentation data legacy.
 
+U1.10a dùng domain `pet` cho identity cá thể sở hữu (`pet.instance_*`). `creature.*` vẫn là species identity; pet instance ID không phải definition registry key và không được suy ra từ display text, party index hoặc Node instance ID.
+
 U1.9l nối mapping hai chiều `item.berry_seed` ↔ `Hạt Giống Cây` trong `LegacyItemAdapter` để typed Mushroom drop reference giữ đúng storage/display key hiện hữu. Đây là compatibility mapping; inventory storage chưa migrate.
 
 U1.9m admit `item.fresh_meat` và mapping hai chiều `item.fresh_meat` ↔ `Thịt Tươi` để typed Beast drop reference giữ nguyên storage/display và cooking/ranch compatibility. Asset `beaf.png` chỉ được tham chiếu lại từ baseline, vẫn `QUARANTINE/UNKNOWN`; inventory storage chưa migrate.

@@ -103,6 +103,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 ### G06 — pet party và command
 
 - Mỗi pet có persistent unique ID; active slot tham chiếu ID, không tham chiếu Node trong save.
+- U1.10a: capture tạo `PetInstance` projection có unique `pet.*` ID và stable `creature.*` species ID; roster legacy vẫn giữ một backing dictionary để summon/ranch tương thích.
 - Command: follow, guard, attack, work, return; feedback xác nhận pet đã nhận hoặc lý do từ chối.
 - Pet downed không bị xóa vĩnh viễn ngoài mode được thiết kế; recovery rule phải hiển thị.
 - Acceptance: đổi active pet không duplicate node; unload/load giữ roster; command không override job đang commit mà thiếu cancel result.

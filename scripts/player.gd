@@ -806,6 +806,7 @@ func on_pet_captured(
 ) -> CaptureOwnershipResult:
 	var request := CaptureOwnershipRequest.new(
 		capture_token,
+		create_pet_instance_id(),
 		StringName(pet_data.get("id", "")),
 		pet_data,
 		pet_level,
@@ -813,6 +814,13 @@ func on_pet_captured(
 		trait_roll
 	)
 	return commit_capture_ownership(request)
+
+
+func create_pet_instance_id() -> StringName:
+	var candidate := StringName("pet.instance_%d" % ResourceUID.create_id())
+	while pet_party.any(func(entry: Dictionary) -> bool: return StringName(entry.get("instance_id", &"")) == candidate):
+		candidate = StringName("pet.instance_%d" % ResourceUID.create_id())
+	return candidate
 
 
 func commit_capture_ownership(request: CaptureOwnershipRequest) -> CaptureOwnershipResult:
