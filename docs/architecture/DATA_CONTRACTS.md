@@ -38,7 +38,7 @@ U1.9a và U1.9k–n đã admit typed definitions cho toàn bộ năm species `cr
 
 U1.10a dùng domain `pet` cho identity cá thể sở hữu (`pet.instance_*`). `creature.*` vẫn là species identity; pet instance ID không phải definition registry key và không được suy ra từ display text, party index hoặc Node instance ID.
 
-U1.10c dùng namespace `pet.command.*` và `pet.stance.*` cho runtime intent/state identity. Đây chưa phải catalog definition hay save DTO; localized HUD text và enum số không được dùng thay các ID này tại boundary.
+U1.10c–d dùng namespace `pet.command.*` và `pet.stance.*` cho runtime intent/state identity, gồm cycle cùng explicit auto-work/combat-assist/follow-protect. Đây chưa phải catalog definition hay save DTO; localized HUD text và enum số không được dùng thay các ID này tại boundary.
 
 U1.9l nối mapping hai chiều `item.berry_seed` ↔ `Hạt Giống Cây` trong `LegacyItemAdapter` để typed Mushroom drop reference giữ đúng storage/display key hiện hữu. Đây là compatibility mapping; inventory storage chưa migrate.
 

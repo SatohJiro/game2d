@@ -1,4 +1,4 @@
-# U1.10a–c — PetInstance, summon and command contract
+# U1.10a–d — PetInstance, summon and command contract
 
 ## Phạm vi
 
@@ -53,3 +53,12 @@ Command hiện hữu dùng stable intent `pet.command.cycle_stance`. Ba state ga
 - CompanionPet apply accepted result, clear enemy ở hai transition cũ và phát đúng floating text cũ.
 - Player phát stable command intent và render HUD từ result; không đọc enum giả `AGGRESSIVE` không tồn tại nữa.
 - Command wheel và explicit target/guard/work/return commands còn ngoài phạm vi; U1.10d mở rộng trên cùng boundary.
+
+## U1.10d explicit stance commands
+
+Policy hỗ trợ thêm `pet.command.auto_work`, `pet.command.combat_assist` và `pet.command.follow_protect`. Các command này đặt trực tiếp stance đích, không phụ thuộc stance hiện tại; `cycle_stance` vẫn là compatibility input của phím hiện hữu.
+
+- Nếu stance đích khác current stance, result là `APPLIED` và actor commit một lần.
+- Nếu stance đích đã active, result là `NO_CHANGE`; actor không mutate, clear target hoặc phát lại presentation.
+- Pet instance ID sai domain, stance input sai hoặc command không hỗ trợ fail closed.
+- Target selection, job reservation và command wheel được hoãn sang U5/U3; U1.10 kết thúc với persistent identity, single-node summon và stable stance command boundary.

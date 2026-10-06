@@ -51,6 +51,14 @@ func _test_command_policy() -> void:
 	_expect(work_to_combat.is_applied() and work_to_combat.next_stance_id == CommandPolicy.STANCE_COMBAT_ASSIST, "auto-work must cycle to combat-assist")
 	_expect(combat_to_follow.is_applied() and combat_to_follow.next_stance_id == CommandPolicy.STANCE_FOLLOW_PROTECT, "combat-assist must cycle to follow-protect")
 	_expect(follow_to_work.is_applied() and follow_to_work.next_stance_id == CommandPolicy.STANCE_AUTO_WORK, "follow-protect must cycle to auto-work")
+	var direct_combat: RefCounted = CommandPolicy.resolve(CommandRequest.new(CommandPolicy.COMMAND_COMBAT_ASSIST, &"pet.one", CommandPolicy.STANCE_AUTO_WORK))
+	var direct_follow: RefCounted = CommandPolicy.resolve(CommandRequest.new(CommandPolicy.COMMAND_FOLLOW_PROTECT, &"pet.one", CommandPolicy.STANCE_AUTO_WORK))
+	var direct_work: RefCounted = CommandPolicy.resolve(CommandRequest.new(CommandPolicy.COMMAND_AUTO_WORK, &"pet.one", CommandPolicy.STANCE_COMBAT_ASSIST))
+	var idempotent: RefCounted = CommandPolicy.resolve(CommandRequest.new(CommandPolicy.COMMAND_AUTO_WORK, &"pet.one", CommandPolicy.STANCE_AUTO_WORK))
+	_expect(direct_combat.next_stance_id == CommandPolicy.STANCE_COMBAT_ASSIST and direct_combat.is_applied(), "explicit combat command mismatch")
+	_expect(direct_follow.next_stance_id == CommandPolicy.STANCE_FOLLOW_PROTECT and direct_follow.is_applied(), "explicit follow command mismatch")
+	_expect(direct_work.next_stance_id == CommandPolicy.STANCE_AUTO_WORK and direct_work.is_applied(), "explicit work command mismatch")
+	_expect(idempotent.status == CommandResult.Status.NO_CHANGE and idempotent.is_resolved() and not idempotent.is_applied(), "same explicit stance must resolve as no-change")
 
 
 func _test_player_adapter() -> void:
@@ -90,6 +98,10 @@ func _test_player_adapter() -> void:
 	_expect(command_one.next_stance_id == CommandPolicy.STANCE_COMBAT_ASSIST, "actor first command mismatch")
 	_expect(command_two.next_stance_id == CommandPolicy.STANCE_FOLLOW_PROTECT, "actor second command mismatch")
 	_expect(command_three.next_stance_id == CommandPolicy.STANCE_AUTO_WORK and first_node.call("get_stance_id") == CommandPolicy.STANCE_AUTO_WORK, "actor command cycle must return to auto-work")
+	var direct_actor: RefCounted = first_node.call("apply_pet_command", CommandPolicy.COMMAND_FOLLOW_PROTECT)
+	var same_actor: RefCounted = first_node.call("apply_pet_command", CommandPolicy.COMMAND_FOLLOW_PROTECT)
+	_expect(direct_actor.is_applied() and first_node.call("get_stance_id") == CommandPolicy.STANCE_FOLLOW_PROTECT, "actor explicit follow command mismatch")
+	_expect(same_actor.status == CommandResult.Status.NO_CHANGE and first_node.call("get_stance_id") == CommandPolicy.STANCE_FOLLOW_PROTECT, "actor idempotent command must preserve stance")
 
 	var same: RefCounted = player.call("swap_active_pet", 0)
 	_expect(same.status == SummonResult.Status.NO_CHANGE and player.get("active_pet_node") == first_node, "same slot must preserve the existing node")

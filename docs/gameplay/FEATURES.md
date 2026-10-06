@@ -106,6 +106,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.10a: capture tạo `PetInstance` projection có unique `pet.*` ID và stable `creature.*` species ID; roster legacy vẫn giữ một backing dictionary để summon/ranch tương thích.
 - U1.10b: phím slot vẫn chọn roster index nhưng lifecycle theo instance ID; chọn lại pet đang active không respawn, đổi pet bảo đảm tối đa một companion node trong tree.
 - U1.10c: pet command hiện tại đi qua `pet.command.cycle_stance`, deterministic cycle auto-work → combat-assist → follow-protect; request sai không đổi stance.
+- U1.10d: gameplay có explicit command đặt auto-work/combat-assist/follow-protect; gửi lại stance đang active là no-op, không reset AI hay phát presentation lặp.
 - Command: follow, guard, attack, work, return; feedback xác nhận pet đã nhận hoặc lý do từ chối.
 - Pet downed không bị xóa vĩnh viễn ngoài mode được thiết kế; recovery rule phải hiển thị.
 - Acceptance: đổi active pet không duplicate node; unload/load giữ roster; command không override job đang commit mà thiếu cancel result.

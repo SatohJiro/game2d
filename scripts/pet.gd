@@ -351,6 +351,8 @@ func get_stance_id() -> StringName:
 
 func apply_pet_command(command_id: StringName) -> RefCounted:
 	var result := PetCommandPolicyModel.resolve(PetCommandRequestModel.new(command_id, pet_instance_id, get_stance_id()))
+	if result.status == PetCommandResultModel.Status.NO_CHANGE:
+		return result
 	if not result.is_applied():
 		return result
 	match result.next_stance_id:
