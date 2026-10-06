@@ -102,6 +102,12 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_cooking_progress := Schema.create_empty(&"save.slot_1", 1)
 	invalid_cooking_progress["world"]["entity_deltas"] = [{"instance_id": "building.instance_pot", "building_id": "building.cooking_pot", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"recipe_id": "recipe.cooking.hearty_stew", "remaining_seconds": 4.0}}]
 	_expect(not Schema.validate(invalid_cooking_progress).is_valid(), "cooking progress beyond recipe duration must fail before mutation")
+	var invalid_compost_capacity := Schema.create_empty(&"save.slot_1", 1)
+	invalid_compost_capacity["world"]["entity_deltas"] = [{"instance_id": "building.instance_compost", "building_id": "building.compost_bin", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"organic_materials": 11, "ready_fertilizer_count": 0, "composting_timer": 0.0}}]
+	_expect(not Schema.validate(invalid_compost_capacity).is_valid(), "compost material count above capacity must fail before mutation")
+	var invalid_compost_progress := Schema.create_empty(&"save.slot_1", 1)
+	invalid_compost_progress["world"]["entity_deltas"] = [{"instance_id": "building.instance_compost", "building_id": "building.compost_bin", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"organic_materials": 0, "ready_fertilizer_count": 2, "composting_timer": 3.0}}]
+	_expect(not Schema.validate(invalid_compost_progress).is_valid(), "compost progress without committed material must fail before mutation")
 
 
 func _test_non_serializable_guards() -> void:
@@ -259,6 +265,20 @@ func _test_runtime_apply_adapter() -> void:
 		var reloaded_cooking_nodes := get_nodes_in_group("persistent_player_buildings")
 		var reloaded_pot: Variant = reloaded_cooking_nodes[0] if reloaded_cooking_nodes.size() == 1 else null
 		_expect(cooking_reloaded.is_applied() and is_instance_valid(reloaded_pot) and reloaded_pot.get("is_cooking") and is_equal_approx(reloaded_pot.get("cooking_timer"), 1.75) and reloaded_pot.get("current_recipe").get("yield_item") == "Súp Hầm Sơn Hào", "cooking save/load must preserve committed recipe and output exactly once")
+		loaded_pet = player.get("active_pet_node")
+	var compost_save := save.duplicate(true)
+	compost_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_compost", "building_id": "building.compost_bin", "position": {"x": 14.0, "y": 20.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"organic_materials": 6, "ready_fertilizer_count": 4, "composting_timer": 3.25}}]
+	var compost_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, compost_save)
+	var compost_nodes := get_nodes_in_group("persistent_player_buildings")
+	var loaded_compost: Variant = compost_nodes[0] if compost_nodes.size() == 1 else null
+	_expect(compost_applied.is_applied() and is_instance_valid(loaded_compost) and loaded_compost.get("organic_materials") == 6 and loaded_compost.get("ready_fertilizer_count") == 4 and is_equal_approx(loaded_compost.get("composting_timer"), 3.25), "compost committed material/output/progress apply mismatch")
+	var compost_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2004, 321.5)
+	_expect(compost_snapshot.is_accepted(), "mid-batch compost bin must snapshot with typed state")
+	if compost_snapshot.is_accepted():
+		var compost_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, compost_snapshot.snapshot)
+		var reloaded_compost_nodes := get_nodes_in_group("persistent_player_buildings")
+		var reloaded_compost: Variant = reloaded_compost_nodes[0] if reloaded_compost_nodes.size() == 1 else null
+		_expect(compost_reloaded.is_applied() and is_instance_valid(reloaded_compost) and reloaded_compost.get("organic_materials") == 6 and reloaded_compost.get("ready_fertilizer_count") == 4 and is_equal_approx(reloaded_compost.get("composting_timer"), 3.25), "compost save/load must preserve input, output and progress exactly once")
 		loaded_pet = player.get("active_pet_node")
 
 	var position_before: Vector2 = player.global_position

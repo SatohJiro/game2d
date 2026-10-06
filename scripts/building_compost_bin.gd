@@ -99,6 +99,20 @@ func update_label_text() -> void:
 		label.text = "Thùng Ủ Phân Hữu Cơ [E nạp nguyên liệu]"
 		label.modulate = Color.WHITE
 
+
+func create_persistence_state() -> CompostBinPlacementState:
+	return CompostBinPlacementState.new(organic_materials, ready_fertilizer_count, composting_timer)
+
+
+func apply_persistence_state(state: CompostBinPlacementState) -> bool:
+	if state == null or not state.is_valid():
+		return false
+	organic_materials = state.organic_materials
+	ready_fertilizer_count = state.ready_fertilizer_count
+	composting_timer = state.composting_timer
+	update_label_text()
+	return true
+
 func spawn_floating_text(txt: String, color: Color) -> void:
 	var float_node = FLOATING_TEXT_SCENE.instantiate()
 	float_node.global_position = global_position + Vector2(randf_range(-10, 10), -30)
