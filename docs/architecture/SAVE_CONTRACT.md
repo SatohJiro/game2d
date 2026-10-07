@@ -102,6 +102,10 @@ Load success phân biệt `LOADED_PRIMARY` với `LOADED_BACKUP`, đồng thời
 
 Resource depletion health parser đồng thời chấp nhận JSON number có giá trị nguyên sau encode/decode, nhưng vẫn từ chối phân số/non-finite; việc này đóng lỗi repository verification của `resource_deltas` mà in-memory schema test trước đó chưa phát hiện.
 
+## U1.12x raid-cycle guard
+
+`world.cycle_state.raid_triggered_this_cycle` đi cùng clock qua snapshot/apply/coordinator result. `WorldCycleState` cho phép guard true chỉ từ phase 0.72 trở đi của chu kỳ 180 giây; false vẫn tương thích save cũ. Main commit clock + guard trong cùng boundary sau load success, không gọi `trigger_night_raid()` và không serialize raid actor/banner/RNG. Boss/spawn timers chưa thuộc DTO.
+
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure

@@ -54,6 +54,10 @@ func _test_valid_envelope_and_round_trip() -> void:
 
 
 func _test_identity_and_shape_guards() -> void:
+	var invalid_raid_phase := Schema.create_empty(&"save.slot_1", 1)
+	invalid_raid_phase["world"]["clock_seconds"] = 45.0
+	invalid_raid_phase["world"]["cycle_state"] = {"raid_triggered_this_cycle": true}
+	_expect(not Schema.validate(invalid_raid_phase).is_valid(), "triggered raid guard must reject a pre-raid clock phase")
 	var wrong_version := Schema.create_empty(&"save.slot_1", 1)
 	wrong_version["schema_version"] = 2
 	_expect(not Schema.validate(wrong_version).is_valid(), "unknown schema version must fail closed")

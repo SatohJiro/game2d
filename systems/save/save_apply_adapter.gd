@@ -112,7 +112,8 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		base_state,
 		placements,
 		resource_depletions,
-		float(snapshot["world"]["clock_seconds"])
+		float(snapshot["world"]["clock_seconds"]),
+		bool(snapshot["world"].get("cycle_state", {"raid_triggered_this_cycle": false})["raid_triggered_this_cycle"])
 	)
 
 
@@ -152,7 +153,7 @@ static func _commit(player: Node, plan: RefCounted) -> RefCounted:
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	if not bool(player.call("apply_resource_depletion_snapshot", plan.resource_depletions)):
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
-	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds)
+	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle)
 
 
 static func _is_default_base_state(state: BaseProgressState) -> bool:

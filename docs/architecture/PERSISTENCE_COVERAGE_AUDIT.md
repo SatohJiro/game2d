@@ -70,3 +70,7 @@ Bốn rock tĩnh có ID `resource.rock_1`…`resource.rock_4` và subtype `resou
 ## U1.12w world clock owner
 
 Main truyền `day_time` khi save và chỉ commit clock trả về sau load primary/backup thành công. Failed load giữ clock runtime; apply clock refresh ambient nhưng không tự chạy raid/boss/spawn transaction. Regression chạy Main scene thật qua repository JSON, đồng thời khóa resource health JSON-integer compatibility. Raid-cycle flag, boss và spawn timers vẫn là gap encounter riêng.
+
+## U1.12x raid-cycle guard
+
+Clock và `raid_triggered_this_cycle` round-trip atomically qua Main boundary. Guard true trước phase 0.72 fail schema; load active-night không gọi raid spawn và failed load giữ cả hai runtime fields. Raid creature Node không persist; boss/spawn timers vẫn PARTIAL.

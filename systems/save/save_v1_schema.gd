@@ -30,7 +30,7 @@ static func create_empty(save_id: StringName, saved_at_unix: int) -> Dictionary:
 		"inventory": {},
 		"pets": [],
 		"base": {"base_level": 1, "active_quest_id": "quest.base.survival", "claimed_quest_ids": []},
-		"world": {"clock_seconds": 0.0, "entity_deltas": [], "resource_deltas": []},
+		"world": {"clock_seconds": 0.0, "cycle_state": {"raid_triggered_this_cycle": false}, "entity_deltas": [], "resource_deltas": []},
 	}
 
 
@@ -134,6 +134,8 @@ static func _validate_world(value: Variant, errors: PackedStringArray) -> void:
 	var world: Dictionary = value
 	if not _is_finite_number(world.get("clock_seconds")) or float(world.get("clock_seconds", -1.0)) < 0.0:
 		errors.append("world.clock_seconds must be finite and non-negative")
+	elif WorldCycleState.from_dto(world.get("cycle_state", {"raid_triggered_this_cycle": false}), float(world["clock_seconds"])) == null:
+		errors.append("world.cycle_state must be coherent with clock phase")
 	if typeof(world.get("entity_deltas")) != TYPE_ARRAY:
 		errors.append("world.entity_deltas must be an Array")
 		return

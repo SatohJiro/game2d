@@ -188,6 +188,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.11e: migration chỉ chấp nhận route tuần tự duy nhất tới current schema và validate output cuối; version tương lai, missing/cycle/ambiguous step đều không được vào runtime.
 - U1.11f: explicit coordinator dừng pipeline ngay khi snapshot/repository/migration/apply lỗi; load success báo primary/backup và trả clock cho world owner. Chưa tự autosave hoặc gọi từ UI.
 - U1.12w: Main là world-clock owner; explicit save truyền `day_time`, explicit load chỉ commit clock và refresh ambient sau success. Failed load giữ clock; raid/boss/spawn timers chưa persist.
+- U1.12x: raid-cycle guard đi cùng clock; load giữa đêm sau raid không spawn raid lặp. Raid actor, boss và spawn timers chưa persist.
 - U1.12b: 25 inventory key reachable trong core/crafting/farming/ranch/cooking đều project sang stable `item.*`; regression từng nhóm bảo đảm output gameplay hợp lệ không làm save thất bại. Unknown key vẫn bị từ chối nguyên khối.
 - U1.12c: rarity, trait và stance của từng pet dùng stable ID; save/load giữ metadata và command stance cho cả pet active lẫn inactive. Badge/name localized chỉ là presentation; roll, multiplier và hành vi pet không đổi.
 - U1.12d: Save v1 giữ base level, active stable quest ID và claimed quest IDs; state skip/mâu thuẫn hoặc localized title fail closed, apply không phát reward.

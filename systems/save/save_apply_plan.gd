@@ -11,6 +11,7 @@ var base_progress_state: BaseProgressState
 var building_placements: Array[BuildingPlacementRecord]
 var resource_depletions: Array[ResourceDepletionRecord]
 var world_clock_seconds: float
+var raid_triggered_this_cycle: bool
 
 
 func _init(
@@ -23,7 +24,8 @@ func _init(
 	p_base_progress_state: BaseProgressState,
 	p_building_placements: Array[BuildingPlacementRecord],
 	p_resource_depletions: Array[ResourceDepletionRecord],
-	p_world_clock_seconds: float
+	p_world_clock_seconds: float,
+	p_raid_triggered_this_cycle: bool
 ) -> void:
 	player_state = p_player_state.duplicate(true)
 	legacy_inventory = p_legacy_inventory.duplicate(true)
@@ -35,3 +37,4 @@ func _init(
 	building_placements = p_building_placements.duplicate()
 	resource_depletions = p_resource_depletions.duplicate()
 	world_clock_seconds = p_world_clock_seconds
+	raid_triggered_this_cycle = p_raid_triggered_this_cycle

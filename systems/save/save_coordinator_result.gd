@@ -7,18 +7,21 @@ var status: Status
 var world_clock_seconds: float
 var upstream_status: int
 var errors: PackedStringArray
+var raid_triggered_this_cycle: bool
 
 
 func _init(
 	p_status: Status,
 	p_world_clock_seconds: float = 0.0,
 	p_upstream_status: int = -1,
-	p_errors: PackedStringArray = PackedStringArray()
+	p_errors: PackedStringArray = PackedStringArray(),
+	p_raid_triggered_this_cycle: bool = false
 ) -> void:
 	status = p_status
 	world_clock_seconds = p_world_clock_seconds
 	upstream_status = p_upstream_status
 	errors = p_errors.duplicate()
+	raid_triggered_this_cycle = p_raid_triggered_this_cycle
 
 
 func is_success() -> bool:
