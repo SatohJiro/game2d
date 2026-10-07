@@ -98,3 +98,7 @@ Lifecycle/instance ID/HP/position đã round-trip và Main restore active đúng
 ## U1.12ad world-boss capture lifecycle
 
 Accepted capture phát stable removal reason và Main terminal-commit đúng owned world boss trước actor free. Reject/duplicate/foreign actor không mutate; save sau captured state không respawn. World-boss defeat + capture coverage hiện FULL; generic external despawn vẫn fail snapshot thay vì suy đoán lifecycle.
+
+## U1.12ae night-raid actor audit
+
+Ba raid actor hiện không có stable identity/reference và owner không nhận defeat/capture removal; guard true không phân biệt active/cleared. Pure `NightRaidState` đã khóa cycle-scoped encounter cùng ba actor slot, resolved species, level/HP/position và JSON validation. Coverage vẫn PARTIAL; chưa admit Save v1 hoặc spawn khi load.

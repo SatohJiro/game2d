@@ -126,6 +126,10 @@ U1.12ab đã đóng actor ownership và defeat-event gate; `spawn_boss(false)` s
 
 U1.12ad không đổi schema: accepted capture chuyển runtime state sang DEFEATED trước free, nên snapshot kế tiếp dùng terminal DTO hiện hữu. Reject hoặc duplicate không đổi DTO.
 
+## U1.12ae night-raid admission gate
+
+`NightRaidState` và `NightRaidActorState` là pure contract chưa thuộc Save v1. Chỉ admit sau khi Main sở hữu stable actor slots và aggregate defeat/capture removal thành CLEARED. DTO tương lai không chứa Node, target, scene path hay species/position RNG.
+
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure

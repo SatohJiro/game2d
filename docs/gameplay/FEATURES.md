@@ -195,6 +195,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.12ab: Main chỉ spawn một world boss và chỉ nhận defeat từ actor/group/ID đang sở hữu; callback lặp, quái thường và altar boss không đổi lifecycle. Reward/drop giữ nguyên.
 - U1.12ac: world boss lifecycle/HP/position round-trip; active load dựng đúng một actor không EXP/drop/banner/audio, defeated load không spawn, corrupt load giữ actor/state.
 - U1.12ad: capture accepted phát `creature.removal.captured` trước despawn; world boss chuyển terminal đúng một lần và save/reload không respawn. Reject/duplicate/actor khác không đổi encounter.
+- U1.12ae: night raid có typed pending/active/cleared contract, cycle index và tối đa ba stable actor slot; chưa restore cho tới khi Main sở hữu defeat/capture removal lifecycle.
 - U1.12b: 25 inventory key reachable trong core/crafting/farming/ranch/cooking đều project sang stable `item.*`; regression từng nhóm bảo đảm output gameplay hợp lệ không làm save thất bại. Unknown key vẫn bị từ chối nguyên khối.
 - U1.12c: rarity, trait và stance của từng pet dùng stable ID; save/load giữ metadata và command stance cho cả pet active lẫn inactive. Badge/name localized chỉ là presentation; roll, multiplier và hành vi pet không đổi.
 - U1.12d: Save v1 giữ base level, active stable quest ID và claimed quest IDs; state skip/mâu thuẫn hoặc localized title fail closed, apply không phát reward.

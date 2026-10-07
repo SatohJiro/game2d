@@ -80,6 +80,8 @@ U1.12u dành `resource.tree` cho subtype và `resource.tree_*` cho sáu instance
 
 U1.12v mở cùng contract cho `resource.rock` và bốn instance `resource.rock_1`…`resource.rock_4`. Max health do stable subtype quyết định: tree 60, rock 80; max health không serialize. Random rock texture chỉ là presentation và không trở thành identity/state. Cả hai subtype dùng respawn countdown 18 giây deterministic.
 
+U1.12ae dành `raid.night_current` cho encounter hiện tại, `raid.night_actor_1..3` cho ba slot actor và `raid.lifecycle.*` cho lifecycle. Actor state lưu resolved `creature.*`, không lưu species/angle/radius RNG; cycle index kết hợp encounter ID để phân biệt các đêm lặp lại.
+
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.
