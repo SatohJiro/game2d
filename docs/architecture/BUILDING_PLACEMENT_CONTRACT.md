@@ -1,4 +1,4 @@
-# U1.12n — Building placement and admitted subtype state contract
+# U1.12o — Building placement and admitted subtype state contract
 
 Chín subtype placement reachable được map từ legacy recipe ID sang stable `building.*` bởi `BuildingPlacementCatalog`. Mỗi placement do Player tạo nhận `building.instance_*`; Node name, scene path và asset path không phải identity.
 
@@ -14,6 +14,8 @@ U1.12m admit `building.turret` với `TurretPlacementState`. DTO chỉ chứa `c
 
 U1.12n mở rộng `ChestPlacementState` bằng durability `health` nguyên trong `[1, 250]`, bên cạnh inventory đã admit. State cũ chỉ có inventory được normalize về 250. Staged restore giữ health qua `_ready()` bằng pending scalar rồi gán trực tiếp; không gọi `take_damage()`, destruction, reward hoặc presentation. Health 0 biểu diễn chest đã bị phá nên không phải placement live hợp lệ.
 
-Audit subtype còn lại: các building ngoài chest vẫn chưa persist health. Resource-node tree/rock depletion và runtime Node references vẫn ngoài phạm vi.
+U1.12o mở rộng `FurnacePlacementState` bằng durability `health` nguyên trong `[1, 300]`. State processing năm field cũ được normalize về 300. Pending scalar giữ health qua `_ready()`; restore gán input/output/progress/health trực tiếp và không gọi `take_damage()`, smelting tick, destruction, reward hoặc presentation.
 
-Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12n: bỏ chest health/pending restore và quay state về inventory-only; save mới có health sau rollback sẽ fail closed.
+Audit subtype còn lại: các building ngoài chest/furnace vẫn chưa persist health. Resource-node tree/rock depletion và runtime Node references vẫn ngoài phạm vi.
+
+Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12o: bỏ furnace health/pending restore và quay state về processing-only; save mới có health sau rollback sẽ fail closed.

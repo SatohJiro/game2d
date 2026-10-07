@@ -153,3 +153,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12n chest durability
 
 `ChestPlacementState` gồm inventory và `health` nguyên trong `[1, 250]`. DTO inventory-only từ U1.12f vẫn được đọc với health mặc định 250; snapshot mới luôn ghi health. Restore validate inventory/capacity/health trước commit, giữ scalar qua `_ready()` và không gọi damage/destruction flow. Health 0, vượt 250, sai type hoặc field thừa fail trước khi thay runtime chest.
+
+## U1.12o furnace durability
+
+`FurnacePlacementState` thêm `health` nguyên trong `[1, 300]`; state năm field từ U1.12g vẫn đọc với health mặc định 300. Snapshot mới ghi input/output/progress/health. Restore giữ health qua `_ready()` nhưng không chạy `_process()`, smelting transaction, damage hoặc destruction; health sai type/miền và field thừa fail trước runtime replacement.

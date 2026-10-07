@@ -3,6 +3,7 @@ class_name BuildingFurnace
 
 @export var max_health: int = 300
 var health: int = 300
+var _pending_restored_health: int = -1
 
 var ore_count: int = 0
 var wood_count: int = 0
@@ -22,7 +23,8 @@ const FLOATING_TEXT_SCENE = preload("res://scenes/floating_text.tscn")
 func _ready() -> void:
 	add_to_group("buildings")
 	add_to_group("furnaces")
-	health = max_health
+	health = _pending_restored_health if _pending_restored_health >= 1 else max_health
+	_pending_restored_health = -1
 	update_display()
 
 func _process(delta: float) -> void:
@@ -110,7 +112,7 @@ func update_display() -> void:
 
 
 func create_persistence_state() -> FurnacePlacementState:
-	return FurnacePlacementState.new(ore_count, wood_count, iron_ingots_ready, pal_ingots_ready, smelt_timer)
+	return FurnacePlacementState.new(ore_count, wood_count, iron_ingots_ready, pal_ingots_ready, smelt_timer, health)
 
 
 func apply_persistence_state(state: FurnacePlacementState) -> bool:
@@ -123,6 +125,10 @@ func apply_persistence_state(state: FurnacePlacementState) -> bool:
 	smelt_timer = state.smelt_timer
 	is_smelting = ore_count >= 2 and wood_count >= 1
 	has_fire_pet_boost = false
+	if is_node_ready():
+		health = state.health
+	else:
+		_pending_restored_health = state.health
 	update_display()
 	return true
 

@@ -116,6 +116,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.12l altar persistence | Hoàn tất | Stable boss lifecycle/identity/HP restore đúng một actor, không phát reward giả |
 | U1.12m turret persistence | Hoàn tất | Typed cooldown round-trip; target/projectile runtime không serialize và load không tạo phát bắn |
 | U1.12n chest durability | Hoàn tất | Inventory + health round-trip; staged load không phát destruction side effect |
+| U1.12o furnace durability | Hoàn tất | Processing + health round-trip; load không tick smelting hoặc destruction |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Hạ tầng | Save v1 explicit Player round-trip xanh; chưa autosave/UI và chưa phủ world/base delta |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

@@ -99,6 +99,9 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_furnace_progress := Schema.create_empty(&"save.slot_1", 1)
 	invalid_furnace_progress["world"]["entity_deltas"] = [{"instance_id": "building.instance_furnace", "building_id": "building.furnace", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"ore_count": 0, "wood_count": 0, "iron_ingots_ready": 0, "pal_ingots_ready": 0, "smelt_timer": 2.0}}]
 	_expect(not Schema.validate(invalid_furnace_progress).is_valid(), "furnace progress without a committed batch must fail before mutation")
+	var invalid_furnace_health := Schema.create_empty(&"save.slot_1", 1)
+	invalid_furnace_health["world"]["entity_deltas"] = [{"instance_id": "building.instance_furnace", "building_id": "building.furnace", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"ore_count": 2, "wood_count": 1, "iron_ingots_ready": 0, "pal_ingots_ready": 0, "smelt_timer": 2.0, "health": 301}}]
+	_expect(not Schema.validate(invalid_furnace_health).is_valid(), "furnace health above maximum must fail before mutation")
 	var invalid_cooking_recipe := Schema.create_empty(&"save.slot_1", 1)
 	invalid_cooking_recipe["world"]["entity_deltas"] = [{"instance_id": "building.instance_pot", "building_id": "building.cooking_pot", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"recipe_id": "hearty_stew", "remaining_seconds": 1.5}}]
 	_expect(not Schema.validate(invalid_cooking_recipe).is_valid(), "legacy cooking recipe ID must not become persistence identity")
@@ -269,18 +272,24 @@ func _test_runtime_apply_adapter() -> void:
 		_expect(rejected_durability.status == ApplyResult.Status.INVALID_SNAPSHOT and preserved_chest == reloaded_chest and preserved_chest.health == 137 and LegacyItemAdapter.get_count(preserved_chest.stored_items, &"item.wood") == 17, "invalid chest durability must fail before replacing runtime state")
 		loaded_pet = player.get("active_pet_node")
 	var furnace_save := save.duplicate(true)
-	furnace_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_furnace", "building_id": "building.furnace", "position": {"x": 30.0, "y": 40.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"ore_count": 4, "wood_count": 2, "iron_ingots_ready": 3, "pal_ingots_ready": 1, "smelt_timer": 2.25}}]
+	furnace_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_furnace", "building_id": "building.furnace", "position": {"x": 30.0, "y": 40.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"ore_count": 4, "wood_count": 2, "iron_ingots_ready": 3, "pal_ingots_ready": 1, "smelt_timer": 2.25, "health": 181}}]
 	var furnace_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, furnace_save)
 	var furnace_nodes := get_nodes_in_group("persistent_player_buildings")
 	var loaded_furnace: Variant = furnace_nodes[0] if furnace_nodes.size() == 1 else null
-	_expect(furnace_applied.is_applied() and is_instance_valid(loaded_furnace) and loaded_furnace.get("ore_count") == 4 and loaded_furnace.get("wood_count") == 2 and loaded_furnace.get("iron_ingots_ready") == 3 and loaded_furnace.get("pal_ingots_ready") == 1 and is_equal_approx(loaded_furnace.get("smelt_timer"), 2.25), "furnace committed batch apply mismatch")
+	_expect(furnace_applied.is_applied() and is_instance_valid(loaded_furnace) and loaded_furnace.get("health") == 181 and not loaded_furnace.is_queued_for_deletion() and loaded_furnace.get("ore_count") == 4 and loaded_furnace.get("wood_count") == 2 and loaded_furnace.get("iron_ingots_ready") == 3 and loaded_furnace.get("pal_ingots_ready") == 1 and is_equal_approx(loaded_furnace.get("smelt_timer"), 2.25), "furnace committed batch/durability apply must not run smelting or destruction")
 	var furnace_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2002, 321.5)
 	_expect(furnace_snapshot.is_accepted(), "mid-batch furnace must snapshot with typed state")
 	if furnace_snapshot.is_accepted():
 		var furnace_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, furnace_snapshot.snapshot)
 		var reloaded_furnace_nodes := get_nodes_in_group("persistent_player_buildings")
 		var reloaded_furnace: Variant = reloaded_furnace_nodes[0] if reloaded_furnace_nodes.size() == 1 else null
-		_expect(furnace_reloaded.is_applied() and is_instance_valid(reloaded_furnace) and reloaded_furnace.get("ore_count") == 4 and reloaded_furnace.get("wood_count") == 2 and reloaded_furnace.get("iron_ingots_ready") == 3 and reloaded_furnace.get("pal_ingots_ready") == 1 and is_equal_approx(reloaded_furnace.get("smelt_timer"), 2.25), "furnace save/load must preserve inputs, outputs and progress exactly once")
+		_expect(furnace_reloaded.is_applied() and is_instance_valid(reloaded_furnace) and reloaded_furnace.get("health") == 181 and not reloaded_furnace.is_queued_for_deletion() and reloaded_furnace.get("ore_count") == 4 and reloaded_furnace.get("wood_count") == 2 and reloaded_furnace.get("iron_ingots_ready") == 3 and reloaded_furnace.get("pal_ingots_ready") == 1 and is_equal_approx(reloaded_furnace.get("smelt_timer"), 2.25), "furnace save/load must preserve processing and durability without side effects")
+		var invalid_furnace_durability: Dictionary = furnace_snapshot.snapshot.duplicate(true)
+		invalid_furnace_durability["world"]["entity_deltas"][0]["state"]["health"] = 301
+		var rejected_furnace_durability: RefCounted = ApplyAdapter.apply_player_snapshot(player, invalid_furnace_durability)
+		var preserved_furnaces := get_nodes_in_group("persistent_player_buildings")
+		var preserved_furnace: Variant = preserved_furnaces[0] if preserved_furnaces.size() == 1 else null
+		_expect(rejected_furnace_durability.status == ApplyResult.Status.INVALID_SNAPSHOT and preserved_furnace == reloaded_furnace and preserved_furnace.get("health") == 181 and preserved_furnace.get("iron_ingots_ready") == 3 and is_equal_approx(preserved_furnace.get("smelt_timer"), 2.25), "invalid furnace durability must fail before replacing or advancing runtime state")
 		loaded_pet = player.get("active_pet_node")
 	var cooking_save := save.duplicate(true)
 	cooking_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_pot", "building_id": "building.cooking_pot", "position": {"x": 18.0, "y": 24.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"recipe_id": "recipe.cooking.hearty_stew", "remaining_seconds": 1.75}}]
