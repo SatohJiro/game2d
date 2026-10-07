@@ -4,6 +4,7 @@ class_name BuildingChest
 @export var max_health: int = 250
 @export_range(1, 100, 1) var inventory_slots: int = 12
 var health: int = 250
+var _pending_restored_health: int = -1
 
 var stored_items: Dictionary = {
 	"Gỗ": 0,
@@ -26,7 +27,8 @@ const MANAGED_ITEM_IDS: Array[StringName] = [&"item.wood", &"item.pal_ore", &"it
 func _ready() -> void:
 	add_to_group("buildings")
 	add_to_group("chests")
-	health = max_health
+	health = _pending_restored_health if _pending_restored_health >= 1 else max_health
+	_pending_restored_health = -1
 	update_display()
 
 func deposit_from_pet(item_name: String, amount: int) -> void:
@@ -102,7 +104,7 @@ func create_persistence_state() -> ChestPlacementState:
 		var count := LegacyItemAdapter.get_count(stored_items, item_id)
 		if count > 0:
 			inventory[item_id] = count
-	return ChestPlacementState.new(inventory)
+	return ChestPlacementState.new(inventory, health)
 
 
 func apply_persistence_state(state: ChestPlacementState) -> bool:
@@ -124,6 +126,10 @@ func apply_persistence_state(state: ChestPlacementState) -> bool:
 			return false
 	stored_items.clear()
 	stored_items.merge(shadow_store, true)
+	if is_node_ready():
+		health = state.health
+	else:
+		_pending_restored_health = state.health
 	update_display()
 	return true
 

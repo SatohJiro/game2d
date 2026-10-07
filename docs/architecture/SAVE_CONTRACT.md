@@ -149,3 +149,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12m turret subtype state
 
 `building.turret` nhận `TurretPlacementState = {cooldown_remaining}` với giá trị hữu hạn trong `[0, 1.25]`. Snapshot/apply giữ nhịp bắn đã commit nhưng không serialize target Node, Callable, projectile hay tween. Restore chỉ gán scalar cooldown, không chạy targeting hoặc tạo phát bắn; field thừa và cooldown ngoài miền fail trước mutation.
+
+## U1.12n chest durability
+
+`ChestPlacementState` gồm inventory và `health` nguyên trong `[1, 250]`. DTO inventory-only từ U1.12f vẫn được đọc với health mặc định 250; snapshot mới luôn ghi health. Restore validate inventory/capacity/health trước commit, giữ scalar qua `_ready()` và không gọi damage/destruction flow. Health 0, vượt 250, sai type hoặc field thừa fail trước khi thay runtime chest.

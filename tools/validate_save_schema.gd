@@ -90,6 +90,9 @@ func _test_identity_and_shape_guards() -> void:
 	var over_capacity_chest := Schema.create_empty(&"save.slot_1", 1)
 	over_capacity_chest["world"]["entity_deltas"] = [{"instance_id": "building.instance_chest", "building_id": "building.chest", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"inventory": {"item.berry": 1189}}}]
 	_expect(not Schema.validate(over_capacity_chest).is_valid(), "over-capacity chest state must fail before runtime mutation")
+	var invalid_chest_health := Schema.create_empty(&"save.slot_1", 1)
+	invalid_chest_health["world"]["entity_deltas"] = [{"instance_id": "building.instance_chest", "building_id": "building.chest", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"inventory": {"item.wood": 1}, "health": 0}}]
+	_expect(not Schema.validate(invalid_chest_health).is_valid(), "destroyed chest health must fail before mutation")
 	var state_on_furnace := Schema.create_empty(&"save.slot_1", 1)
 	state_on_furnace["world"]["entity_deltas"] = [{"instance_id": "building.instance_furnace", "building_id": "building.furnace", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"inventory": {}}}]
 	_expect(not Schema.validate(state_on_furnace).is_valid(), "furnace must reject state from another subtype")
@@ -235,7 +238,7 @@ func _test_runtime_apply_adapter() -> void:
 	}]
 	save["world"]["clock_seconds"] = 321.5
 	save["base"] = {"base_level": 4, "active_quest_id": "quest.base.fortress", "claimed_quest_ids": ["quest.base.survival", "quest.base.organic_farming", "quest.base.automation"]}
-	save["world"]["entity_deltas"] = [{"instance_id": "building.instance_loaded", "building_id": "building.chest", "position": {"x": 44.0, "y": 55.0}, "rotation": 0.5, "scale": {"x": 1.0, "y": 1.0}, "state": {"inventory": {"item.wood": 17, "item.berry": 4}}}]
+	save["world"]["entity_deltas"] = [{"instance_id": "building.instance_loaded", "building_id": "building.chest", "position": {"x": 44.0, "y": 55.0}, "rotation": 0.5, "scale": {"x": 1.0, "y": 1.0}, "state": {"inventory": {"item.wood": 17, "item.berry": 4}, "health": 137}}]
 	var applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, save)
 	_expect(applied.is_applied() and is_equal_approx(applied.world_clock_seconds, 321.5), "valid Save v1 must apply and return world clock")
 	_expect(player.global_position == Vector2(91.25, 42.5) and player.get("level") == 4 and player.get("hp") == 77, "player scalar apply mismatch")
@@ -250,14 +253,20 @@ func _test_runtime_apply_adapter() -> void:
 	var loaded_buildings := get_nodes_in_group("persistent_player_buildings")
 	_expect(loaded_buildings.size() == 1 and loaded_buildings[0].get_meta("building_instance_id") == &"building.instance_loaded" and loaded_buildings[0].global_position == Vector2(44.0, 55.0), "building placement apply mismatch")
 	var loaded_chest: BuildingChest = loaded_buildings[0] as BuildingChest
-	_expect(loaded_chest != null and LegacyItemAdapter.get_count(loaded_chest.stored_items, &"item.wood") == 17 and LegacyItemAdapter.get_count(loaded_chest.stored_items, &"item.berry") == 4, "chest committed inventory apply mismatch")
+	_expect(loaded_chest != null and loaded_chest.health == 137 and not loaded_chest.is_queued_for_deletion() and LegacyItemAdapter.get_count(loaded_chest.stored_items, &"item.wood") == 17 and LegacyItemAdapter.get_count(loaded_chest.stored_items, &"item.berry") == 4, "chest inventory/durability apply must not trigger destruction")
 	var chest_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2001, 321.5)
 	_expect(chest_snapshot.is_accepted(), "loaded chest must snapshot with typed state")
 	if chest_snapshot.is_accepted():
 		var reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, chest_snapshot.snapshot)
 		var reloaded_buildings := get_nodes_in_group("persistent_player_buildings")
 		var reloaded_chest: BuildingChest = reloaded_buildings[0] as BuildingChest if reloaded_buildings.size() == 1 else null
-		_expect(reloaded.is_applied() and reloaded_chest != null and LegacyItemAdapter.get_count(reloaded_chest.stored_items, &"item.wood") == 17 and LegacyItemAdapter.get_count(reloaded_chest.stored_items, &"item.berry") == 4, "chest save/load must preserve committed counts exactly once")
+		_expect(reloaded.is_applied() and reloaded_chest != null and reloaded_chest.health == 137 and not reloaded_chest.is_queued_for_deletion() and LegacyItemAdapter.get_count(reloaded_chest.stored_items, &"item.wood") == 17 and LegacyItemAdapter.get_count(reloaded_chest.stored_items, &"item.berry") == 4, "chest save/load must preserve inventory and durability without destruction")
+		var invalid_durability: Dictionary = chest_snapshot.snapshot.duplicate(true)
+		invalid_durability["world"]["entity_deltas"][0]["state"]["health"] = 0
+		var rejected_durability: RefCounted = ApplyAdapter.apply_player_snapshot(player, invalid_durability)
+		var preserved_chests := get_nodes_in_group("persistent_player_buildings")
+		var preserved_chest: BuildingChest = preserved_chests[0] as BuildingChest if preserved_chests.size() == 1 else null
+		_expect(rejected_durability.status == ApplyResult.Status.INVALID_SNAPSHOT and preserved_chest == reloaded_chest and preserved_chest.health == 137 and LegacyItemAdapter.get_count(preserved_chest.stored_items, &"item.wood") == 17, "invalid chest durability must fail before replacing runtime state")
 		loaded_pet = player.get("active_pet_node")
 	var furnace_save := save.duplicate(true)
 	furnace_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_furnace", "building_id": "building.furnace", "position": {"x": 30.0, "y": 40.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"ore_count": 4, "wood_count": 2, "iron_ingots_ready": 3, "pal_ingots_ready": 1, "smelt_timer": 2.25}}]

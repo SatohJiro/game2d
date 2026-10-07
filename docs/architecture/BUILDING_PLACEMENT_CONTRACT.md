@@ -1,4 +1,4 @@
-# U1.12m — Building placement and admitted subtype state contract
+# U1.12n — Building placement and admitted subtype state contract
 
 Chín subtype placement reachable được map từ legacy recipe ID sang stable `building.*` bởi `BuildingPlacementCatalog`. Mỗi placement do Player tạo nhận `building.instance_*`; Node name, scene path và asset path không phải identity.
 
@@ -12,6 +12,8 @@ U1.12l admit `building.altar` với `AltarPlacementState`: lifecycle `altar.life
 
 U1.12m admit `building.turret` với `TurretPlacementState`. DTO chỉ chứa `cooldown_remaining` hữu hạn trong `[0, 1.25]`; damage, range và fire interval vẫn là tuning runtime. Target được tìm mới mỗi physics tick, còn target Node, Callable, projectile và tween đang bay là transient nên không serialize. Apply chỉ gán cooldown, không gọi targeting hay `fire_projectile()`.
 
-Audit subtype còn lại: mọi building có health. Resource-node tree/rock depletion và runtime Node references vẫn ngoài phạm vi.
+U1.12n mở rộng `ChestPlacementState` bằng durability `health` nguyên trong `[1, 250]`, bên cạnh inventory đã admit. State cũ chỉ có inventory được normalize về 250. Staged restore giữ health qua `_ready()` bằng pending scalar rồi gán trực tiếp; không gọi `take_damage()`, destruction, reward hoặc presentation. Health 0 biểu diễn chest đã bị phá nên không phải placement live hợp lệ.
 
-Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12m: bỏ turret state và Player dispatch; save có turret state sau rollback sẽ fail closed.
+Audit subtype còn lại: các building ngoài chest vẫn chưa persist health. Resource-node tree/rock depletion và runtime Node references vẫn ngoài phạm vi.
+
+Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12n: bỏ chest health/pending restore và quay state về inventory-only; save mới có health sau rollback sẽ fail closed.

@@ -62,6 +62,8 @@ U1.12l dành `altar.lifecycle.*` cho state và `boss.instance_*` cho encounter i
 
 U1.12m turret persistence không thêm identity mới: state chỉ có scalar `cooldown_remaining`. Target Node, projectile, Callable và scene/asset path không được dùng làm identity hoặc đưa qua DTO.
 
+U1.12n chest durability không thêm identity mới: `health` là scalar state, còn `max_health = 250` là contract/tuning hiện tại. Node, scene path, tween và destruction callback không đi qua DTO.
+
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.
