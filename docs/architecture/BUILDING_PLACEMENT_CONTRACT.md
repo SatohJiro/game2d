@@ -1,13 +1,13 @@
-# U1.12i — Building placement and admitted processing state contract
+# U1.12j — Building placement, processing and ranch state contract
 
 Chín subtype placement reachable được map từ legacy recipe ID sang stable `building.*` bởi `BuildingPlacementCatalog`. Mỗi placement do Player tạo nhận `building.instance_*`; Node name, scene path và asset path không phải identity.
 
 `BuildingPlacementRecord` gồm instance ID, subtype ID, transform finite và `state` theo subtype. Player giữ placement ledger, không scan SceneTree mỗi frame; snapshot chỉ query group một lần khi save để chiếu transform/state live. Starter building trong scene không bị thay.
 
-`building.chest`, `building.furnace` và `building.cooking_pot` dùng typed state riêng. U1.12i admit `building.compost_bin` với `CompostBinPlacementState`: material đã commit, fertilizer chờ nhận và timer trong chu kỳ 8 giây. Material bắt buộc 0–10, output không âm; timer dương chỉ hợp lệ khi còn material. Record cũ thiếu state được normalize thành state rỗng theo subtype; subtype khác bắt buộc state rỗng.
+Các subtype chest/furnace/cooking/compost dùng typed state riêng. U1.12j admit `building.ranch` với `RanchPlacementState`: food không âm, tối đa hai assignment stable và timer `[0,10)`. Pet sở hữu dùng `pet.instance_*`; resident Slime mặc định dùng `ranch.resident_starter`, scoped trong building record. Assignment ID phải unique và species phải thuộc catalog hiện hữu. Record cũ thiếu state được normalize rồi ranch `_ready` tái lập resident mặc định.
 
-Chest restore qua capacity-checked shadow store. Furnace, cooking pot và compost snapshot giữ input/output/progress đã commit; apply gán state đúng một lần nên không trừ lại input hoặc cộng lại output. Presentation, player-in-range và UI không persist. Save apply instantiate và apply toàn bộ state off-tree trước khi thay world.
+Ranch snapshot chỉ giữ food/assignment/species/progress. `animal_nodes`, Sprite, random wander/eat/sleep state và localized pet name là presentation được dựng lại sau add-tree. Apply không chạy production hoặc cấp lại reward; Save apply instantiate và apply toàn bộ state off-tree trước khi thay world.
 
-Audit subtype còn lại: ranch có food/assignment/production timer/runtime animals; farm plot có crop/stage/growth/moisture/fertilizer; altar có boss-active; turret có cooldown; mọi building có health. Các state này và runtime Node references vẫn ngoài phạm vi.
+Audit subtype còn lại: farm plot có crop/stage/growth/moisture/fertilizer; altar có boss-active; turret có cooldown; mọi building có health. Các state này và runtime Node references vẫn ngoài phạm vi.
 
-Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12i: bỏ compost state và projection/apply/validation; save có compost state sau rollback sẽ fail closed.
+Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12j: bỏ ranch state/identity bridge và projection/apply/validation; save có ranch state sau rollback sẽ fail closed.

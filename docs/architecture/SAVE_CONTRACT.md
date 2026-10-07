@@ -133,3 +133,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12i compost-bin subtype state
 
 `building.compost_bin` nhận `CompostBinPlacementState` gồm `organic_materials`, `ready_fertilizer_count` và `composting_timer`. Material bị khóa trong 0–10, output không âm, timer hữu hạn trong `[0,8)` và phải bằng 0 khi không còn material. Snapshot/apply lặp lại giữ nguyên input, output và progress thay vì chạy lại transaction.
+
+## U1.12j ranch subtype state
+
+`building.ranch` nhận `RanchPlacementState` gồm food, tối đa hai `{assignment_id, species_id}` và production timer. Owned assignment dùng `pet.*`; starter resident dùng `ranch.resident_starter`. ID trùng/localized, species không hỗ trợ, count âm và timer ngoài `[0,10)` fail closed. Runtime animal Node và behavior state được dựng lại từ assignment, không serialize.

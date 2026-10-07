@@ -108,6 +108,12 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_compost_progress := Schema.create_empty(&"save.slot_1", 1)
 	invalid_compost_progress["world"]["entity_deltas"] = [{"instance_id": "building.instance_compost", "building_id": "building.compost_bin", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"organic_materials": 0, "ready_fertilizer_count": 2, "composting_timer": 3.0}}]
 	_expect(not Schema.validate(invalid_compost_progress).is_valid(), "compost progress without committed material must fail before mutation")
+	var invalid_ranch_identity := Schema.create_empty(&"save.slot_1", 1)
+	invalid_ranch_identity["world"]["entity_deltas"] = [{"instance_id": "building.instance_ranch", "building_id": "building.ranch", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"food_count": 8, "assignments": [{"assignment_id": "Lovely Slime", "species_id": "creature.slime"}], "production_timer": 2.0}}]
+	_expect(not Schema.validate(invalid_ranch_identity).is_valid(), "localized ranch assignment identity must fail before mutation")
+	var duplicate_ranch_assignment := Schema.create_empty(&"save.slot_1", 1)
+	duplicate_ranch_assignment["world"]["entity_deltas"] = [{"instance_id": "building.instance_ranch", "building_id": "building.ranch", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"food_count": 8, "assignments": [{"assignment_id": "pet.loaded_1", "species_id": "creature.flam"}, {"assignment_id": "pet.loaded_1", "species_id": "creature.flam"}], "production_timer": 2.0}}]
+	_expect(not Schema.validate(duplicate_ranch_assignment).is_valid(), "duplicate ranch assignment must fail before mutation")
 
 
 func _test_non_serializable_guards() -> void:
@@ -279,6 +285,21 @@ func _test_runtime_apply_adapter() -> void:
 		var reloaded_compost_nodes := get_nodes_in_group("persistent_player_buildings")
 		var reloaded_compost: Variant = reloaded_compost_nodes[0] if reloaded_compost_nodes.size() == 1 else null
 		_expect(compost_reloaded.is_applied() and is_instance_valid(reloaded_compost) and reloaded_compost.get("organic_materials") == 6 and reloaded_compost.get("ready_fertilizer_count") == 4 and is_equal_approx(reloaded_compost.get("composting_timer"), 3.25), "compost save/load must preserve input, output and progress exactly once")
+		loaded_pet = player.get("active_pet_node")
+	var ranch_save := save.duplicate(true)
+	ranch_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_ranch", "building_id": "building.ranch", "position": {"x": 9.0, "y": 15.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"food_count": 13, "assignments": [{"assignment_id": "ranch.resident_starter", "species_id": "creature.slime"}, {"assignment_id": "pet.loaded_1", "species_id": "creature.flam"}], "production_timer": 4.5}}]
+	var ranch_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, ranch_save)
+	var ranch_nodes := get_nodes_in_group("persistent_player_buildings")
+	var loaded_ranch: Variant = ranch_nodes[0] if ranch_nodes.size() == 1 else null
+	_expect(ranch_applied.is_applied() and is_instance_valid(loaded_ranch) and loaded_ranch.get("food_count") == 13 and loaded_ranch.get("assigned_pets").size() == 2 and loaded_ranch.get("animal_nodes").size() == 2 and is_equal_approx(loaded_ranch.get("production_timer"), 4.5), "ranch stable assignments/production apply mismatch")
+	var ranch_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2005, 321.5)
+	_expect(ranch_snapshot.is_accepted(), "active ranch must snapshot without runtime animal nodes")
+	if ranch_snapshot.is_accepted():
+		var ranch_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, ranch_snapshot.snapshot)
+		var reloaded_ranch_nodes := get_nodes_in_group("persistent_player_buildings")
+		var reloaded_ranch: Variant = reloaded_ranch_nodes[0] if reloaded_ranch_nodes.size() == 1 else null
+		var ranch_assignments: Array = reloaded_ranch.get("assigned_pets") if is_instance_valid(reloaded_ranch) else []
+		_expect(ranch_reloaded.is_applied() and ranch_assignments.size() == 2 and ranch_assignments[0].get("assignment_id") == &"ranch.resident_starter" and ranch_assignments[1].get("assignment_id") == &"pet.loaded_1" and reloaded_ranch.get("animal_nodes").size() == 2 and is_equal_approx(reloaded_ranch.get("production_timer"), 4.5), "ranch save/load must preserve assignments once and rebuild presentation nodes")
 		loaded_pet = player.get("active_pet_node")
 
 	var position_before: Vector2 = player.global_position

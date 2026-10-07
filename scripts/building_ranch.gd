@@ -42,10 +42,9 @@ func _ready() -> void:
 	# Default starter pet in ranch (Lovely Slime)
 	if assigned_pets.size() == 0:
 		assigned_pets.append({
-			"species_data": {
-				"name": "Slime",
-				"element": "Nước"
-			}
+			"assignment_id": RanchPlacementState.STARTER_RESIDENT_ID,
+			"species_id": LegacySpeciesAdapter.SLIME_ID,
+			"species_data": LegacySpeciesAdapter.create_runtime_snapshot_for_id(LegacySpeciesAdapter.SLIME_ID),
 		})
 	
 	refresh_ranch_animals()
@@ -269,7 +268,8 @@ func interact(player: CharacterBody2D) -> void:
 	
 	# Option 2: Assign pet from player party if slot open
 	if player.pet_party.size() > 0 and assigned_pets.size() < 2:
-		var pet_entry = player.pet_party[0]
+		var pet_entry: Dictionary = player.pet_party[0].duplicate(true)
+		pet_entry["assignment_id"] = pet_entry.get("instance_id", &"")
 		assigned_pets.append(pet_entry)
 		refresh_ranch_animals()
 		spawn_floating_text("Đã đưa [%s] vào Chuồng Chăn Nuôi!" % pet_entry["species_data"]["name"], Color(0.4, 1.0, 0.5))
@@ -283,6 +283,34 @@ func interact(player: CharacterBody2D) -> void:
 func update_prompt() -> void:
 	if not prompt_label: return
 	prompt_label.text = "[E] Thêm Thức Ăn (%d) | Pet: %d/2" % [food_count, assigned_pets.size()]
+
+
+func create_persistence_state() -> RanchPlacementState:
+	var assignments: Array[Dictionary] = []
+	for entry: Dictionary in assigned_pets:
+		assignments.append({
+			"assignment_id": StringName(entry.get("assignment_id", entry.get("instance_id", &""))),
+			"species_id": StringName(entry.get("species_id", entry.get("species_data", {}).get("id", &""))),
+		})
+	return RanchPlacementState.new(food_count, assignments, production_timer)
+
+
+func apply_persistence_state(state: RanchPlacementState) -> bool:
+	if state == null or not state.is_valid():
+		return false
+	var restored: Array[Dictionary] = []
+	for assignment: Dictionary in state.assignments:
+		var species_id := StringName(assignment["species_id"])
+		restored.append({
+			"assignment_id": StringName(assignment["assignment_id"]),
+			"instance_id": StringName(assignment["assignment_id"]) if StringName(assignment["assignment_id"]) != RanchPlacementState.STARTER_RESIDENT_ID else &"",
+			"species_id": species_id,
+			"species_data": LegacySpeciesAdapter.create_runtime_snapshot_for_id(species_id),
+		})
+	food_count = state.food_count
+	assigned_pets = restored
+	production_timer = state.production_timer
+	return true
 
 func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player") and prompt_label:

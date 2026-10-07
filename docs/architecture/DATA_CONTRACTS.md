@@ -54,6 +54,8 @@ U1.12h admit năm stable recipe ID `recipe.cooking.smoked_meat`, `hearty_stew`, 
 
 U1.12i admit `CompostBinPlacementState` cho đúng `building.compost_bin`. State chỉ chứa scalar JSON-safe với range/coherence validation; fertilizer display text không trở thành identity.
 
+U1.12j admit ranch assignment identity: owned pet giữ `pet.instance_*`; resident baseline dùng `ranch.resident_starter` trong scope của building record. Save giữ stable species ID, không giữ localized species name hoặc runtime animal Node.
+
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.
