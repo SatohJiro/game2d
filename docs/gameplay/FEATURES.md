@@ -164,7 +164,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 
 ### G14 — world rộng
 
-- Chunk load quanh player theo radius và budget; persistent delta hiện giữ tree health/respawn và player-built state, còn rock/spawn/chunk admission thuộc U2.
+- Chunk load quanh player theo radius và budget; persistent delta hiện giữ static tree/rock health/respawn và player-built state, còn spawn/chunk admission thuộc U2.
 - Biome definition sở hữu terrain palette, spawn table, ambience, resource và hazard.
 - Fast travel chỉ tới point đã khám phá và commit save trước transition.
 - Acceptance: đi qua ít nhất 9 chunk liên tục; quay lại giữ thay đổi; soak 20 phút không tăng node/memory vô hạn.

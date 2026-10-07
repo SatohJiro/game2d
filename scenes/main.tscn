@@ -152,18 +152,22 @@ resource_instance_id = &"resource.tree_6"
 [node name="Rock1" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(-190, 160)
 node_type = 1
+resource_instance_id = &"resource.rock_1"
 
 [node name="Rock2" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(200, 170)
 node_type = 1
+resource_instance_id = &"resource.rock_2"
 
 [node name="Rock3" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(310, -140)
 node_type = 1
+resource_instance_id = &"resource.rock_3"
 
 [node name="Rock4" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(-300, -170)
 node_type = 1
+resource_instance_id = &"resource.rock_4"
 
 [node name="FarmPlot1" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(-70, 50)

@@ -2,6 +2,7 @@ class_name ResourceDepletionRecord
 extends RefCounted
 
 const TREE_ID := &"resource.tree"
+const ROCK_ID := &"resource.rock"
 var instance_id: StringName
 var resource_id: StringName
 var state: ResourceDepletionState
@@ -12,7 +13,7 @@ func _init(p_instance_id: StringName, p_resource_id: StringName, p_state: Resour
 	state = p_state
 
 func is_valid() -> bool:
-	return ContentId.domain_of(instance_id) == &"resource" and resource_id == TREE_ID and state != null and state.is_valid()
+	return ContentId.domain_of(instance_id) == &"resource" and (resource_id == TREE_ID or resource_id == ROCK_ID) and state != null and state.is_valid() and state.max_health == max_health_for(resource_id)
 
 func to_dto() -> Dictionary:
 	return {"instance_id": String(instance_id), "resource_id": String(resource_id), "state": state.to_dto()}
@@ -21,5 +22,11 @@ static func from_dto(value: Variant) -> ResourceDepletionRecord:
 	if typeof(value) != TYPE_DICTIONARY: return null
 	var data: Dictionary = value
 	if data.size() != 3: return null
-	var record := ResourceDepletionRecord.new(StringName(data.get("instance_id", "")), StringName(data.get("resource_id", "")), ResourceDepletionState.from_dto(data.get("state")))
+	var resource_id := StringName(data.get("resource_id", ""))
+	var record := ResourceDepletionRecord.new(StringName(data.get("instance_id", "")), resource_id, ResourceDepletionState.from_dto(data.get("state"), max_health_for(resource_id)))
 	return record if record.is_valid() else null
+
+static func max_health_for(p_resource_id: StringName) -> int:
+	if p_resource_id == TREE_ID: return ResourceDepletionState.TREE_MAX_HEALTH
+	if p_resource_id == ROCK_ID: return ResourceDepletionState.ROCK_MAX_HEALTH
+	return 0
