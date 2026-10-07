@@ -1,37 +1,36 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.12r — altar structure durability persistence
+## U1.12s — turret structure durability persistence
 
 Trạng thái: `VERIFIED` ngày 2026-10-07.
 
 ### Mục tiêu và invariant
 
-- Altar save/load giữ structure health độc lập với boss identity/HP trong cùng typed state.
-- Restore đúng một boss nhưng không gọi offering, summon/completion, reward hay destruction flow.
-- Altar health ngoài 1–1000 fail trước mutation; boss lifecycle/HP và max health giữ nguyên.
+- Turret save/load giữ cooldown và structure health trong cùng typed state.
+- Restore không gọi targeting/fire/destruction và không serialize target/projectile runtime.
+- Health ngoài 1–350 fail trước mutation; damage/range/fire-rate/targeting giữ nguyên.
 
 ### Kết quả đã triển khai
 
-- Mở rộng `AltarPlacementState` bằng `altar_health` 1–1000, tách khỏi `boss_hp` 1–280.
-- Lifecycle DTO ba field cũ mặc định altar health 1000; pending health sống qua `_ready()`.
-- Boss replacement tiếp tục dùng suppression guard nên không phát completion giả.
-- Regression giữ altar 641 HP và đúng một boss ID với 137 HP; altar health 1001 giữ runtime cũ.
+- Mở rộng `TurretPlacementState` bằng health nguyên 1–350; DTO cooldown-only cũ mặc định 350.
+- Turret staged apply dùng pending health để `_ready()` không reset state đã restore.
+- DTO mới chỉ có cooldown/health scalar; target/projectile/tween không đi qua save.
+- Regression giữ cooldown 0.8 và 223 HP; health 351 giữ runtime cũ.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh trước thay đổi.
 - Godot editor import/load và focused `validate_save_schema.gd` xanh; chỉ còn cảnh báo môi trường CA/log `user://` đã biết.
-- Regression apply/snapshot/apply giữ altar/boss state riêng biệt; health 1001 bị reject trước runtime replacement.
+- Regression apply/snapshot/apply giữ cooldown + 223 health; health 351 bị reject trước runtime replacement.
 - Full `tools/check_project.ps1` xanh: 41 Markdown files, asset/content gates, editor load và toàn bộ gameplay/save validators; leak-aware scan `build/checks` sạch.
 
 ### Compatibility, asset và giới hạn
 
-- Save shape pre-release vẫn version 1; altar lifecycle ba field cũ load structure health 1000.
+- Save shape pre-release vẫn version 1; turret cooldown-only state cũ load health 350.
 - Asset/provenance: none.
-- Altar chưa có `take_damage()`; package chỉ persist mutable health hiện hữu, không thêm damage rule.
-- Health của turret/workbench chưa persist; compost/farm plot chưa có durability runtime; resource depletion chưa persist.
-- Rollback: revert altar structure health/pending lifecycle, regression và docs U1.12r.
+- Workbench health chưa persist; compost/farm plot chưa có durability runtime; resource depletion chưa persist.
+- Rollback: revert turret health/pending lifecycle, regression và docs U1.12s.
 
 ### Gói tiếp theo
 
-U1.12s persist riêng turret structure durability theo `NEXT_UPDATE_PROMPT.md`.
+U1.12t persist riêng workbench durability theo `NEXT_UPDATE_PROMPT.md`.

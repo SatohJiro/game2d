@@ -169,3 +169,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12r altar structure durability
 
 `AltarPlacementState` thêm `altar_health` nguyên trong `[1, 1000]`, độc lập với `boss_hp` tối đa 280. Lifecycle state ba field cũ vẫn đọc với altar health mặc định 1000. Restore giữ scalar qua `_ready()`, thay đúng một boss bằng suppression guard và không gọi offering/summon/completion/destruction. Invalid structure health fail trước khi thay altar hoặc boss runtime.
+
+## U1.12s turret structure durability
+
+`TurretPlacementState` gồm `cooldown_remaining` trong `[0, 1.25]` và `health` nguyên `[1, 350]`; DTO cooldown-only cũ mặc định 350. Restore giữ health qua `_ready()` và chỉ commit hai scalar, không target/fire/destruction. Target Node, projectile, Callable và tween không serialize; invalid health fail trước runtime replacement.

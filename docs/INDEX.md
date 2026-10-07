@@ -120,6 +120,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.12p cooking-pot durability | Hoàn tất | 200 HP foundation + recipe/progress/health round-trip không phát reward giả |
 | U1.12q ranch durability | Hoàn tất | Assignment/food/production/health round-trip; đúng hai animal presentation |
 | U1.12r altar durability | Hoàn tất | Structure health tách boss HP; restore đúng một boss, không phát lifecycle giả |
+| U1.12s turret durability | Hoàn tất | Cooldown + health round-trip; không fire, destruction hoặc stale target khi load |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Hạ tầng | Save v1 explicit Player round-trip xanh; chưa autosave/UI và chưa phủ world/base delta |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

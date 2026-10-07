@@ -144,6 +144,9 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_turret_cooldown := Schema.create_empty(&"save.slot_1", 1)
 	invalid_turret_cooldown["world"]["entity_deltas"] = [{"instance_id": "building.instance_turret", "building_id": "building.turret", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"cooldown_remaining": 1.26}}]
 	_expect(not Schema.validate(invalid_turret_cooldown).is_valid(), "turret cooldown above fire interval must fail before mutation")
+	var invalid_turret_health := Schema.create_empty(&"save.slot_1", 1)
+	invalid_turret_health["world"]["entity_deltas"] = [{"instance_id": "building.instance_turret", "building_id": "building.turret", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"cooldown_remaining": 0.8, "health": 351}}]
+	_expect(not Schema.validate(invalid_turret_health).is_valid(), "turret health above maximum must fail before mutation")
 
 
 func _test_non_serializable_guards() -> void:
@@ -394,20 +397,26 @@ func _test_runtime_apply_adapter() -> void:
 		_expect(rejected_altar_durability.status == ApplyResult.Status.INVALID_SNAPSHOT and preserved_altars.size() == 1 and preserved_altars[0] == reloaded_altar and preserved_altars[0].get("health") == 641 and preserved_bosses.size() == 1 and preserved_bosses[0] == reloaded_boss and preserved_bosses[0].get("hp") == 137, "invalid altar structure health must preserve altar and boss runtime state")
 		loaded_pet = player.get("active_pet_node")
 	var turret_save := save.duplicate(true)
-	turret_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_turret", "building_id": "building.turret", "position": {"x": 3.0, "y": 6.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"cooldown_remaining": 0.8}}]
+	turret_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_turret", "building_id": "building.turret", "position": {"x": 3.0, "y": 6.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"cooldown_remaining": 0.8, "health": 223}}]
 	var turret_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, turret_save)
 	var turret_nodes := get_nodes_in_group("persistent_player_buildings")
 	var loaded_turret: Variant = turret_nodes[0] if turret_nodes.size() == 1 else null
-	_expect(turret_applied.is_applied() and is_instance_valid(loaded_turret) and is_equal_approx(loaded_turret.get("fire_cooldown"), 0.8), "turret must restore cooldown without firing on load")
+	_expect(turret_applied.is_applied() and is_instance_valid(loaded_turret) and loaded_turret.get("health") == 223 and not loaded_turret.is_queued_for_deletion() and is_equal_approx(loaded_turret.get("fire_cooldown"), 0.8), "turret must restore cooldown/health without firing or destruction")
 	var turret_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2008, 321.5)
 	_expect(turret_snapshot.is_accepted(), "turret cooldown must snapshot without target or projectile nodes")
 	if turret_snapshot.is_accepted():
 		var turret_state: Dictionary = turret_snapshot.snapshot["world"]["entity_deltas"][0]["state"]
-		_expect(turret_state.size() == 1 and is_equal_approx(float(turret_state.get("cooldown_remaining", -1.0)), 0.8), "turret DTO must contain only remaining cooldown")
+		_expect(turret_state.size() == 2 and turret_state.get("health") == 223 and is_equal_approx(float(turret_state.get("cooldown_remaining", -1.0)), 0.8), "turret DTO must contain only remaining cooldown and health")
 		var turret_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, turret_snapshot.snapshot)
 		var reloaded_turret_nodes := get_nodes_in_group("persistent_player_buildings")
 		var reloaded_turret: Variant = reloaded_turret_nodes[0] if reloaded_turret_nodes.size() == 1 else null
-		_expect(turret_reloaded.is_applied() and is_instance_valid(reloaded_turret) and is_equal_approx(reloaded_turret.get("fire_cooldown"), 0.8), "turret save/load must preserve cooldown without stale target state")
+		_expect(turret_reloaded.is_applied() and is_instance_valid(reloaded_turret) and reloaded_turret.get("health") == 223 and not reloaded_turret.is_queued_for_deletion() and is_equal_approx(reloaded_turret.get("fire_cooldown"), 0.8), "turret save/load must preserve cooldown/health without stale target state")
+		var invalid_turret_durability: Dictionary = turret_snapshot.snapshot.duplicate(true)
+		invalid_turret_durability["world"]["entity_deltas"][0]["state"]["health"] = 351
+		var rejected_turret_durability: RefCounted = ApplyAdapter.apply_player_snapshot(player, invalid_turret_durability)
+		var preserved_turrets := get_nodes_in_group("persistent_player_buildings")
+		var preserved_turret: Variant = preserved_turrets[0] if preserved_turrets.size() == 1 else null
+		_expect(rejected_turret_durability.status == ApplyResult.Status.INVALID_SNAPSHOT and preserved_turret == reloaded_turret and preserved_turret.get("health") == 223 and is_equal_approx(preserved_turret.get("fire_cooldown"), 0.8), "invalid turret health must fail before replacing or firing runtime state")
 		loaded_pet = player.get("active_pet_node")
 
 	var position_before: Vector2 = player.global_position

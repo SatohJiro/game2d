@@ -3,6 +3,7 @@ class_name BuildingTurret
 
 @export var max_health: int = 350
 var health: int = 350
+var _pending_restored_health: int = -1
 
 var attack_range: float = 230.0
 var fire_cooldown: float = 0.0
@@ -17,7 +18,8 @@ const SPHERE_SCENE = preload("res://scenes/sphere.tscn")
 func _ready() -> void:
 	add_to_group("buildings")
 	add_to_group("turrets")
-	health = max_health
+	health = _pending_restored_health if _pending_restored_health >= 1 else max_health
+	_pending_restored_health = -1
 	if label:
 		label.text = "Tháp Phòng Thủ"
 
@@ -69,11 +71,13 @@ func fire_projectile(target: Node2D, dir: Vector2) -> void:
 	)
 
 func create_persistence_state() -> TurretPlacementState:
-	return TurretPlacementState.new(clampf(fire_cooldown, 0.0, TurretPlacementState.FIRE_INTERVAL))
+	return TurretPlacementState.new(clampf(fire_cooldown, 0.0, TurretPlacementState.FIRE_INTERVAL), health)
 
 func apply_persistence_state(state: TurretPlacementState) -> bool:
 	if state == null or not state.is_valid(): return false
 	fire_cooldown = state.cooldown_remaining
+	if is_node_ready(): health = state.health
+	else: _pending_restored_health = state.health
 	return true
 
 func take_damage(amount: int) -> void:
