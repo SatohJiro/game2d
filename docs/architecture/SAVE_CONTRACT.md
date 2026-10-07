@@ -165,3 +165,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12q ranch durability
 
 `RanchPlacementState` thêm `health` nguyên trong `[1, 350]`; state ba field cũ vẫn đọc với health mặc định 350. Restore assignment/food/timer/health trước khi node vào tree; `_ready()` dựng đúng số animal presentation nhưng không chạy production, consume food, reward hoặc destruction. Invalid health fail trước runtime replacement.
+
+## U1.12r altar structure durability
+
+`AltarPlacementState` thêm `altar_health` nguyên trong `[1, 1000]`, độc lập với `boss_hp` tối đa 280. Lifecycle state ba field cũ vẫn đọc với altar health mặc định 1000. Restore giữ scalar qua `_ready()`, thay đúng một boss bằng suppression guard và không gọi offering/summon/completion/destruction. Invalid structure health fail trước khi thay altar hoặc boss runtime.

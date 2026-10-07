@@ -3,6 +3,7 @@ class_name BuildingAltar
 
 @export var max_health: int = 1000
 var health: int = 1000
+var _pending_restored_health: int = -1
 
 var is_boss_active: bool = false
 var boss_instance_id: StringName = &""
@@ -17,7 +18,8 @@ const CREATURE_SCENE = preload("res://scenes/creature.tscn")
 func _ready() -> void:
 	add_to_group("buildings")
 	add_to_group("altars")
-	health = max_health
+	health = _pending_restored_health if _pending_restored_health >= 1 else max_health
+	_pending_restored_health = -1
 	update_display()
 	if is_boss_active:
 		_spawn_boss(false, boss_instance_id, _restored_boss_hp)
@@ -86,15 +88,17 @@ func _spawn_boss(show_completion_banner: bool, instance_id: StringName, restored
 	)
 
 func create_persistence_state() -> AltarPlacementState:
-	if not is_boss_active: return AltarPlacementState.new()
+	if not is_boss_active: return AltarPlacementState.new(AltarPlacementState.IDLE, &"", 0, health)
 	var current_hp := int(boss_node.get("hp")) if is_instance_valid(boss_node) else _restored_boss_hp
-	return AltarPlacementState.new(AltarPlacementState.ACTIVE, boss_instance_id, current_hp)
+	return AltarPlacementState.new(AltarPlacementState.ACTIVE, boss_instance_id, current_hp, health)
 
 func apply_persistence_state(state: AltarPlacementState) -> bool:
 	if state == null or not state.is_valid(): return false
 	is_boss_active = state.lifecycle_id == AltarPlacementState.ACTIVE
 	boss_instance_id = state.boss_instance_id
 	_restored_boss_hp = state.boss_hp if is_boss_active else AltarPlacementState.BOSS_MAX_HP
+	if is_node_ready(): health = state.altar_health
+	else: _pending_restored_health = state.altar_health
 	if is_inside_tree() and is_boss_active: _spawn_boss(false, boss_instance_id, _restored_boss_hp)
 	return true
 

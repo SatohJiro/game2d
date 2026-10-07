@@ -26,7 +26,7 @@ U0 chỉ hoàn tất khi baseline có thể khôi phục và asset mới không 
 9. **U1.9 Creature skills/drop — VERIFIED:** U1.9a–u gồm typed species, toàn bộ species attack tuning, deterministic defeat drops và burn tick qua combat boundary.
 10. **U1.10 Pet roster/command — VERIFIED:** U1.10a–d khóa persistent identity, single-node summon và deterministic cycle/explicit stance commands; target/job depth thuộc U5.
 11. **U1.11 Save v1 foundation — VERIFIED:** U1.11a–f gồm schema, runtime snapshot/apply, atomic repository, migration harness và explicit coordinator. Autosave/UI/world-base coverage thuộc package sau; gate U1 tổng thể chưa đạt.
-12. **U1.12 Persistence coverage — IN PROGRESS:** U1.12a–q VERIFIED: thêm placement và mutable state qua ranch durability. World/health subtype còn lại/resource depletion là dependency kế tiếp.
+12. **U1.12 Persistence coverage — IN PROGRESS:** U1.12a–r VERIFIED: thêm placement và mutable state qua altar structure durability. World/health subtype còn lại/resource depletion là dependency kế tiếp.
 
 Gate U1: vertical slice combat → capture → pet → farm/build → save/load dùng ID/data typed; validator và regression xanh; player/creature giảm trách nhiệm có đo lường.
 

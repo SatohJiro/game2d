@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.12r altar structure durability
+# Prompt cho model tiếp theo — U1.12s turret structure durability
 
-Tiếp tục bằng đúng một package U1.12r: thêm typed structure durability cho riêng `building.altar`, phân biệt rõ altar health với boss HP trong lifecycle state hiện có. Giữ max health 1000, damage/summon/cost/reward rule và không serialize altar/boss Node hoặc scene path. Chứng minh idle/active lifecycle, boss identity/HP cùng altar health round-trip chính xác, health ngoài miền fail trước mutation, load không phát destruction/summon/completion side effect, chạy full gate + leak-aware log scan và cập nhật contract/checkpoint docs.
+Tiếp tục bằng đúng một package U1.12s: thêm typed structure durability cho riêng `building.turret`, mở rộng cooldown state hiện có. Giữ max health 350, damage/range/fire-rate/targeting rule và không serialize target/projectile Node, Callable hoặc scene path. Chứng minh cooldown cùng health round-trip chính xác, health ngoài miền fail trước mutation, load không phát shot/destruction hoặc giữ stale target, chạy full gate + leak-aware log scan và cập nhật contract/checkpoint docs.

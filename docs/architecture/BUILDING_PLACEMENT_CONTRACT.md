@@ -1,4 +1,4 @@
-# U1.12q — Building placement and admitted subtype state contract
+# U1.12r — Building placement and admitted subtype state contract
 
 Chín subtype placement reachable được map từ legacy recipe ID sang stable `building.*` bởi `BuildingPlacementCatalog`. Mỗi placement do Player tạo nhận `building.instance_*`; Node name, scene path và asset path không phải identity.
 
@@ -20,6 +20,8 @@ U1.12p thiết lập durability foundation còn thiếu cho `building.cooking_po
 
 U1.12q mở rộng `RanchPlacementState` bằng health nguyên `[1, 350]`; state food/assignment/timer cũ mặc định 350. Restore giữ health qua `_ready()`, dựng presentation animal đúng một lần từ stable assignments và không chạy production, consume food, reward hoặc destruction.
 
-Audit subtype còn lại: altar/turret/workbench có health chưa persist; compost/farm plot chưa có durability runtime. Resource-node depletion và runtime Node references vẫn ngoài phạm vi.
+U1.12r mở rộng `AltarPlacementState` bằng `altar_health` nguyên `[1, 1000]`, tách rõ khỏi `boss_hp` `[1, 280]`. State lifecycle ba field cũ mặc định altar health 1000. Restore giữ structure health qua `_ready()`, thay đúng một boss bằng suppression guard và không chạy offering, summon/completion hoặc destruction flow. Altar hiện chưa có `take_damage()`, package không tự thêm damage rule.
 
-Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12q: bỏ ranch health/pending restore và quay state về ba field; save mới có health sau rollback sẽ fail closed.
+Audit subtype còn lại: turret/workbench có health chưa persist; compost/farm plot chưa có durability runtime. Resource-node depletion và runtime Node references vẫn ngoài phạm vi.
+
+Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12r: bỏ altar structure health/pending restore và quay state về ba lifecycle field; save mới sẽ fail closed.

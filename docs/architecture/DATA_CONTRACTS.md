@@ -70,6 +70,8 @@ U1.12p cooking-pot durability không thêm identity mới: `health` là scalar s
 
 U1.12q ranch durability không thêm identity mới: `health` là scalar state, max health 350 giữ nguyên. Animal/presentation Node, scene path, tween và production callback không đi qua DTO.
 
+U1.12r altar dùng hai scalar phân biệt: `altar_health` cho structure và `boss_hp` cho encounter actor; không field nào là identity. Stable `boss.instance_*` vẫn là encounter identity duy nhất; altar/boss Node và scene path không đi qua DTO.
+
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.

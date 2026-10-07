@@ -138,6 +138,9 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_altar_hp := Schema.create_empty(&"save.slot_1", 1)
 	invalid_altar_hp["world"]["entity_deltas"] = [{"instance_id": "building.instance_altar", "building_id": "building.altar", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"lifecycle_id": "altar.lifecycle.active", "boss_instance_id": "boss.instance_test", "boss_hp": 281}}]
 	_expect(not Schema.validate(invalid_altar_hp).is_valid(), "altar boss HP above encounter maximum must fail before mutation")
+	var invalid_altar_health := Schema.create_empty(&"save.slot_1", 1)
+	invalid_altar_health["world"]["entity_deltas"] = [{"instance_id": "building.instance_altar", "building_id": "building.altar", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"lifecycle_id": "altar.lifecycle.active", "boss_instance_id": "boss.instance_test", "boss_hp": 137, "altar_health": 1001}}]
+	_expect(not Schema.validate(invalid_altar_health).is_valid(), "altar structure health above maximum must fail before mutation")
 	var invalid_turret_cooldown := Schema.create_empty(&"save.slot_1", 1)
 	invalid_turret_cooldown["world"]["entity_deltas"] = [{"instance_id": "building.instance_turret", "building_id": "building.turret", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"cooldown_remaining": 1.26}}]
 	_expect(not Schema.validate(invalid_turret_cooldown).is_valid(), "turret cooldown above fire interval must fail before mutation")
@@ -367,18 +370,28 @@ func _test_runtime_apply_adapter() -> void:
 		_expect(farm_reloaded.is_applied() and is_instance_valid(reloaded_plot) and reloaded_plot.get("crop_stage") == 2 and reloaded_plot.get("crop_type") == 1 and is_equal_approx(reloaded_plot.get("grow_timer"), 7.25) and is_equal_approx(reloaded_plot.get("moisture"), 64.0) and reloaded_plot.get("is_watered") and reloaded_plot.get("is_fertilized"), "farm save/load must preserve growth and avoid harvest/reset")
 		loaded_pet = player.get("active_pet_node")
 	var altar_save := save.duplicate(true)
-	altar_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_altar", "building_id": "building.altar", "position": {"x": 5.0, "y": 8.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"lifecycle_id": "altar.lifecycle.active", "boss_instance_id": "boss.instance_test", "boss_hp": 137}}]
+	altar_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_altar", "building_id": "building.altar", "position": {"x": 5.0, "y": 8.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"lifecycle_id": "altar.lifecycle.active", "boss_instance_id": "boss.instance_test", "boss_hp": 137, "altar_health": 641}}]
 	var altar_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, altar_save)
 	var altar_bosses := get_nodes_in_group("persistent_altar_bosses")
 	var loaded_boss: Variant = altar_bosses[0] if altar_bosses.size() == 1 else null
-	_expect(altar_applied.is_applied() and altar_bosses.size() == 1 and loaded_boss.get_meta("boss_instance_id") == &"boss.instance_test" and loaded_boss.get("hp") == 137, "active altar must restore exactly one boss with committed HP")
+	var altar_nodes := get_nodes_in_group("persistent_player_buildings")
+	var loaded_altar: Variant = altar_nodes[0] if altar_nodes.size() == 1 else null
+	_expect(altar_applied.is_applied() and is_instance_valid(loaded_altar) and loaded_altar.get("health") == 641 and not loaded_altar.is_queued_for_deletion() and altar_bosses.size() == 1 and loaded_boss.get_meta("boss_instance_id") == &"boss.instance_test" and loaded_boss.get("hp") == 137, "active altar must restore distinct structure health and exactly one boss HP")
 	var altar_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2007, 321.5)
 	_expect(altar_snapshot.is_accepted(), "active altar must snapshot boss lifecycle without serializing Node")
 	if altar_snapshot.is_accepted():
 		var altar_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, altar_snapshot.snapshot)
 		var reloaded_bosses := get_nodes_in_group("persistent_altar_bosses")
 		var reloaded_boss: Variant = reloaded_bosses[0] if reloaded_bosses.size() == 1 else null
-		_expect(altar_reloaded.is_applied() and reloaded_bosses.size() == 1 and reloaded_boss.get_meta("boss_instance_id") == &"boss.instance_test" and reloaded_boss.get("hp") == 137, "altar save/load must replace rather than duplicate active boss")
+		var reloaded_altar_nodes := get_nodes_in_group("persistent_player_buildings")
+		var reloaded_altar: Variant = reloaded_altar_nodes[0] if reloaded_altar_nodes.size() == 1 else null
+		_expect(altar_reloaded.is_applied() and is_instance_valid(reloaded_altar) and reloaded_altar.get("health") == 641 and not reloaded_altar.is_queued_for_deletion() and reloaded_bosses.size() == 1 and reloaded_boss.get_meta("boss_instance_id") == &"boss.instance_test" and reloaded_boss.get("hp") == 137, "altar save/load must preserve structure/boss health and replace rather than duplicate boss")
+		var invalid_altar_durability: Dictionary = altar_snapshot.snapshot.duplicate(true)
+		invalid_altar_durability["world"]["entity_deltas"][0]["state"]["altar_health"] = 1001
+		var rejected_altar_durability: RefCounted = ApplyAdapter.apply_player_snapshot(player, invalid_altar_durability)
+		var preserved_altars := get_nodes_in_group("persistent_player_buildings")
+		var preserved_bosses := get_nodes_in_group("persistent_altar_bosses")
+		_expect(rejected_altar_durability.status == ApplyResult.Status.INVALID_SNAPSHOT and preserved_altars.size() == 1 and preserved_altars[0] == reloaded_altar and preserved_altars[0].get("health") == 641 and preserved_bosses.size() == 1 and preserved_bosses[0] == reloaded_boss and preserved_bosses[0].get("hp") == 137, "invalid altar structure health must preserve altar and boss runtime state")
 		loaded_pet = player.get("active_pet_node")
 	var turret_save := save.duplicate(true)
 	turret_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_turret", "building_id": "building.turret", "position": {"x": 3.0, "y": 6.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"cooldown_remaining": 0.8}}]
