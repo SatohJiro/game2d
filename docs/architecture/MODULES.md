@@ -31,7 +31,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | INVENTORY | Stack, transfer, equipment, loot | Stable transactions; chest finite stack slots và atomic mapped batch; other direct writers còn legacy | ID-based transaction atomic | U1.2, U1.4 |
 | CRAFT | Recipe/cooking/smelting/compost | `RecipeDefinition` canary tồn tại; Player + 3 building scripts vẫn authoritative | RecipeDefinition + CraftOrder state machine | U1.3, U5.4 |
 | FARM | Soil/crop/water/fertilizer/harvest | `CropDefinition` berry mirror; `resource_node.gd` vẫn gộp resource và plot | FarmPlot state thuần + CropDefinition | U1.3, U5.3 |
-| BUILD | Placement, cost, structure health | `BuildingDefinition` workbench mirror; Player + building scripts vẫn authoritative | PlacementRequest/Result, occupancy grid | U1.3, U1.6, U5.5 |
+| BUILD | Placement, cost, structure health | Workbench đã có typed durability DTO/catalog admission; Player + building scripts vẫn authoritative | PlacementRequest/Result, occupancy grid | U1.3, U1.6, U1.12t, U5.5 |
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
 | WORLD | Zone, chunks, spawn, day/night, raid | `main.gd`, scene tĩnh | Chunk admission + persistent delta | U2 |
 | NAV | Navigation/path requests | Chưa có | Navigation adapter theo chunk | U2.3 |

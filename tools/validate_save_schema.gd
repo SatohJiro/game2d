@@ -147,6 +147,12 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_turret_health := Schema.create_empty(&"save.slot_1", 1)
 	invalid_turret_health["world"]["entity_deltas"] = [{"instance_id": "building.instance_turret", "building_id": "building.turret", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"cooldown_remaining": 0.8, "health": 351}}]
 	_expect(not Schema.validate(invalid_turret_health).is_valid(), "turret health above maximum must fail before mutation")
+	var invalid_workbench_health := Schema.create_empty(&"save.slot_1", 1)
+	invalid_workbench_health["world"]["entity_deltas"] = [{"instance_id": "building.instance_workbench", "building_id": "building.workbench", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"health": 201}}]
+	_expect(not Schema.validate(invalid_workbench_health).is_valid(), "workbench health above maximum must fail before mutation")
+	var legacy_workbench := Schema.create_empty(&"save.slot_1", 1)
+	legacy_workbench["world"]["entity_deltas"] = [{"instance_id": "building.instance_workbench_legacy", "building_id": "building.workbench", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {}}]
+	_expect(Schema.validate(legacy_workbench).is_valid(), "legacy empty workbench state must normalize to full durability")
 
 
 func _test_non_serializable_guards() -> void:
@@ -417,6 +423,29 @@ func _test_runtime_apply_adapter() -> void:
 		var preserved_turrets := get_nodes_in_group("persistent_player_buildings")
 		var preserved_turret: Variant = preserved_turrets[0] if preserved_turrets.size() == 1 else null
 		_expect(rejected_turret_durability.status == ApplyResult.Status.INVALID_SNAPSHOT and preserved_turret == reloaded_turret and preserved_turret.get("health") == 223 and is_equal_approx(preserved_turret.get("fire_cooldown"), 0.8), "invalid turret health must fail before replacing or firing runtime state")
+		loaded_pet = player.get("active_pet_node")
+
+	var workbench_save := save.duplicate(true)
+	workbench_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_workbench", "building_id": "building.workbench", "position": {"x": 7.0, "y": 9.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"health": 137}}]
+	var workbench_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, workbench_save)
+	var workbench_nodes := get_nodes_in_group("persistent_player_buildings")
+	var loaded_workbench: Variant = workbench_nodes[0] if workbench_nodes.size() == 1 else null
+	_expect(workbench_applied.is_applied() and is_instance_valid(loaded_workbench) and loaded_workbench.get("health") == 137 and not loaded_workbench.is_queued_for_deletion(), "workbench must restore health without destruction or crafting interaction")
+	var workbench_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2009, 321.5)
+	_expect(workbench_snapshot.is_accepted(), "workbench durability must snapshot without Node or scene identity")
+	if workbench_snapshot.is_accepted():
+		var workbench_state: Dictionary = workbench_snapshot.snapshot["world"]["entity_deltas"][0]["state"]
+		_expect(workbench_state == {"health": 137}, "workbench DTO must contain only health")
+		var workbench_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, workbench_snapshot.snapshot)
+		var reloaded_workbenches := get_nodes_in_group("persistent_player_buildings")
+		var reloaded_workbench: Variant = reloaded_workbenches[0] if reloaded_workbenches.size() == 1 else null
+		_expect(workbench_reloaded.is_applied() and is_instance_valid(reloaded_workbench) and reloaded_workbench.get("health") == 137 and not reloaded_workbench.is_queued_for_deletion(), "workbench health must round-trip without destruction or crafting side effect")
+		var invalid_workbench_durability: Dictionary = workbench_snapshot.snapshot.duplicate(true)
+		invalid_workbench_durability["world"]["entity_deltas"][0]["state"]["health"] = 201
+		var rejected_workbench_durability: RefCounted = ApplyAdapter.apply_player_snapshot(player, invalid_workbench_durability)
+		var preserved_workbenches := get_nodes_in_group("persistent_player_buildings")
+		var preserved_workbench: Variant = preserved_workbenches[0] if preserved_workbenches.size() == 1 else null
+		_expect(rejected_workbench_durability.status == ApplyResult.Status.INVALID_SNAPSHOT and preserved_workbench == reloaded_workbench and preserved_workbench.get("health") == 137, "invalid workbench health must fail before replacing runtime state")
 		loaded_pet = player.get("active_pet_node")
 
 	var position_before: Vector2 = player.global_position

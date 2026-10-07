@@ -27,6 +27,8 @@ func _init(p_instance_id: StringName, p_building_id: StringName, p_transform: Tr
 		state = AltarPlacementState.new().to_dto()
 	elif building_id == &"building.turret" and state.is_empty():
 		state = TurretPlacementState.new().to_dto()
+	elif building_id == &"building.workbench" and state.is_empty():
+		state = WorkbenchPlacementState.new().to_dto()
 
 func is_valid() -> bool:
 	if ContentId.domain_of(instance_id) != &"building" or not BuildingPlacementCatalog.is_supported(building_id) or not transform.is_finite():
@@ -47,6 +49,8 @@ func is_valid() -> bool:
 		return AltarPlacementState.from_dto(state) != null
 	if building_id == &"building.turret":
 		return TurretPlacementState.from_dto(state) != null
+	if building_id == &"building.workbench":
+		return WorkbenchPlacementState.from_dto(state) != null
 	return state.is_empty()
 
 func to_dto() -> Dictionary:

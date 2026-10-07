@@ -5,12 +5,14 @@ const LEGACY_TO_ID := {
 	"building_furnace": &"building.furnace", "building_chest": &"building.chest", "building_turret": &"building.turret",
 	"building_altar": &"building.altar", "building_ranch": &"building.ranch", "building_cooking_pot": &"building.cooking_pot",
 	"building_compost_bin": &"building.compost_bin", "farm_plot": &"building.farm_plot", "wood_fence": &"building.wood_fence",
+	"building_workbench": &"building.workbench",
 }
 const SCENE_PATHS := {
 	&"building.furnace": "res://scenes/building_furnace.tscn", &"building.chest": "res://scenes/building_chest.tscn",
 	&"building.turret": "res://scenes/building_turret.tscn", &"building.altar": "res://scenes/building_altar.tscn",
 	&"building.ranch": "res://scenes/building_ranch.tscn", &"building.cooking_pot": "res://scenes/building_cooking_pot.tscn",
 	&"building.compost_bin": "res://scenes/building_compost_bin.tscn", &"building.farm_plot": "res://scenes/resource_node.tscn",
+	&"building.workbench": "res://scenes/building_workbench.tscn",
 }
 
 static func from_legacy(legacy_id: String) -> StringName: return LEGACY_TO_ID.get(legacy_id, &"")

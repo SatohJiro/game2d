@@ -1,36 +1,36 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.12s — turret structure durability persistence
+## U1.12t — workbench durability persistence
 
 Trạng thái: `VERIFIED` ngày 2026-10-07.
 
 ### Mục tiêu và invariant
 
-- Turret save/load giữ cooldown và structure health trong cùng typed state.
-- Restore không gọi targeting/fire/destruction và không serialize target/projectile runtime.
-- Health ngoài 1–350 fail trước mutation; damage/range/fire-rate/targeting giữ nguyên.
+- Workbench save/load giữ structure health bằng typed state và stable `building.workbench`.
+- Restore không gọi interaction/crafting/destruction và không serialize runtime references.
+- Health ngoài 1–200 fail trước mutation; damage/crafting/progression giữ nguyên.
 
 ### Kết quả đã triển khai
 
-- Mở rộng `TurretPlacementState` bằng health nguyên 1–350; DTO cooldown-only cũ mặc định 350.
-- Turret staged apply dùng pending health để `_ready()` không reset state đã restore.
-- DTO mới chỉ có cooldown/health scalar; target/projectile/tween không đi qua save.
-- Regression giữ cooldown 0.8 và 223 HP; health 351 giữ runtime cũ.
+- Thêm `WorkbenchPlacementState` với duy nhất health nguyên 1–200; state rỗng cũ mặc định 200.
+- Admit scene dưới stable ID trong placement catalog nhưng không mở recipe/unlock xây workbench mới.
+- Workbench staged apply dùng pending health để `_ready()` không reset state đã restore.
+- Regression giữ 137 HP qua apply/snapshot/apply; health 201 giữ runtime cũ.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh trước thay đổi.
-- Godot editor import/load và focused `validate_save_schema.gd` xanh; chỉ còn cảnh báo môi trường CA/log `user://` đã biết.
-- Regression apply/snapshot/apply giữ cooldown + 223 health; health 351 bị reject trước runtime replacement.
+- Godot editor import/load và focused `validate_save_schema.gd` xanh.
+- Regression apply/snapshot/apply giữ 137 health; health 201 bị reject trước runtime replacement; empty state chuẩn hóa 200.
 - Full `tools/check_project.ps1` xanh: 41 Markdown files, asset/content gates, editor load và toàn bộ gameplay/save validators; leak-aware scan `build/checks` sạch.
 
 ### Compatibility, asset và giới hạn
 
-- Save shape pre-release vẫn version 1; turret cooldown-only state cũ load health 350.
+- Save shape pre-release vẫn version 1; workbench state rỗng load health 200.
 - Asset/provenance: none.
-- Workbench health chưa persist; compost/farm plot chưa có durability runtime; resource depletion chưa persist.
-- Rollback: revert turret health/pending lifecycle, regression và docs U1.12s.
+- Workbench chưa có player build recipe/unlock; package này không thay progression/economy. Resource depletion chưa persist.
+- Rollback: revert workbench catalog/state/pending lifecycle, regression và docs U1.12t.
 
 ### Gói tiếp theo
 
-U1.12t persist riêng workbench durability theo `NEXT_UPDATE_PROMPT.md`.
+U1.12u audit và persist riêng world resource depletion theo `NEXT_UPDATE_PROMPT.md`.

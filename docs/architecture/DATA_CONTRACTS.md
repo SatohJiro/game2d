@@ -74,6 +74,8 @@ U1.12r altar dùng hai scalar phân biệt: `altar_health` cho structure và `bo
 
 U1.12s turret state chỉ có cooldown/health scalar và không thêm identity. Target/projectile Node, Callable, scene path, tween và fire callback không đi qua DTO.
 
+U1.12t admit `building.workbench` vào placement persistence catalog nhưng không mở recipe/unlock xây mới. `WorkbenchPlacementState` chỉ giữ scalar `health` trong miền 1–200; record state rỗng được chuẩn hóa thành 200 để tương thích. Player, HUD, crafting callback, Node, Callable và scene/asset path không đi qua DTO.
+
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.
