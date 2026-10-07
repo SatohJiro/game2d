@@ -68,6 +68,14 @@ func fire_projectile(target: Node2D, dir: Vector2) -> void:
 		p.queue_free()
 	)
 
+func create_persistence_state() -> TurretPlacementState:
+	return TurretPlacementState.new(clampf(fire_cooldown, 0.0, TurretPlacementState.FIRE_INTERVAL))
+
+func apply_persistence_state(state: TurretPlacementState) -> bool:
+	if state == null or not state.is_valid(): return false
+	fire_cooldown = state.cooldown_remaining
+	return true
+
 func take_damage(amount: int) -> void:
 	health -= amount
 	var tween = create_tween()

@@ -144,7 +144,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Preview biểu diễn valid/invalid; placement kiểm tra terrain, collision, bounds, cost và unlock.
 - Build commit trừ cost và spawn entity trong một transaction logic; cancel không tốn cost.
 - Building có stable instance ID, health, repair/dismantle policy và state riêng theo subtype.
-- U1.12e: chín placement reachable có stable subtype/instance identity; U1.12f–l giữ mutable state qua altar boss lifecycle. Health/turret state chưa persist.
+- U1.12e: chín placement reachable có stable subtype/instance identity; U1.12f–m giữ mutable state qua turret cooldown. Building health chưa persist.
 - Acceptance: không overlap vùng cấm; reload giữ transform/state; dismantle trả đúng bảng refund.
 
 ### G12 — progression và quests
@@ -191,6 +191,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.12c: rarity, trait và stance của từng pet dùng stable ID; save/load giữ metadata và command stance cho cả pet active lẫn inactive. Badge/name localized chỉ là presentation; roll, multiplier và hành vi pet không đổi.
 - U1.12d: Save v1 giữ base level, active stable quest ID và claimed quest IDs; state skip/mâu thuẫn hoặc localized title fail closed, apply không phát reward.
 - U1.12l: active altar restore đúng một boss ID/HP, không thu offering hoặc phát completion giả; idle/stale và HP ngoài range fail closed.
+- U1.12m: turret restore cooldown còn lại mà không bắn khi load hoặc giữ stale target; target/projectile runtime không thuộc save.
 - Acceptance: save → quit → load giữ inventory, roster, assignment, building, crop, quest và world clock; corrupt file trả lỗi an toàn.
 
 ## Thứ tự ưu tiên playable vertical slice

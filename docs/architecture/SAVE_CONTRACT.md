@@ -145,3 +145,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12l altar subtype state
 
 `building.altar` nhận idle hoặc active lifecycle. Active bắt buộc stable boss instance ID và HP 1–280; idle cấm stale boss ID/HP. Restore thay boss thuộc altar trước khi spawn đúng một actor với HP đã lưu, không gọi offering/summon presentation và suppress callback completion của actor bị thay.
+
+## U1.12m turret subtype state
+
+`building.turret` nhận `TurretPlacementState = {cooldown_remaining}` với giá trị hữu hạn trong `[0, 1.25]`. Snapshot/apply giữ nhịp bắn đã commit nhưng không serialize target Node, Callable, projectile hay tween. Restore chỉ gán scalar cooldown, không chạy targeting hoặc tạo phát bắn; field thừa và cooldown ngoài miền fail trước mutation.

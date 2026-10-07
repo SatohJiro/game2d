@@ -126,6 +126,9 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_altar_hp := Schema.create_empty(&"save.slot_1", 1)
 	invalid_altar_hp["world"]["entity_deltas"] = [{"instance_id": "building.instance_altar", "building_id": "building.altar", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"lifecycle_id": "altar.lifecycle.active", "boss_instance_id": "boss.instance_test", "boss_hp": 281}}]
 	_expect(not Schema.validate(invalid_altar_hp).is_valid(), "altar boss HP above encounter maximum must fail before mutation")
+	var invalid_turret_cooldown := Schema.create_empty(&"save.slot_1", 1)
+	invalid_turret_cooldown["world"]["entity_deltas"] = [{"instance_id": "building.instance_turret", "building_id": "building.turret", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"cooldown_remaining": 1.26}}]
+	_expect(not Schema.validate(invalid_turret_cooldown).is_valid(), "turret cooldown above fire interval must fail before mutation")
 
 
 func _test_non_serializable_guards() -> void:
@@ -340,6 +343,22 @@ func _test_runtime_apply_adapter() -> void:
 		var reloaded_bosses := get_nodes_in_group("persistent_altar_bosses")
 		var reloaded_boss: Variant = reloaded_bosses[0] if reloaded_bosses.size() == 1 else null
 		_expect(altar_reloaded.is_applied() and reloaded_bosses.size() == 1 and reloaded_boss.get_meta("boss_instance_id") == &"boss.instance_test" and reloaded_boss.get("hp") == 137, "altar save/load must replace rather than duplicate active boss")
+		loaded_pet = player.get("active_pet_node")
+	var turret_save := save.duplicate(true)
+	turret_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_turret", "building_id": "building.turret", "position": {"x": 3.0, "y": 6.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"cooldown_remaining": 0.8}}]
+	var turret_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, turret_save)
+	var turret_nodes := get_nodes_in_group("persistent_player_buildings")
+	var loaded_turret: Variant = turret_nodes[0] if turret_nodes.size() == 1 else null
+	_expect(turret_applied.is_applied() and is_instance_valid(loaded_turret) and is_equal_approx(loaded_turret.get("fire_cooldown"), 0.8), "turret must restore cooldown without firing on load")
+	var turret_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2008, 321.5)
+	_expect(turret_snapshot.is_accepted(), "turret cooldown must snapshot without target or projectile nodes")
+	if turret_snapshot.is_accepted():
+		var turret_state: Dictionary = turret_snapshot.snapshot["world"]["entity_deltas"][0]["state"]
+		_expect(turret_state.size() == 1 and is_equal_approx(float(turret_state.get("cooldown_remaining", -1.0)), 0.8), "turret DTO must contain only remaining cooldown")
+		var turret_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, turret_snapshot.snapshot)
+		var reloaded_turret_nodes := get_nodes_in_group("persistent_player_buildings")
+		var reloaded_turret: Variant = reloaded_turret_nodes[0] if reloaded_turret_nodes.size() == 1 else null
+		_expect(turret_reloaded.is_applied() and is_instance_valid(reloaded_turret) and is_equal_approx(reloaded_turret.get("fire_cooldown"), 0.8), "turret save/load must preserve cooldown without stale target state")
 		loaded_pet = player.get("active_pet_node")
 
 	var position_before: Vector2 = player.global_position
