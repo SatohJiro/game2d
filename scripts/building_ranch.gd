@@ -3,6 +3,7 @@ class_name BuildingRanch
 
 @export var max_health: int = 350
 var health: int = 350
+var _pending_restored_health: int = -1
 
 var food_count: int = 8
 var assigned_pets: Array[Dictionary] = []
@@ -30,7 +31,8 @@ var animal_nodes: Array[Dictionary] = []
 func _ready() -> void:
 	add_to_group("buildings")
 	add_to_group("ranches")
-	health = max_health
+	health = _pending_restored_health if _pending_restored_health >= 1 else max_health
+	_pending_restored_health = -1
 	if prompt_label:
 		prompt_label.visible = false
 	
@@ -292,7 +294,7 @@ func create_persistence_state() -> RanchPlacementState:
 			"assignment_id": StringName(entry.get("assignment_id", entry.get("instance_id", &""))),
 			"species_id": StringName(entry.get("species_id", entry.get("species_data", {}).get("id", &""))),
 		})
-	return RanchPlacementState.new(food_count, assignments, production_timer)
+	return RanchPlacementState.new(food_count, assignments, production_timer, health)
 
 
 func apply_persistence_state(state: RanchPlacementState) -> bool:
@@ -310,6 +312,10 @@ func apply_persistence_state(state: RanchPlacementState) -> bool:
 	food_count = state.food_count
 	assigned_pets = restored
 	production_timer = state.production_timer
+	if is_node_ready():
+		health = state.health
+	else:
+		_pending_restored_health = state.health
 	return true
 
 func _on_body_entered(body: Node2D) -> void:

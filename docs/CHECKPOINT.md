@@ -1,37 +1,36 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.12p — cooking-pot durability foundation and persistence
+## U1.12q — ranch durability persistence
 
 Trạng thái: `VERIFIED` ngày 2026-10-07.
 
 ### Mục tiêu và invariant
 
-- Cooking pot có durability runtime rõ ràng và save/load giữ recipe/progress/health trong cùng typed state.
-- Restore không gọi cooking tick, finish/reward, damage, destruction hay presentation path.
-- Health ngoài 1–200 fail trước mutation; recipe timer/cost/reward giữ nguyên.
+- Ranch save/load giữ assignments/food/production timer/health trong cùng typed state.
+- Restore dựng đúng animal presentation nhưng không chạy production, consume food, reward hay destruction.
+- Health ngoài 1–350 fail trước mutation; assignment/production economy và max health giữ nguyên.
 
 ### Kết quả đã triển khai
 
-- Audit xác nhận cooking pot trước U1.12p không có health/max-health/damage rule.
-- Thêm foundation 200 HP theo workbench, `buildings` group và damage/destruction pattern hiện có.
-- Mở rộng `CookingPotPlacementState`; state recipe/progress cũ mặc định 200 HP và pending restore sống qua `_ready()`.
-- Regression giữ hearty stew, timer 1.75 và 121 HP; health 201 giữ runtime cũ.
+- Mở rộng `RanchPlacementState` với health nguyên 1–350; DTO ba field cũ mặc định 350.
+- Ranch staged apply dùng pending health để `_ready()` không reset state đã restore.
+- Stable assignments dựng đúng hai animal presentation Node nhưng Node không đi qua DTO.
+- Regression giữ 13 food, hai assignment, timer 4.5 và 219 HP; health 351 giữ runtime cũ.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh trước thay đổi.
 - Godot editor import/load và focused `validate_save_schema.gd` xanh; chỉ còn cảnh báo môi trường CA/log `user://` đã biết.
-- Regression apply/snapshot/apply giữ recipe/progress + 121 health; health 201 bị reject trước runtime replacement.
+- Regression apply/snapshot/apply giữ ranch state + 219 health; health 351 bị reject trước runtime replacement.
 - Full `tools/check_project.ps1` xanh: 41 Markdown files, asset/content gates, editor load và toàn bộ gameplay/save validators; leak-aware scan `build/checks` sạch.
 
 ### Compatibility, asset và giới hạn
 
-- Save shape pre-release vẫn version 1; cooking state hai field cũ load health 200.
+- Save shape pre-release vẫn version 1; ranch state ba field cũ load health 350.
 - Asset/provenance: none.
-- Max health 200 là balance assumption mới, căn theo workbench; chưa chuyển sang typed BuildingDefinition.
-- Health của ranch/altar/turret/workbench chưa persist; compost/farm plot chưa có durability runtime; resource depletion chưa persist.
-- Rollback: revert cooking-pot durability foundation/state field, regression và docs U1.12p.
+- Health của altar/turret/workbench chưa persist; compost/farm plot chưa có durability runtime; resource depletion chưa persist.
+- Rollback: revert ranch health/pending lifecycle, regression và docs U1.12q.
 
 ### Gói tiếp theo
 
-U1.12q persist riêng ranch durability theo `NEXT_UPDATE_PROMPT.md`.
+U1.12r persist riêng altar structure durability theo `NEXT_UPDATE_PROMPT.md`.

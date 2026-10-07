@@ -161,3 +161,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12p cooking-pot durability
 
 `CookingPotPlacementState` thêm `health` nguyên trong `[1, 200]`; state recipe/progress cũ vẫn đọc với health mặc định 200. Runtime cooking pot nhận durability foundation 200 HP theo pattern building hiện có. Restore resolve stable recipe trước commit, giữ health qua `_ready()` và không chạy cooking/finish/reward/destruction; invalid health fail trước runtime replacement.
+
+## U1.12q ranch durability
+
+`RanchPlacementState` thêm `health` nguyên trong `[1, 350]`; state ba field cũ vẫn đọc với health mặc định 350. Restore assignment/food/timer/health trước khi node vào tree; `_ready()` dựng đúng số animal presentation nhưng không chạy production, consume food, reward hoặc destruction. Invalid health fail trước runtime replacement.
