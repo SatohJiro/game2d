@@ -190,6 +190,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.12w: Main là world-clock owner; explicit save truyền `day_time`, explicit load chỉ commit clock và refresh ambient sau success. Failed load giữ clock; raid/boss/spawn timers chưa persist.
 - U1.12x: raid-cycle guard đi cùng clock; load giữa đêm sau raid không spawn raid lặp. Raid actor, boss và spawn timers chưa persist.
 - U1.12y: boss pre-spawn timer/guard đi cùng cycle state; load không tự spawn boss. Boss actor HP và ambient spawn timer chưa persist.
+- U1.12z: ambient spawn countdown round-trip nhưng load không spawn creature; roster/offset/species RNG chưa persist.
 - U1.12b: 25 inventory key reachable trong core/crafting/farming/ranch/cooking đều project sang stable `item.*`; regression từng nhóm bảo đảm output gameplay hợp lệ không làm save thất bại. Unknown key vẫn bị từ chối nguyên khối.
 - U1.12c: rarity, trait và stance của từng pet dùng stable ID; save/load giữ metadata và command stance cho cả pet active lẫn inactive. Badge/name localized chỉ là presentation; roll, multiplier và hành vi pet không đổi.
 - U1.12d: Save v1 giữ base level, active stable quest ID và claimed quest IDs; state skip/mâu thuẫn hoặc localized title fail closed, apply không phát reward.

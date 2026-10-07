@@ -78,3 +78,7 @@ Clock và `raid_triggered_this_cycle` round-trip atomically qua Main boundary. G
 ## U1.12y boss timer/guard
 
 Pre-spawn boss countdown và spawned guard round-trip trong typed cycle state. Invalid spawned+pending-timer bị reject trước mutation; load chỉ gán scalar nên không tạo boss actor. Boss actor HP/lifecycle sau spawn và ambient spawn timer vẫn PARTIAL.
+
+## U1.12z ambient spawn timer
+
+Ambient countdown round-trip trong `(0,4]`, default-compatible 3 giây. Load không gọi creature maintenance và failed load giữ timer runtime. Creature roster, random species/offset và chunk spawn identity không persist.

@@ -110,6 +110,10 @@ Resource depletion health parser đồng thời chấp nhận JSON number có gi
 
 `WorldCycleState` thêm `boss_spawned` và `boss_timer`: pre-spawn dùng timer `(0,50]`; spawned bắt buộc timer 0. DTO cycle một-field cũ mặc định boss chưa spawn/timer 50. Main commit clock/raid/boss scalars atomically sau load success, không gọi `spawn_boss()` và không serialize actor/HP/banner/species presentation. Ambient spawn timer vẫn ngoài scope.
 
+## U1.12z ambient spawn timer
+
+`WorldCycleState.spawn_timer` giữ countdown ambient trong `(0,4]`; cycle DTO cũ mặc định initial 3 giây. Main handoff/commit timer cùng các scalar cycle nhưng không gọi `maintain_creatures()`. Creature Node, offset, species roll và RNG không serialize; roster/chunk persistence vẫn ngoài scope.
+
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure

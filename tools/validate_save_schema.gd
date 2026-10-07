@@ -61,6 +61,9 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_boss_state := Schema.create_empty(&"save.slot_1", 1)
 	invalid_boss_state["world"]["cycle_state"] = {"raid_triggered_this_cycle": false, "boss_spawned": true, "boss_timer": 4.0}
 	_expect(not Schema.validate(invalid_boss_state).is_valid(), "spawned boss guard must reject a pending timer")
+	var invalid_spawn_timer := Schema.create_empty(&"save.slot_1", 1)
+	invalid_spawn_timer["world"]["cycle_state"] = {"raid_triggered_this_cycle": false, "boss_spawned": false, "boss_timer": 50.0, "spawn_timer": 4.1}
+	_expect(not Schema.validate(invalid_spawn_timer).is_valid(), "ambient spawn timer above interval must fail before mutation")
 	var wrong_version := Schema.create_empty(&"save.slot_1", 1)
 	wrong_version["schema_version"] = 2
 	_expect(not Schema.validate(wrong_version).is_valid(), "unknown schema version must fail closed")

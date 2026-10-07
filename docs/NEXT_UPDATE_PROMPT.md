@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.12z ambient spawn timer
+# Prompt cho model tiếp theo — U1.12aa world-boss actor audit
 
-Tiếp tục bằng đúng một package U1.12z: persist riêng ambient `spawn_timer` trong typed world-cycle state. Giữ interval 4 giây và initial 3 giây; không serialize creature Node, spawn offset, species roll hoặc RNG. Chứng minh timer round-trip, invalid value fail trước mutation, load không tự spawn creature và failed load giữ runtime. Không mở creature roster/world chunk persistence. Chạy full gate + leak-aware log scan và cập nhật docs.
+Tiếp tục bằng đúng một package U1.12aa: audit và thiết kế typed persistence tối thiểu cho world boss được `main.gd` spawn (khác altar boss). Xác định stable instance/lifecycle identity trước khi code; persist HP/position chỉ nếu ownership và defeat callback cho phép restore không reward lặp. Không serialize Node, scene path, banner hoặc RNG. Nếu lifecycle chưa đủ an toàn, chỉ tạo contract/pure state + regression và ghi blocker, không spawn actor giả. Chạy full gate + leak-aware log scan và cập nhật docs.

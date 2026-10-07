@@ -14,6 +14,7 @@ var world_clock_seconds: float
 var raid_triggered_this_cycle: bool
 var boss_spawned: bool
 var boss_timer: float
+var spawn_timer: float
 
 
 func _init(
@@ -29,7 +30,8 @@ func _init(
 	p_world_clock_seconds: float,
 	p_raid_triggered_this_cycle: bool,
 	p_boss_spawned: bool,
-	p_boss_timer: float
+	p_boss_timer: float,
+	p_spawn_timer: float
 ) -> void:
 	player_state = p_player_state.duplicate(true)
 	legacy_inventory = p_legacy_inventory.duplicate(true)
@@ -44,3 +46,4 @@ func _init(
 	raid_triggered_this_cycle = p_raid_triggered_this_cycle
 	boss_spawned = p_boss_spawned
 	boss_timer = p_boss_timer
+	spawn_timer = p_spawn_timer

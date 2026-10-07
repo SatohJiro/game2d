@@ -33,7 +33,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | FARM | Soil/crop/water/fertilizer/harvest | `CropDefinition` berry mirror; `resource_node.gd` vẫn gộp resource và plot | FarmPlot state thuần + CropDefinition | U1.3, U5.3 |
 | BUILD | Placement, cost, structure health | Workbench đã có typed durability DTO/catalog admission; Player + building scripts vẫn authoritative | PlacementRequest/Result, occupancy grid | U1.3, U1.6, U1.12t, U5.5 |
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
-| WORLD | Zone, chunks, spawn, day/night, raid | Main owns clock, raid guard và boss timer/guard; tree/rock depletion typed | Chunk admission + persistent delta | U1.12u–y, U2 |
+| WORLD | Zone, chunks, spawn, day/night, raid | Main owns typed clock/raid/boss/ambient timers; tree/rock depletion typed | Chunk admission + actor deltas | U1.12u–z, U2 |
 | NAV | Navigation/path requests | Chưa có | Navigation adapter theo chunk | U2.3 |
 | SAVE | Versioned persistence | Main→coordinator explicit clock boundary; Player/base/building/resource adapters; atomic repository | Autosave/UI scheduling, encounter delta | U1.11–U1.12 |
 | UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
