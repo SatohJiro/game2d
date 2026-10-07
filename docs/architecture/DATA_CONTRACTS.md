@@ -66,6 +66,8 @@ U1.12n chest durability không thêm identity mới: `health` là scalar state, 
 
 U1.12o furnace durability không thêm identity mới: `health` là scalar state, `max_health = 300` là tuning hiện tại. Node, scene path, pet boost, tween và smelting callback không đi qua DTO.
 
+U1.12p cooking-pot durability không thêm identity mới: `health` là scalar state và max health 200 là tuning foundation mới, tạm căn theo workbench. Node, scene path, player-in-range, tween và finish callback không đi qua DTO.
+
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.

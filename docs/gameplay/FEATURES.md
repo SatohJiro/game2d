@@ -144,7 +144,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Preview biểu diễn valid/invalid; placement kiểm tra terrain, collision, bounds, cost và unlock.
 - Build commit trừ cost và spawn entity trong một transaction logic; cancel không tốn cost.
 - Building có stable instance ID, health, repair/dismantle policy và state riêng theo subtype.
-- U1.12e: chín placement reachable có stable subtype/instance identity; U1.12f–o giữ mutable state qua furnace durability. Health subtype còn lại chưa persist.
+- U1.12e: chín placement reachable có stable subtype/instance identity; U1.12f–p giữ mutable state qua cooking-pot durability. Health subtype còn lại chưa persist.
 - Acceptance: không overlap vùng cấm; reload giữ transform/state; dismantle trả đúng bảng refund.
 
 ### G12 — progression và quests
@@ -194,6 +194,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.12m: turret restore cooldown còn lại mà không bắn khi load hoặc giữ stale target; target/projectile runtime không thuộc save.
 - U1.12n: chest inventory và health 1–250 round-trip cùng nhau; load không gọi damage/destruction, invalid health không thay runtime state.
 - U1.12o: furnace processing và health 1–300 round-trip cùng nhau; load không tick smelting hoặc gọi destruction, invalid health fail atomic.
+- U1.12p: cooking pot có durability foundation 200 HP; recipe/progress/health round-trip không finish/reward khi load và invalid health fail atomic.
 - Acceptance: save → quit → load giữ inventory, roster, assignment, building, crop, quest và world clock; corrupt file trả lỗi an toàn.
 
 ## Thứ tự ưu tiên playable vertical slice

@@ -157,3 +157,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12o furnace durability
 
 `FurnacePlacementState` thêm `health` nguyên trong `[1, 300]`; state năm field từ U1.12g vẫn đọc với health mặc định 300. Snapshot mới ghi input/output/progress/health. Restore giữ health qua `_ready()` nhưng không chạy `_process()`, smelting transaction, damage hoặc destruction; health sai type/miền và field thừa fail trước runtime replacement.
+
+## U1.12p cooking-pot durability
+
+`CookingPotPlacementState` thêm `health` nguyên trong `[1, 200]`; state recipe/progress cũ vẫn đọc với health mặc định 200. Runtime cooking pot nhận durability foundation 200 HP theo pattern building hiện có. Restore resolve stable recipe trước commit, giữ health qua `_ready()` và không chạy cooking/finish/reward/destruction; invalid health fail trước runtime replacement.

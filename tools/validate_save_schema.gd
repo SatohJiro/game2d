@@ -108,6 +108,9 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_cooking_progress := Schema.create_empty(&"save.slot_1", 1)
 	invalid_cooking_progress["world"]["entity_deltas"] = [{"instance_id": "building.instance_pot", "building_id": "building.cooking_pot", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"recipe_id": "recipe.cooking.hearty_stew", "remaining_seconds": 4.0}}]
 	_expect(not Schema.validate(invalid_cooking_progress).is_valid(), "cooking progress beyond recipe duration must fail before mutation")
+	var invalid_cooking_health := Schema.create_empty(&"save.slot_1", 1)
+	invalid_cooking_health["world"]["entity_deltas"] = [{"instance_id": "building.instance_pot", "building_id": "building.cooking_pot", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"recipe_id": "recipe.cooking.hearty_stew", "remaining_seconds": 1.5, "health": 201}}]
+	_expect(not Schema.validate(invalid_cooking_health).is_valid(), "cooking pot health above maximum must fail before mutation")
 	var invalid_compost_capacity := Schema.create_empty(&"save.slot_1", 1)
 	invalid_compost_capacity["world"]["entity_deltas"] = [{"instance_id": "building.instance_compost", "building_id": "building.compost_bin", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"organic_materials": 11, "ready_fertilizer_count": 0, "composting_timer": 0.0}}]
 	_expect(not Schema.validate(invalid_compost_capacity).is_valid(), "compost material count above capacity must fail before mutation")
@@ -292,18 +295,24 @@ func _test_runtime_apply_adapter() -> void:
 		_expect(rejected_furnace_durability.status == ApplyResult.Status.INVALID_SNAPSHOT and preserved_furnace == reloaded_furnace and preserved_furnace.get("health") == 181 and preserved_furnace.get("iron_ingots_ready") == 3 and is_equal_approx(preserved_furnace.get("smelt_timer"), 2.25), "invalid furnace durability must fail before replacing or advancing runtime state")
 		loaded_pet = player.get("active_pet_node")
 	var cooking_save := save.duplicate(true)
-	cooking_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_pot", "building_id": "building.cooking_pot", "position": {"x": 18.0, "y": 24.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"recipe_id": "recipe.cooking.hearty_stew", "remaining_seconds": 1.75}}]
+	cooking_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_pot", "building_id": "building.cooking_pot", "position": {"x": 18.0, "y": 24.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"recipe_id": "recipe.cooking.hearty_stew", "remaining_seconds": 1.75, "health": 121}}]
 	var cooking_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, cooking_save)
 	var cooking_nodes := get_nodes_in_group("persistent_player_buildings")
 	var loaded_pot: Variant = cooking_nodes[0] if cooking_nodes.size() == 1 else null
-	_expect(cooking_applied.is_applied() and is_instance_valid(loaded_pot) and loaded_pot.get("is_cooking") and is_equal_approx(loaded_pot.get("cooking_timer"), 1.75) and loaded_pot.get("current_recipe").get("id") == "hearty_stew", "cooking pot committed recipe/progress apply mismatch")
+	_expect(cooking_applied.is_applied() and is_instance_valid(loaded_pot) and loaded_pot.get("health") == 121 and not loaded_pot.is_queued_for_deletion() and loaded_pot.get("is_cooking") and is_equal_approx(loaded_pot.get("cooking_timer"), 1.75) and loaded_pot.get("current_recipe").get("id") == "hearty_stew", "cooking pot recipe/progress/durability apply must not finish cooking or destroy")
 	var cooking_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2003, 321.5)
 	_expect(cooking_snapshot.is_accepted(), "mid-batch cooking pot must snapshot with stable recipe state")
 	if cooking_snapshot.is_accepted():
 		var cooking_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, cooking_snapshot.snapshot)
 		var reloaded_cooking_nodes := get_nodes_in_group("persistent_player_buildings")
 		var reloaded_pot: Variant = reloaded_cooking_nodes[0] if reloaded_cooking_nodes.size() == 1 else null
-		_expect(cooking_reloaded.is_applied() and is_instance_valid(reloaded_pot) and reloaded_pot.get("is_cooking") and is_equal_approx(reloaded_pot.get("cooking_timer"), 1.75) and reloaded_pot.get("current_recipe").get("yield_item") == "Súp Hầm Sơn Hào", "cooking save/load must preserve committed recipe and output exactly once")
+		_expect(cooking_reloaded.is_applied() and is_instance_valid(reloaded_pot) and reloaded_pot.get("health") == 121 and not reloaded_pot.is_queued_for_deletion() and reloaded_pot.get("is_cooking") and is_equal_approx(reloaded_pot.get("cooking_timer"), 1.75) and reloaded_pot.get("current_recipe").get("yield_item") == "Súp Hầm Sơn Hào", "cooking save/load must preserve recipe/progress/durability without side effects")
+		var invalid_pot_durability: Dictionary = cooking_snapshot.snapshot.duplicate(true)
+		invalid_pot_durability["world"]["entity_deltas"][0]["state"]["health"] = 201
+		var rejected_pot_durability: RefCounted = ApplyAdapter.apply_player_snapshot(player, invalid_pot_durability)
+		var preserved_pots := get_nodes_in_group("persistent_player_buildings")
+		var preserved_pot: Variant = preserved_pots[0] if preserved_pots.size() == 1 else null
+		_expect(rejected_pot_durability.status == ApplyResult.Status.INVALID_SNAPSHOT and preserved_pot == reloaded_pot and preserved_pot.get("health") == 121 and preserved_pot.get("is_cooking") and is_equal_approx(preserved_pot.get("cooking_timer"), 1.75), "invalid cooking pot durability must fail before replacing or advancing runtime state")
 		loaded_pet = player.get("active_pet_node")
 	var compost_save := save.duplicate(true)
 	compost_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_compost", "building_id": "building.compost_bin", "position": {"x": 14.0, "y": 20.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"organic_materials": 6, "ready_fertilizer_count": 4, "composting_timer": 3.25}}]

@@ -1,4 +1,4 @@
-# U1.12o — Building placement and admitted subtype state contract
+# U1.12p — Building placement and admitted subtype state contract
 
 Chín subtype placement reachable được map từ legacy recipe ID sang stable `building.*` bởi `BuildingPlacementCatalog`. Mỗi placement do Player tạo nhận `building.instance_*`; Node name, scene path và asset path không phải identity.
 
@@ -16,6 +16,8 @@ U1.12n mở rộng `ChestPlacementState` bằng durability `health` nguyên tron
 
 U1.12o mở rộng `FurnacePlacementState` bằng durability `health` nguyên trong `[1, 300]`. State processing năm field cũ được normalize về 300. Pending scalar giữ health qua `_ready()`; restore gán input/output/progress/health trực tiếp và không gọi `take_damage()`, smelting tick, destruction, reward hoặc presentation.
 
-Audit subtype còn lại: các building ngoài chest/furnace vẫn chưa persist health. Resource-node tree/rock depletion và runtime Node references vẫn ngoài phạm vi.
+U1.12p thiết lập durability foundation còn thiếu cho `building.cooking_pot` với max health 200, ngang workbench/crafting station hiện tại, rồi mở rộng `CookingPotPlacementState` bằng health `[1, 200]`. State recipe/progress cũ mặc định 200. Restore resolve recipe trước mutation, giữ health qua `_ready()` và không gọi cooking tick, finish/reward hoặc destruction.
 
-Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12o: bỏ furnace health/pending restore và quay state về processing-only; save mới có health sau rollback sẽ fail closed.
+Audit subtype còn lại: ranch/altar/turret/workbench có health chưa persist; compost/farm plot chưa có durability runtime. Resource-node depletion và runtime Node references vẫn ngoài phạm vi.
+
+Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12p: bỏ cooking-pot health/damage foundation và state field; save mới có health sau rollback sẽ fail closed.

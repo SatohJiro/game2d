@@ -1,6 +1,10 @@
 extends StaticBody2D
 class_name BuildingCookingPot
 
+@export var max_health: int = 200
+var health: int = 200
+var _pending_restored_health: int = -1
+
 @onready var visual: Node2D = $Visual
 @onready var sprite: Sprite2D = $Visual/Sprite2D
 @onready var fire_light: PointLight2D = $Visual/FireLight
@@ -68,6 +72,9 @@ var cooking_recipes: Array[Dictionary] = [
 func _ready() -> void:
 	add_to_group("cooking_pots")
 	add_to_group("heat_sources") # Allows warming player up in cold weather!
+	add_to_group("buildings")
+	health = _pending_restored_health if _pending_restored_health >= 1 else max_health
+	_pending_restored_health = -1
 	label.visible = false
 	interaction_area.body_entered.connect(_on_body_entered)
 	interaction_area.body_exited.connect(_on_body_exited)
@@ -177,30 +184,55 @@ func finish_cooking() -> void:
 
 func create_persistence_state() -> CookingPotPlacementState:
 	if not is_cooking:
-		return CookingPotPlacementState.new()
+		return CookingPotPlacementState.new(&"", 0.0, health)
 	return CookingPotPlacementState.new(
 		CookingRecipeCatalog.from_legacy(String(current_recipe.get("id", ""))),
-		cooking_timer
+		cooking_timer,
+		health
 	)
 
 
 func apply_persistence_state(state: CookingPotPlacementState) -> bool:
 	if state == null or not state.is_valid():
 		return false
+	var resolved_recipe: Dictionary = {}
+	if state.recipe_id != &"":
+		var legacy_id := CookingRecipeCatalog.to_legacy(state.recipe_id)
+		for recipe: Dictionary in cooking_recipes:
+			if String(recipe.get("id", "")) == legacy_id:
+				resolved_recipe = recipe.duplicate(true)
+				break
+		if resolved_recipe.is_empty():
+			return false
+	_commit_restored_health(state.health)
 	if state.recipe_id == &"":
 		is_cooking = false
 		cooking_timer = 0.0
 		current_recipe = {}
 		return true
-	var legacy_id := CookingRecipeCatalog.to_legacy(state.recipe_id)
-	for recipe: Dictionary in cooking_recipes:
-		if String(recipe.get("id", "")) == legacy_id:
-			current_recipe = recipe.duplicate(true)
-			cooking_duration = float(recipe.get("cook_time", 0.0))
-			cooking_timer = state.remaining_seconds
-			is_cooking = true
-			return true
-	return false
+	current_recipe = resolved_recipe
+	cooking_duration = float(resolved_recipe.get("cook_time", 0.0))
+	cooking_timer = state.remaining_seconds
+	is_cooking = true
+	return true
+
+
+func _commit_restored_health(restored_health: int) -> void:
+	if is_node_ready():
+		health = restored_health
+	else:
+		_pending_restored_health = restored_health
+
+
+func take_damage(amount: int) -> void:
+	if amount <= 0:
+		return
+	health -= amount
+	var tween := create_tween()
+	tween.tween_property(sprite, "modulate", Color(1.6, 0.4, 0.4), 0.08)
+	tween.tween_property(sprite, "modulate", Color.WHITE, 0.1)
+	if health <= 0:
+		queue_free()
 
 func spawn_floating_text(txt: String, color: Color) -> void:
 	var float_node = FLOATING_TEXT_SCENE.instantiate()
