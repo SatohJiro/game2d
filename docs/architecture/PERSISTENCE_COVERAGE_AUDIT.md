@@ -90,3 +90,7 @@ Ambient countdown round-trip trong `(0,4]`, default-compatible 3 giây. Load kh�
 ## U1.12ab world-boss ownership
 
 Main đã sở hữu một actor `boss.world_dragon_1`; duplicate spawn fail closed và defeat signal chỉ commit actor reference/group/ID trùng khớp. Coverage vẫn PARTIAL vì lifecycle/HP/position chưa đi qua Save v1; reward/drop và actor thường/altar không đổi.
+
+## U1.12ac world-boss Save v1
+
+Lifecycle/instance ID/HP/position đã round-trip và Main restore active đúng một actor, defeated/pending không spawn. Invalid/corrupt load không thay actor hiện tại; restore không tạo EXP/drop hoặc presentation. Defeat coverage FULL; capture/despawn ngoài defeat vẫn cần lifecycle event riêng.

@@ -18,4 +18,6 @@ DTO chỉ chứa lifecycle ID, instance ID, HP và hai scalar position. Không c
 
 Main hiện giữ đúng một `world_boss_actor`, gắn group `persistent_world_bosses` và metadata `boss.world_dragon_1`. Creature phát `defeated(actor, encounter_instance_id)` trước khi tween/free; Main chỉ commit `DEFEATED` khi actor reference, group và ID cùng khớp. Callback lặp, quái thường và altar boss đều fail closed. `spawn_boss(false)` chỉ suppress banner/audio để test và chuẩn bị restore, không đổi damage/reward/drop.
 
-State vẫn chưa thuộc Save v1. Package sau mới được admit HP/position/lifecycle qua snapshot/apply và restore không thưởng; không serialize actor Node, signal connection hoặc presentation state.
+## U1.12ac Save v1 admission
+
+Save mới ghi `world.world_boss_state`; save cũ thiếu field suy ra PENDING khi guard chưa spawn và DEFEATED khi guard đã spawn. Schema khóa coherence với `WorldCycleState`. Active restore thay actor cũ bằng đúng một actor có HP/position đã lưu qua đường không banner/audio/reward; pending/defeated không spawn. Corrupt/invalid snapshot dừng trước Main apply. Node, target, signal connection, scene path, EXP/drop và RNG không serialize.

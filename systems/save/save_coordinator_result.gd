@@ -11,6 +11,7 @@ var raid_triggered_this_cycle: bool
 var boss_spawned: bool
 var boss_timer: float
 var spawn_timer: float
+var world_boss_state: WorldBossState
 
 
 func _init(
@@ -21,7 +22,8 @@ func _init(
 	p_raid_triggered_this_cycle: bool = false,
 	p_boss_spawned: bool = false,
 	p_boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS,
-	p_spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS
+	p_spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS,
+	p_world_boss_state: WorldBossState = null
 ) -> void:
 	status = p_status
 	world_clock_seconds = p_world_clock_seconds
@@ -31,6 +33,7 @@ func _init(
 	boss_spawned = p_boss_spawned
 	boss_timer = p_boss_timer
 	spawn_timer = p_spawn_timer
+	world_boss_state = WorldBossState.new(p_world_boss_state.lifecycle_id, p_world_boss_state.instance_id, p_world_boss_state.hp, p_world_boss_state.position) if p_world_boss_state != null else WorldBossState.new()
 
 
 func is_success() -> bool:

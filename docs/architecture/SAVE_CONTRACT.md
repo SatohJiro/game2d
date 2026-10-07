@@ -120,6 +120,10 @@ Resource depletion health parser đồng thời chấp nhận JSON number có gi
 
 U1.12ab đã đóng actor ownership và defeat-event gate; `spawn_boss(false)` suppress presentation mà không thay reward path. Save schema/snapshot/apply vẫn chưa mang `WorldBossState`, nên không có migration trong package này.
 
+## U1.12ac world-boss state
+
+`world.world_boss_state` chứa exact DTO lifecycle/instance/HP/position và phải coherent với cycle boss guard. Field thiếu từ save v1 pre-release được suy ra bảo thủ: pending nếu chưa spawn, defeated nếu đã spawn. Snapshot active đọc live actor; restore active thay đúng một actor qua presentation-suppressed path, còn defeated/pending không spawn. Validation hoàn tất trước mutation; Node/target/signal/scene/reward/RNG không thuộc DTO.
+
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure

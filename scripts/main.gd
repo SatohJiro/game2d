@@ -54,7 +54,10 @@ func configure_save_path(primary_path: String) -> bool:
 func save_game(saved_at_unix: int, save_id: StringName = &"save.slot_1") -> RefCounted:
 	if save_coordinator == null:
 		save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
-	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time, raid_triggered_this_cycle, boss_spawned, boss_timer, spawn_timer)
+	var boss_state := create_world_boss_persistence_state()
+	if boss_state == null:
+		boss_state = WorldBossState.new(WorldBossState.ACTIVE, WorldBossState.INSTANCE_ID, 0, Vector2.ZERO)
+	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time, raid_triggered_this_cycle, boss_spawned, boss_timer, spawn_timer, boss_state)
 
 func load_game() -> RefCounted:
 	if save_coordinator == null:
@@ -62,6 +65,7 @@ func load_game() -> RefCounted:
 	var result: RefCounted = save_coordinator.load_player(player)
 	if result.is_loaded():
 		apply_world_cycle(result.world_clock_seconds, result.raid_triggered_this_cycle, result.boss_spawned, result.boss_timer, result.spawn_timer)
+		apply_world_boss_state(result.world_boss_state)
 	return result
 
 func apply_world_clock(clock_seconds: float) -> bool:
@@ -188,6 +192,7 @@ func spawn_boss(show_presentation: bool = true) -> bool:
 	if world_boss_state.lifecycle_id != WorldBossState.PENDING or is_instance_valid(world_boss_actor):
 		return false
 	boss_spawned = true
+	boss_timer = 0.0
 	var creature = CREATURE_SCENE.instantiate()
 	creature.global_position = Vector2(340, 220)
 	creature.species_index = 4 # Dragon Boss
@@ -228,6 +233,37 @@ func commit_world_boss_defeat(actor: Node2D, encounter_instance_id: StringName) 
 	world_boss_state = WorldBossState.new(WorldBossState.DEFEATED, WorldBossState.INSTANCE_ID, 0, Vector2.ZERO)
 	world_boss_actor = null
 	return true
+
+func create_world_boss_persistence_state() -> WorldBossState:
+	if world_boss_state.lifecycle_id == WorldBossState.ACTIVE:
+		if not is_instance_valid(world_boss_actor): return null
+		var projected := WorldBossState.new(WorldBossState.ACTIVE, WorldBossState.INSTANCE_ID, int(world_boss_actor.get("hp")), world_boss_actor.global_position)
+		return projected if projected.is_valid() else null
+	return WorldBossState.new(world_boss_state.lifecycle_id, world_boss_state.instance_id, world_boss_state.hp, world_boss_state.position)
+
+func apply_world_boss_state(state: WorldBossState) -> bool:
+	if state == null or not state.is_valid(): return false
+	_remove_world_boss_actor()
+	world_boss_state = WorldBossState.new()
+	if state.lifecycle_id == WorldBossState.ACTIVE:
+		boss_spawned = false
+		if not spawn_boss(false): return false
+		world_boss_actor.global_position = state.position
+		world_boss_actor.set("hp", state.hp)
+		world_boss_actor.call("update_overhead")
+		world_boss_state = WorldBossState.new(WorldBossState.ACTIVE, WorldBossState.INSTANCE_ID, state.hp, state.position)
+		return true
+	world_boss_state = WorldBossState.new(state.lifecycle_id, state.instance_id, state.hp, state.position)
+	boss_spawned = state.lifecycle_id != WorldBossState.PENDING
+	if boss_spawned: boss_timer = 0.0
+	return true
+
+func _remove_world_boss_actor() -> void:
+	for actor: Node in get_tree().get_nodes_in_group("persistent_world_bosses"):
+		if is_instance_valid(actor):
+			if actor.get_parent() != null: actor.get_parent().remove_child(actor)
+			actor.free()
+	world_boss_actor = null
 
 func spawn_initial_creatures() -> void:
 	# 1. Bầy Nhớt Thủy Sinh tụ tập gần hồ nước

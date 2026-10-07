@@ -57,6 +57,7 @@ func _run() -> void:
 	_expect(_runtime_snapshot(player) == state_before, "failed coordinator load must not mutate runtime")
 
 	await _test_world_clock_owner()
+	await _test_world_boss_round_trip()
 
 	root.remove_child(fixture)
 	fixture.free()
@@ -114,6 +115,49 @@ func _test_world_clock_owner() -> void:
 	world.set("spawn_timer", 1.5)
 	var rejected_world_load: RefCounted = world.call("load_game")
 	_expect(not rejected_world_load.is_loaded() and is_equal_approx(float(world.get("day_time")), 44.0) and not bool(world.get("raid_triggered_this_cycle")) and is_equal_approx(float(world.get("boss_timer")), 12.0) and is_equal_approx(float(world.get("spawn_timer")), 1.5), "failed world load must preserve runtime cycle state")
+	root.remove_child(world)
+	world.free()
+	await process_frame
+	await process_frame
+	_cleanup(directory, primary)
+
+
+func _test_world_boss_round_trip() -> void:
+	var packed_main := load("res://scenes/main.tscn") as PackedScene
+	var directory := "user://world_boss_owner_test_%d" % Time.get_ticks_usec()
+	var primary := "%s/slot_1.json" % directory
+	var world: Node = packed_main.instantiate()
+	root.add_child(world)
+	await process_frame
+	world.set_process(false)
+	world.call("configure_save_path", primary)
+	_expect(bool(world.call("spawn_boss", false)), "world boss fixture must spawn")
+	var actor := world.get("world_boss_actor") as Node2D
+	actor.global_position = Vector2(301.5, 177.25)
+	actor.set("hp", 217)
+	var player_exp_before := int(world.get("player").get("exp_val"))
+	var drops_before := get_nodes_in_group("dropped_items").size()
+	_expect(world.call("save_game", 401, &"save.slot_1").is_success(), "active world boss save must succeed")
+	world.call("apply_world_boss_state", WorldBossState.new(WorldBossState.DEFEATED, WorldBossState.INSTANCE_ID, 0, Vector2.ZERO))
+	var active_load: RefCounted = world.call("load_game")
+	var restored_actor := world.get("world_boss_actor") as Node2D
+	var restored_state := world.get("world_boss_state") as WorldBossState
+	_expect(active_load.is_loaded() and restored_state.lifecycle_id == WorldBossState.ACTIVE, "active world boss lifecycle must round-trip")
+	_expect(is_instance_valid(restored_actor) and int(restored_actor.get("hp")) == 217 and restored_actor.global_position.is_equal_approx(Vector2(301.5, 177.25)), "active load must restore boss HP and position")
+	_expect(get_nodes_in_group("persistent_world_bosses").size() == 1 and int(world.get("player").get("exp_val")) == player_exp_before and get_nodes_in_group("dropped_items").size() == drops_before, "active load must create one actor without EXP or drops")
+	world.call("commit_world_boss_defeat", restored_actor, WorldBossState.INSTANCE_ID)
+	if restored_actor.get_parent() != null: restored_actor.get_parent().remove_child(restored_actor)
+	restored_actor.free()
+	_expect(world.call("save_game", 402, &"save.slot_1").is_success(), "defeated world boss save must succeed")
+	world.call("apply_world_boss_state", WorldBossState.new(WorldBossState.ACTIVE, WorldBossState.INSTANCE_ID, 100, Vector2(20, 30)))
+	var defeated_load: RefCounted = world.call("load_game")
+	_expect(defeated_load.is_loaded() and (world.get("world_boss_state") as WorldBossState).lifecycle_id == WorldBossState.DEFEATED and get_nodes_in_group("persistent_world_bosses").is_empty(), "defeated load must remove actor and lock respawn")
+	world.call("apply_world_boss_state", WorldBossState.new(WorldBossState.ACTIVE, WorldBossState.INSTANCE_ID, 91, Vector2(40, 50)))
+	var preserved_actor: Node2D = world.get("world_boss_actor") as Node2D
+	_write_corrupt(primary)
+	_write_corrupt("%s.bak" % primary)
+	var rejected: RefCounted = world.call("load_game")
+	_expect(not rejected.is_loaded() and world.get("world_boss_actor") == preserved_actor and (world.get("world_boss_state") as WorldBossState).hp == 91, "corrupt load must preserve current world-boss actor and state")
 	root.remove_child(world)
 	world.free()
 	await process_frame

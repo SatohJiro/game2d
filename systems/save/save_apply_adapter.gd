@@ -103,6 +103,9 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		return null
 	var player_data: Dictionary = snapshot["player"]
 	var cycle_state := WorldCycleState.from_dto(snapshot["world"].get("cycle_state", {"raid_triggered_this_cycle": false}), float(snapshot["world"]["clock_seconds"]))
+	var boss_state: WorldBossState = WorldBossState.from_dto(snapshot["world"].get("world_boss_state"))
+	if boss_state == null:
+		boss_state = WorldBossState.new(WorldBossState.DEFEATED, WorldBossState.INSTANCE_ID, 0, Vector2.ZERO) if cycle_state.boss_spawned else WorldBossState.new()
 	return ApplyPlan.new(
 		player_data,
 		legacy_inventory,
@@ -117,7 +120,8 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		cycle_state.raid_triggered_this_cycle,
 		cycle_state.boss_spawned,
 		cycle_state.boss_timer,
-		cycle_state.spawn_timer
+		cycle_state.spawn_timer,
+		boss_state
 	)
 
 
@@ -157,7 +161,7 @@ static func _commit(player: Node, plan: RefCounted) -> RefCounted:
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	if not bool(player.call("apply_resource_depletion_snapshot", plan.resource_depletions)):
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
-	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle, plan.boss_spawned, plan.boss_timer, plan.spawn_timer)
+	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle, plan.boss_spawned, plan.boss_timer, plan.spawn_timer, plan.world_boss_state)
 
 
 static func _is_default_base_state(state: BaseProgressState) -> bool:

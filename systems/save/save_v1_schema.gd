@@ -30,7 +30,7 @@ static func create_empty(save_id: StringName, saved_at_unix: int) -> Dictionary:
 		"inventory": {},
 		"pets": [],
 		"base": {"base_level": 1, "active_quest_id": "quest.base.survival", "claimed_quest_ids": []},
-		"world": {"clock_seconds": 0.0, "cycle_state": {"raid_triggered_this_cycle": false}, "entity_deltas": [], "resource_deltas": []},
+		"world": {"clock_seconds": 0.0, "cycle_state": {"raid_triggered_this_cycle": false}, "world_boss_state": WorldBossState.new().to_dto(), "entity_deltas": [], "resource_deltas": []},
 	}
 
 
@@ -134,8 +134,14 @@ static func _validate_world(value: Variant, errors: PackedStringArray) -> void:
 	var world: Dictionary = value
 	if not _is_finite_number(world.get("clock_seconds")) or float(world.get("clock_seconds", -1.0)) < 0.0:
 		errors.append("world.clock_seconds must be finite and non-negative")
-	elif WorldCycleState.from_dto(world.get("cycle_state", {"raid_triggered_this_cycle": false}), float(world["clock_seconds"])) == null:
-		errors.append("world.cycle_state must be coherent with clock phase")
+	else:
+		var cycle_state := WorldCycleState.from_dto(world.get("cycle_state", {"raid_triggered_this_cycle": false}), float(world["clock_seconds"]))
+		if cycle_state == null:
+			errors.append("world.cycle_state must be coherent with clock phase")
+		else:
+			var boss_state := _parse_world_boss_state(world.get("world_boss_state"), cycle_state.boss_spawned)
+			if boss_state == null or (boss_state.lifecycle_id == WorldBossState.PENDING) == cycle_state.boss_spawned:
+				errors.append("world.world_boss_state must be valid and coherent with cycle state")
 	if typeof(world.get("entity_deltas")) != TYPE_ARRAY:
 		errors.append("world.entity_deltas must be an Array")
 		return
@@ -159,6 +165,12 @@ static func _validate_world(value: Variant, errors: PackedStringArray) -> void:
 			continue
 		if seen.has(record.instance_id): errors.append("resource instance_id must be unique")
 		seen[record.instance_id] = true
+
+
+static func _parse_world_boss_state(value: Variant, boss_spawned: bool) -> WorldBossState:
+	if value == null:
+		return WorldBossState.new(WorldBossState.DEFEATED, WorldBossState.INSTANCE_ID, 0, Vector2.ZERO) if boss_spawned else WorldBossState.new()
+	return WorldBossState.from_dto(value)
 
 
 static func _validate_base(value: Variant, errors: PackedStringArray) -> void:
