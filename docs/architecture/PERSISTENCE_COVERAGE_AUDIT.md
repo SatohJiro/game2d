@@ -82,3 +82,7 @@ Pre-spawn boss countdown và spawned guard round-trip trong typed cycle state. I
 ## U1.12z ambient spawn timer
 
 Ambient countdown round-trip trong `(0,4]`, default-compatible 3 giây. Load không gọi creature maintenance và failed load giữ timer runtime. Creature roster, random species/offset và chunk spawn identity không persist.
+
+## U1.12aa world-boss actor audit
+
+`boss_spawned` hiện không phân biệt active/defeated; Main không giữ actor reference/stable group và Creature không signal defeat về world owner. `WorldBossState` đã khóa future DTO bằng lifecycle pending/active/defeated, fixed `boss.world_dragon_1`, HP 1–380 và finite position. Coverage vẫn PARTIAL: state chưa thuộc Save v1 cho tới khi actor ownership, defeat callback và reward suppression được triển khai/test.

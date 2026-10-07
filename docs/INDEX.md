@@ -26,7 +26,8 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 19. `docs/architecture/PET_INSTANCE_CONTRACT.md`: unique pet identity, typed projection và capture-to-roster boundary.
 20. `docs/architecture/SAVE_CONTRACT.md`: versioned Save v1 envelope, JSON-safe DTO và validation boundary.
 21. `docs/architecture/PERSISTENCE_COVERAGE_AUDIT.md`: ma trận owner/state/identity và data-loss risk sau U1.11.
-22. `docs/architecture/BASE_QUEST_PERSISTENCE_CONTRACT.md`: stable quest IDs, claimed ledger và BaseProgressState.
+22. `docs/architecture/WORLD_BOSS_PERSISTENCE_CONTRACT.md`: audit lifecycle, stable identity và gate trước khi nối world boss vào Save v1.
+23. `docs/architecture/BASE_QUEST_PERSISTENCE_CONTRACT.md`: stable quest IDs, claimed ledger và BaseProgressState.
 23. `docs/architecture/BUILDING_PLACEMENT_CONTRACT.md`: stable building instance/subtype identity và placement delta.
 23. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
 24. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.

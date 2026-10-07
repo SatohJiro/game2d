@@ -114,6 +114,10 @@ Resource depletion health parser đồng thời chấp nhận JSON number có gi
 
 `WorldCycleState.spawn_timer` giữ countdown ambient trong `(0,4]`; cycle DTO cũ mặc định initial 3 giây. Main handoff/commit timer cùng các scalar cycle nhưng không gọi `maintain_creatures()`. Creature Node, offset, species roll và RNG không serialize; roster/chunk persistence vẫn ngoài scope.
 
+## U1.12aa world-boss admission gate
+
+`WorldBossState` là contract thuần chưa được admit vào Save v1. Chỉ admit sau khi Main sở hữu duy nhất actor `boss.world_dragon_1`, nhận defeat event trước actor free, và restore có đường suppress banner/EXP/drop. Việc tách gate này ngăn `boss_spawned` mơ hồ tạo actor hoặc reward lặp khi load.
+
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure

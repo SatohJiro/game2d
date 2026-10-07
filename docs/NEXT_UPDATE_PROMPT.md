@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.12aa world-boss actor audit
+# Prompt cho model tiếp theo — U1.12ab world-boss ownership
 
-Tiếp tục bằng đúng một package U1.12aa: audit và thiết kế typed persistence tối thiểu cho world boss được `main.gd` spawn (khác altar boss). Xác định stable instance/lifecycle identity trước khi code; persist HP/position chỉ nếu ownership và defeat callback cho phép restore không reward lặp. Không serialize Node, scene path, banner hoặc RNG. Nếu lifecycle chưa đủ an toàn, chỉ tạo contract/pure state + regression và ghi blocker, không spawn actor giả. Chạy full gate + leak-aware log scan và cập nhật docs.
+Tiếp tục bằng đúng một package U1.12ab: cho Main sở hữu duy nhất world-boss actor `boss.world_dragon_1` và nhận lifecycle/defeat signal từ Creature trước khi actor free. Phân biệt active với defeated bằng `WorldBossState`; spawn trùng phải no-op/fail closed. Chưa nối Save v1, chưa restore actor và không đổi reward/drop. Regression phải chứng minh đúng một actor, callback chỉ commit đúng world boss và actor thường/altar boss không làm đổi state. Chạy full gate + leak-aware log scan và cập nhật docs.
