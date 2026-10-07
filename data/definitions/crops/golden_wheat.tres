@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CropDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/crop_definition.gd" id="1_crop"]
+
+[resource]
+script = ExtResource("1_crop")
+content_id = &"crop.golden_wheat"
+display_name_key = &"crop.golden_wheat.name"
+developer_notes = "U1.12k typed authority for ResourceNode CropType.WHEAT persistence identity."
+seed_item_id = &"item.golden_wheat_seed"
+harvest_item_id = &"item.golden_wheat"
+growth_time_seconds = 10.0
+harvest_yield_min = 3
+harvest_yield_max = 6

@@ -21,6 +21,8 @@ func _init(p_instance_id: StringName, p_building_id: StringName, p_transform: Tr
 		state = CompostBinPlacementState.new().to_dto()
 	elif building_id == &"building.ranch" and state.is_empty():
 		state = RanchPlacementState.new().to_dto()
+	elif building_id == &"building.farm_plot" and state.is_empty():
+		state = FarmPlotPlacementState.new().to_dto()
 
 func is_valid() -> bool:
 	if ContentId.domain_of(instance_id) != &"building" or not BuildingPlacementCatalog.is_supported(building_id) or not transform.is_finite():
@@ -35,6 +37,8 @@ func is_valid() -> bool:
 		return CompostBinPlacementState.from_dto(state) != null
 	if building_id == &"building.ranch":
 		return RanchPlacementState.from_dto(state) != null
+	if building_id == &"building.farm_plot":
+		return FarmPlotPlacementState.from_dto(state) != null
 	return state.is_empty()
 
 func to_dto() -> Dictionary:

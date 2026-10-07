@@ -381,6 +381,21 @@ func update_farm_display() -> void:
 			var crop_name = "Thảo Dược" if crop_type == CropType.HERB else ("Lúa Mì" if crop_type == CropType.WHEAT else "Quả Mọng")
 			label.text = "★ Chín Rộ: %s%s [E thu hoạch]" % [crop_name, fert_tag]
 
+func create_persistence_state() -> FarmPlotPlacementState:
+	if node_type != NodeType.FARM_PLOT: return null
+	var stage_ids: Array[StringName] = [FarmPlotCatalog.EMPTY_STAGE, FarmPlotCatalog.SEEDED_STAGE, FarmPlotCatalog.GROWING_STAGE, FarmPlotCatalog.READY_STAGE]
+	var crop_id := &"" if crop_stage == CropStage.EMPTY else FarmPlotCatalog.crop_id_from_legacy(int(crop_type))
+	return FarmPlotPlacementState.new(stage_ids[int(crop_stage)], crop_id, 0.0 if crop_stage == CropStage.EMPTY else grow_timer, moisture, is_watered, is_fertilized)
+
+func apply_persistence_state(state: FarmPlotPlacementState) -> bool:
+	if node_type != NodeType.FARM_PLOT or state == null or not state.is_valid(): return false
+	var stages := {FarmPlotCatalog.EMPTY_STAGE: CropStage.EMPTY, FarmPlotCatalog.SEEDED_STAGE: CropStage.SEEDED, FarmPlotCatalog.GROWING_STAGE: CropStage.GROWING, FarmPlotCatalog.READY_STAGE: CropStage.READY}
+	crop_stage = stages[state.stage_id]
+	if state.crop_id != &"": crop_type = FarmPlotCatalog.legacy_type_from_id(state.crop_id) as CropType
+	grow_timer = state.grow_timer; moisture = state.moisture; is_watered = state.is_watered; is_fertilized = state.is_fertilized
+	update_farm_display()
+	return true
+
 func spawn_floating_text(txt: String, color: Color) -> void:
 	var float_node = FLOATING_TEXT_SCENE.instantiate()
 	float_node.global_position = global_position + Vector2(randf_range(-12, 12), -30)

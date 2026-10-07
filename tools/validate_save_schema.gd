@@ -114,6 +114,12 @@ func _test_identity_and_shape_guards() -> void:
 	var duplicate_ranch_assignment := Schema.create_empty(&"save.slot_1", 1)
 	duplicate_ranch_assignment["world"]["entity_deltas"] = [{"instance_id": "building.instance_ranch", "building_id": "building.ranch", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"food_count": 8, "assignments": [{"assignment_id": "pet.loaded_1", "species_id": "creature.flam"}, {"assignment_id": "pet.loaded_1", "species_id": "creature.flam"}], "production_timer": 2.0}}]
 	_expect(not Schema.validate(duplicate_ranch_assignment).is_valid(), "duplicate ranch assignment must fail before mutation")
+	var invalid_farm_crop := Schema.create_empty(&"save.slot_1", 1)
+	invalid_farm_crop["world"]["entity_deltas"] = [{"instance_id": "building.instance_plot", "building_id": "building.farm_plot", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"stage_id": "farm.stage.growing", "crop_id": "Wheat", "grow_timer": 7.0, "moisture": 50.0, "is_watered": true, "is_fertilized": false}}]
+	_expect(not Schema.validate(invalid_farm_crop).is_valid(), "localized farm crop identity must fail before mutation")
+	var invalid_farm_stage := Schema.create_empty(&"save.slot_1", 1)
+	invalid_farm_stage["world"]["entity_deltas"] = [{"instance_id": "building.instance_plot", "building_id": "building.farm_plot", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"stage_id": "farm.stage.seeded", "crop_id": "crop.berry", "grow_timer": 6.0, "moisture": 0.0, "is_watered": false, "is_fertilized": false}}]
+	_expect(not Schema.validate(invalid_farm_stage).is_valid(), "farm progress inconsistent with stage must fail before mutation")
 
 
 func _test_non_serializable_guards() -> void:
@@ -300,6 +306,20 @@ func _test_runtime_apply_adapter() -> void:
 		var reloaded_ranch: Variant = reloaded_ranch_nodes[0] if reloaded_ranch_nodes.size() == 1 else null
 		var ranch_assignments: Array = reloaded_ranch.get("assigned_pets") if is_instance_valid(reloaded_ranch) else []
 		_expect(ranch_reloaded.is_applied() and ranch_assignments.size() == 2 and ranch_assignments[0].get("assignment_id") == &"ranch.resident_starter" and ranch_assignments[1].get("assignment_id") == &"pet.loaded_1" and reloaded_ranch.get("animal_nodes").size() == 2 and is_equal_approx(reloaded_ranch.get("production_timer"), 4.5), "ranch save/load must preserve assignments once and rebuild presentation nodes")
+		loaded_pet = player.get("active_pet_node")
+	var farm_save := save.duplicate(true)
+	farm_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_plot", "building_id": "building.farm_plot", "position": {"x": 7.0, "y": 11.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"stage_id": "farm.stage.growing", "crop_id": "crop.golden_wheat", "grow_timer": 7.25, "moisture": 64.0, "is_watered": true, "is_fertilized": true}}]
+	var farm_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, farm_save)
+	var farm_nodes := get_nodes_in_group("persistent_player_buildings")
+	var loaded_plot: Variant = farm_nodes[0] if farm_nodes.size() == 1 else null
+	_expect(farm_applied.is_applied() and is_instance_valid(loaded_plot) and loaded_plot.get("crop_stage") == 2 and loaded_plot.get("crop_type") == 1 and is_equal_approx(loaded_plot.get("grow_timer"), 7.25) and is_equal_approx(loaded_plot.get("moisture"), 64.0) and loaded_plot.get("is_watered") and loaded_plot.get("is_fertilized"), "farm plot crop/stage/progress apply mismatch")
+	var farm_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2006, 321.5)
+	_expect(farm_snapshot.is_accepted(), "growing farm plot must snapshot with stable crop/stage state")
+	if farm_snapshot.is_accepted():
+		var farm_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, farm_snapshot.snapshot)
+		var reloaded_farm_nodes := get_nodes_in_group("persistent_player_buildings")
+		var reloaded_plot: Variant = reloaded_farm_nodes[0] if reloaded_farm_nodes.size() == 1 else null
+		_expect(farm_reloaded.is_applied() and is_instance_valid(reloaded_plot) and reloaded_plot.get("crop_stage") == 2 and reloaded_plot.get("crop_type") == 1 and is_equal_approx(reloaded_plot.get("grow_timer"), 7.25) and is_equal_approx(reloaded_plot.get("moisture"), 64.0) and reloaded_plot.get("is_watered") and reloaded_plot.get("is_fertilized"), "farm save/load must preserve growth and avoid harvest/reset")
 		loaded_pet = player.get("active_pet_node")
 
 	var position_before: Vector2 = player.global_position

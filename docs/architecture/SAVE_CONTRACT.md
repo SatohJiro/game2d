@@ -137,3 +137,7 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12j ranch subtype state
 
 `building.ranch` nhận `RanchPlacementState` gồm food, tối đa hai `{assignment_id, species_id}` và production timer. Owned assignment dùng `pet.*`; starter resident dùng `ranch.resident_starter`. ID trùng/localized, species không hỗ trợ, count âm và timer ngoài `[0,10)` fail closed. Runtime animal Node và behavior state được dựng lại từ assignment, không serialize.
+
+## U1.12k farm-plot subtype state
+
+`building.farm_plot` nhận `FarmPlotPlacementState` gồm stable crop/stage ID, growth timer, moisture, watered và fertilized flags. Stage/progress và moisture/watered phải coherent trước apply. EMPTY record không giữ stale crop/timer; apply không chạy growth/harvest side effect. Enum `CropStage`/`CropType` chỉ còn compatibility projection runtime.

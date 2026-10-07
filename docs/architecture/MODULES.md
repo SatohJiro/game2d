@@ -134,7 +134,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.12b đóng blocker inventory đã audit: snapshot regression theo core/crafting/farming/ranch/cooking; unknown key vẫn fail closed. Pet metadata và world/base coverage chưa đổi.
 - U1.12c thêm `PetMetadataCatalog`, stable rarity/trait/stance trong roster và Save v1; Player persist stance trước node replacement và restore khi summon. Presentation text/behavior giữ nguyên.
 - U1.12d thêm PROGRESSION boundary `BaseQuestCatalog`/`BaseProgressState`; BaseManager sở hữu claimed ledger, Save v1 snapshot/apply stable base state mà không phát reward. World/building DTO chưa đổi.
-- U1.12e thêm BUILDING placement catalog/record; U1.12f–j thêm typed chest, processing và ranch state với staged restore. Crop/health/altar/turret state chưa persist.
+- U1.12e thêm BUILDING placement catalog/record; U1.12f–k thêm typed chest, processing, ranch và farm-plot state với staged restore. Health/altar/turret state chưa persist.
 
 ### UI và PRESENTATION
 

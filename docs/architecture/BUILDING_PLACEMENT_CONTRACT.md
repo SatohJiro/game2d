@@ -1,13 +1,13 @@
-# U1.12j — Building placement, processing and ranch state contract
+# U1.12k — Building placement and admitted subtype state contract
 
 Chín subtype placement reachable được map từ legacy recipe ID sang stable `building.*` bởi `BuildingPlacementCatalog`. Mỗi placement do Player tạo nhận `building.instance_*`; Node name, scene path và asset path không phải identity.
 
 `BuildingPlacementRecord` gồm instance ID, subtype ID, transform finite và `state` theo subtype. Player giữ placement ledger, không scan SceneTree mỗi frame; snapshot chỉ query group một lần khi save để chiếu transform/state live. Starter building trong scene không bị thay.
 
-Các subtype chest/furnace/cooking/compost dùng typed state riêng. U1.12j admit `building.ranch` với `RanchPlacementState`: food không âm, tối đa hai assignment stable và timer `[0,10)`. Pet sở hữu dùng `pet.instance_*`; resident Slime mặc định dùng `ranch.resident_starter`, scoped trong building record. Assignment ID phải unique và species phải thuộc catalog hiện hữu. Record cũ thiếu state được normalize rồi ranch `_ready` tái lập resident mặc định.
+Các subtype chest/processing/ranch dùng typed state riêng. U1.12k admit `building.farm_plot` với `FarmPlotPlacementState`: stable crop ID, stable `farm.stage.*`, growth, moisture, watered và fertilized state. `crop.golden_wheat` và `crop.pal_herb` được thêm làm typed `CropDefinition` bên cạnh `crop.berry`. Record cũ thiếu state được normalize thành plot EMPTY.
 
-Ranch snapshot chỉ giữ food/assignment/species/progress. `animal_nodes`, Sprite, random wander/eat/sleep state và localized pet name là presentation được dựng lại sau add-tree. Apply không chạy production hoặc cấp lại reward; Save apply instantiate và apply toàn bộ state off-tree trước khi thay world.
+Farm validation khóa stage/progress: EMPTY không crop và timer 0; SEEDED `<4,5`; GROWING từ `4,5` đến `<10`; READY `>=10`. Moisture nằm 0–100 và `is_watered` phải đúng với moisture dương. Apply map stable IDs về enum compatibility nhưng không chạy growth tick hoặc harvest, vì vậy không reset progress hay sinh reward.
 
-Audit subtype còn lại: farm plot có crop/stage/growth/moisture/fertilizer; altar có boss-active; turret có cooldown; mọi building có health. Các state này và runtime Node references vẫn ngoài phạm vi.
+Audit subtype còn lại: altar có boss-active; turret có cooldown; mọi building có health. Resource-node tree/rock depletion và runtime Node references vẫn ngoài phạm vi.
 
-Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none. Rollback U1.12j: bỏ ranch state/identity bridge và projection/apply/validation; save có ranch state sau rollback sẽ fail closed.
+Shape v1 đổi pre-release nên version vẫn 1. Asset/provenance: none; crop definitions tái sử dụng item definitions/assets baseline. Rollback U1.12k: bỏ hai crop definitions, farm catalog/state và projection/apply/validation; save có farm state sau rollback sẽ fail closed.

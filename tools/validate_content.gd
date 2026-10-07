@@ -182,7 +182,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 40, "registry must contain forty definitions through U1.12b")
+	_expect(registry.size() == 42, "registry must contain forty-two definitions through U1.12k")
 	_validate_runtime_inventory_manifest(registry)
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
@@ -198,6 +198,7 @@ func _validate_project_content() -> void:
 	_expect(registry.has(&"recipe.pal_sphere.basic"), "registry is missing recipe.pal_sphere.basic")
 	_expect(registry.has(&"building.workbench"), "registry is missing building.workbench")
 	_expect(registry.has(&"crop.berry"), "registry is missing crop.berry")
+	_expect(registry.has(&"crop.golden_wheat") and registry.has(&"crop.pal_herb"), "registry is missing U1.12k crop definitions")
 	_expect(registry.has(&"creature.flam"), "registry is missing creature.flam")
 	_expect(registry.has(&"creature.slime"), "registry is missing creature.slime")
 	_expect(registry.has(&"creature.mushroom"), "registry is missing creature.mushroom")
