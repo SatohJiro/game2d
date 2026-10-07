@@ -58,6 +58,8 @@ U1.12j admit ranch assignment identity: owned pet giữ `pet.instance_*`; reside
 
 U1.12k admit typed `crop.golden_wheat` và `crop.pal_herb`, cùng `crop.berry` tạo allowlist persistence cho farm plot. Stage dùng `farm.stage.empty|seeded|growing|ready`; enum số và localized crop name không đi vào save.
 
+U1.12l dành `altar.lifecycle.*` cho state và `boss.instance_*` cho encounter instance identity. Boss Node, scene path và banner text không phải persistence identity.
+
 U1.11a dành domain `save` cho envelope identity (`save.slot_1`) và bắt đầu Save v1 dùng String stable IDs trong JSON DTO. Schema/validation đầy đủ ở `SAVE_CONTRACT.md`; StringName runtime phải project thành String, không serialize object trực tiếp.
 
 U1.11b admit `item.stone` và `item.iron_ingot`, map hai chiều với `Đá`/`Thỏi Sắt`, để inventory mặc định có thể snapshot không mất dữ liệu. Hai definitions dùng icon baseline hiện hữu; provenance vẫn `QUARANTINE/UNKNOWN`, không có asset mới.

@@ -113,6 +113,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.12i compost persistence | Hoàn tất | Typed material/output/timer giữ chính xác mẻ đang ủ |
 | U1.12j ranch persistence | Hoàn tất | Stable assignment/species, food và production timer; animal Node được dựng lại |
 | U1.12k farm-plot persistence | Hoàn tất | Typed crop/stage/growth/moisture/fertilizer round-trip không reset harvest progress |
+| U1.12l altar persistence | Hoàn tất | Stable boss lifecycle/identity/HP restore đúng một actor, không phát reward giả |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
 | Save/load | Hạ tầng | Save v1 explicit Player round-trip xanh; chưa autosave/UI và chưa phủ world/base delta |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |

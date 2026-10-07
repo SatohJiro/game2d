@@ -120,6 +120,12 @@ func _test_identity_and_shape_guards() -> void:
 	var invalid_farm_stage := Schema.create_empty(&"save.slot_1", 1)
 	invalid_farm_stage["world"]["entity_deltas"] = [{"instance_id": "building.instance_plot", "building_id": "building.farm_plot", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"stage_id": "farm.stage.seeded", "crop_id": "crop.berry", "grow_timer": 6.0, "moisture": 0.0, "is_watered": false, "is_fertilized": false}}]
 	_expect(not Schema.validate(invalid_farm_stage).is_valid(), "farm progress inconsistent with stage must fail before mutation")
+	var invalid_altar_idle := Schema.create_empty(&"save.slot_1", 1)
+	invalid_altar_idle["world"]["entity_deltas"] = [{"instance_id": "building.instance_altar", "building_id": "building.altar", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"lifecycle_id": "altar.lifecycle.idle", "boss_instance_id": "boss.instance_stale", "boss_hp": 137}}]
+	_expect(not Schema.validate(invalid_altar_idle).is_valid(), "idle altar must reject stale boss identity and HP")
+	var invalid_altar_hp := Schema.create_empty(&"save.slot_1", 1)
+	invalid_altar_hp["world"]["entity_deltas"] = [{"instance_id": "building.instance_altar", "building_id": "building.altar", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {"lifecycle_id": "altar.lifecycle.active", "boss_instance_id": "boss.instance_test", "boss_hp": 281}}]
+	_expect(not Schema.validate(invalid_altar_hp).is_valid(), "altar boss HP above encounter maximum must fail before mutation")
 
 
 func _test_non_serializable_guards() -> void:
@@ -320,6 +326,20 @@ func _test_runtime_apply_adapter() -> void:
 		var reloaded_farm_nodes := get_nodes_in_group("persistent_player_buildings")
 		var reloaded_plot: Variant = reloaded_farm_nodes[0] if reloaded_farm_nodes.size() == 1 else null
 		_expect(farm_reloaded.is_applied() and is_instance_valid(reloaded_plot) and reloaded_plot.get("crop_stage") == 2 and reloaded_plot.get("crop_type") == 1 and is_equal_approx(reloaded_plot.get("grow_timer"), 7.25) and is_equal_approx(reloaded_plot.get("moisture"), 64.0) and reloaded_plot.get("is_watered") and reloaded_plot.get("is_fertilized"), "farm save/load must preserve growth and avoid harvest/reset")
+		loaded_pet = player.get("active_pet_node")
+	var altar_save := save.duplicate(true)
+	altar_save["world"]["entity_deltas"] = [{"instance_id": "building.instance_altar", "building_id": "building.altar", "position": {"x": 5.0, "y": 8.0}, "rotation": 0.0, "scale": {"x": 1.0, "y": 1.0}, "state": {"lifecycle_id": "altar.lifecycle.active", "boss_instance_id": "boss.instance_test", "boss_hp": 137}}]
+	var altar_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, altar_save)
+	var altar_bosses := get_nodes_in_group("persistent_altar_bosses")
+	var loaded_boss: Variant = altar_bosses[0] if altar_bosses.size() == 1 else null
+	_expect(altar_applied.is_applied() and altar_bosses.size() == 1 and loaded_boss.get_meta("boss_instance_id") == &"boss.instance_test" and loaded_boss.get("hp") == 137, "active altar must restore exactly one boss with committed HP")
+	var altar_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 2007, 321.5)
+	_expect(altar_snapshot.is_accepted(), "active altar must snapshot boss lifecycle without serializing Node")
+	if altar_snapshot.is_accepted():
+		var altar_reloaded: RefCounted = ApplyAdapter.apply_player_snapshot(player, altar_snapshot.snapshot)
+		var reloaded_bosses := get_nodes_in_group("persistent_altar_bosses")
+		var reloaded_boss: Variant = reloaded_bosses[0] if reloaded_bosses.size() == 1 else null
+		_expect(altar_reloaded.is_applied() and reloaded_bosses.size() == 1 and reloaded_boss.get_meta("boss_instance_id") == &"boss.instance_test" and reloaded_boss.get("hp") == 137, "altar save/load must replace rather than duplicate active boss")
 		loaded_pet = player.get("active_pet_node")
 
 	var position_before: Vector2 = player.global_position

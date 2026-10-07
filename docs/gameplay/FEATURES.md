@@ -144,7 +144,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Preview biểu diễn valid/invalid; placement kiểm tra terrain, collision, bounds, cost và unlock.
 - Build commit trừ cost và spawn entity trong một transaction logic; cancel không tốn cost.
 - Building có stable instance ID, health, repair/dismantle policy và state riêng theo subtype.
-- U1.12e: chín placement reachable có stable subtype/instance identity; U1.12f–k: save/load giữ chest, processing, ranch và farm growth state mà không cộng dồn/reset. Health/altar/turret state chưa persist.
+- U1.12e: chín placement reachable có stable subtype/instance identity; U1.12f–l giữ mutable state qua altar boss lifecycle. Health/turret state chưa persist.
 - Acceptance: không overlap vùng cấm; reload giữ transform/state; dismantle trả đúng bảng refund.
 
 ### G12 — progression và quests
@@ -190,7 +190,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.12b: 25 inventory key reachable trong core/crafting/farming/ranch/cooking đều project sang stable `item.*`; regression từng nhóm bảo đảm output gameplay hợp lệ không làm save thất bại. Unknown key vẫn bị từ chối nguyên khối.
 - U1.12c: rarity, trait và stance của từng pet dùng stable ID; save/load giữ metadata và command stance cho cả pet active lẫn inactive. Badge/name localized chỉ là presentation; roll, multiplier và hành vi pet không đổi.
 - U1.12d: Save v1 giữ base level, active stable quest ID và claimed quest IDs; state skip/mâu thuẫn hoặc localized title fail closed, apply không phát reward.
-- U1.12e: Save v1 giữ building identity/transform; U1.12f–k thêm subtype-tagged state và staged restore. Farm chỉ serialize stable crop/stage và scalar state; invalid crop/stage/progress fail closed trước mutation.
+- U1.12l: active altar restore đúng một boss ID/HP, không thu offering hoặc phát completion giả; idle/stale và HP ngoài range fail closed.
 - Acceptance: save → quit → load giữ inventory, roster, assignment, building, crop, quest và world clock; corrupt file trả lỗi an toàn.
 
 ## Thứ tự ưu tiên playable vertical slice
