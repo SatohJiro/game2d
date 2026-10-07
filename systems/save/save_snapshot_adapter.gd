@@ -9,7 +9,7 @@ const BaseProgressStateModel = preload("res://systems/progression/base_progress_
 const DEFAULT_STANCE_ID := &"pet.stance.auto_work"
 
 
-static func create_player_snapshot(player: Node, save_id: StringName, saved_at_unix: int, world_clock_seconds: float = 0.0, raid_triggered_this_cycle: bool = false) -> RefCounted:
+static func create_player_snapshot(player: Node, save_id: StringName, saved_at_unix: int, world_clock_seconds: float = 0.0, raid_triggered_this_cycle: bool = false, boss_spawned: bool = false, boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS) -> RefCounted:
 	if player == null or not is_instance_valid(player) or not player.has_method("get"):
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
 	var inventory_value: Variant = player.get("inventory")
@@ -48,7 +48,7 @@ static func create_player_snapshot(player: Node, save_id: StringName, saved_at_u
 	dto["pets"] = pets_dto
 	dto["base"] = base_state.to_dto()
 	dto["world"]["clock_seconds"] = world_clock_seconds
-	dto["world"]["cycle_state"] = WorldCycleState.new(raid_triggered_this_cycle).to_dto()
+	dto["world"]["cycle_state"] = WorldCycleState.new(raid_triggered_this_cycle, boss_spawned, boss_timer).to_dto()
 	if not player.has_method("create_building_placement_snapshot"):
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
 	dto["world"]["entity_deltas"] = player.call("create_building_placement_snapshot")

@@ -12,6 +12,8 @@ var building_placements: Array[BuildingPlacementRecord]
 var resource_depletions: Array[ResourceDepletionRecord]
 var world_clock_seconds: float
 var raid_triggered_this_cycle: bool
+var boss_spawned: bool
+var boss_timer: float
 
 
 func _init(
@@ -25,7 +27,9 @@ func _init(
 	p_building_placements: Array[BuildingPlacementRecord],
 	p_resource_depletions: Array[ResourceDepletionRecord],
 	p_world_clock_seconds: float,
-	p_raid_triggered_this_cycle: bool
+	p_raid_triggered_this_cycle: bool,
+	p_boss_spawned: bool,
+	p_boss_timer: float
 ) -> void:
 	player_state = p_player_state.duplicate(true)
 	legacy_inventory = p_legacy_inventory.duplicate(true)
@@ -38,3 +42,5 @@ func _init(
 	resource_depletions = p_resource_depletions.duplicate()
 	world_clock_seconds = p_world_clock_seconds
 	raid_triggered_this_cycle = p_raid_triggered_this_cycle
+	boss_spawned = p_boss_spawned
+	boss_timer = p_boss_timer

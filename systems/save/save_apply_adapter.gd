@@ -102,6 +102,7 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		errors.append("resource depletion owner or instance is unavailable")
 		return null
 	var player_data: Dictionary = snapshot["player"]
+	var cycle_state := WorldCycleState.from_dto(snapshot["world"].get("cycle_state", {"raid_triggered_this_cycle": false}), float(snapshot["world"]["clock_seconds"]))
 	return ApplyPlan.new(
 		player_data,
 		legacy_inventory,
@@ -113,7 +114,9 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		placements,
 		resource_depletions,
 		float(snapshot["world"]["clock_seconds"]),
-		bool(snapshot["world"].get("cycle_state", {"raid_triggered_this_cycle": false})["raid_triggered_this_cycle"])
+		cycle_state.raid_triggered_this_cycle,
+		cycle_state.boss_spawned,
+		cycle_state.boss_timer
 	)
 
 
@@ -153,7 +156,7 @@ static func _commit(player: Node, plan: RefCounted) -> RefCounted:
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	if not bool(player.call("apply_resource_depletion_snapshot", plan.resource_depletions)):
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
-	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle)
+	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle, plan.boss_spawned, plan.boss_timer)
 
 
 static func _is_default_base_state(state: BaseProgressState) -> bool:

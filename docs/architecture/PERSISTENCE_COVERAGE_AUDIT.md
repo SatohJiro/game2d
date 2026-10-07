@@ -74,3 +74,7 @@ Main truyền `day_time` khi save và chỉ commit clock trả về sau load pri
 ## U1.12x raid-cycle guard
 
 Clock và `raid_triggered_this_cycle` round-trip atomically qua Main boundary. Guard true trước phase 0.72 fail schema; load active-night không gọi raid spawn và failed load giữ cả hai runtime fields. Raid creature Node không persist; boss/spawn timers vẫn PARTIAL.
+
+## U1.12y boss timer/guard
+
+Pre-spawn boss countdown và spawned guard round-trip trong typed cycle state. Invalid spawned+pending-timer bị reject trước mutation; load chỉ gán scalar nên không tạo boss actor. Boss actor HP/lifecycle sau spawn và ambient spawn timer vẫn PARTIAL.

@@ -1,36 +1,36 @@
 # Checkpoint triển khai Paloria 3.0
 
-## U1.12x — raid-cycle guard persistence
+## U1.12y — boss timer/guard persistence
 
 Trạng thái: `VERIFIED` ngày 2026-10-07.
 
 ### Mục tiêu và invariant
 
-- Raid guard round-trip cùng clock để load giữa đêm không phát raid lặp.
-- Guard true chỉ coherent từ phase 0.72; invalid/failed load không mutate world state.
-- Không serialize/spawn raid actor; boss/spawn timers ngoài scope.
+- Boss pre-spawn timer/guard round-trip cùng typed world cycle.
+- Spawned boss bắt buộc timer 0; pre-spawn timer trong `(0,50]`.
+- Load không gọi spawn boss; actor/HP và ambient spawn timer ngoài scope.
 
 ### Kết quả đã triển khai
 
-- Thêm typed `WorldCycleState` và `world.cycle_state.raid_triggered_this_cycle`.
-- Snapshot/apply/coordinator result handoff guard mà không giữ runtime Node/RNG/banner.
-- Main `apply_world_cycle()` commit clock + guard sau load success, không gọi raid transaction.
-- Save cũ thiếu cycle state mặc định guard false.
+- Mở rộng `WorldCycleState` bằng `boss_spawned` và `boss_timer`.
+- Snapshot/apply/coordinator handoff boss scalars cùng clock/raid guard.
+- Main commit atomically sau load success, không gọi `spawn_boss()`.
+- Cycle DTO một-field cũ mặc định boss chưa spawn/timer 50.
 
 ### Validation hiện tại
 
 - Baseline full gate xanh trước thay đổi.
-- Editor-load, schema và coordinator regressions xanh: active-night clock 140 + guard true round-trip, không thêm raid creature.
-- Guard true ở clock 45 fail schema; corrupt primary+backup giữ clock 44 + guard false.
+- Editor-load, schema và coordinator regressions xanh: boss timer 23.5 round-trip, không thêm boss actor.
+- Spawned+timer 4 bị reject; corrupt save giữ runtime boss timer 12.
 - Full `tools/check_project.ps1` xanh: 41 Markdown files, asset/content gates, editor load và toàn bộ gameplay/save validators; leak-aware scan `build/checks` sạch.
 
 ### Compatibility, asset và giới hạn
 
-- Save v1 pre-release thêm optional-compatible cycle state; API coordinator thêm bool mặc định false.
+- Save v1 pre-release mở rộng cycle state; one-field DTO cũ tương thích.
 - Asset/provenance: none.
-- Boss/spawn timers, autosave/UI và chunk persistence chưa phủ.
-- Rollback: revert WorldCycleState/handoff/Main atomic apply, regressions và docs U1.12x.
+- Boss actor HP, ambient spawn timer, autosave/UI và chunk persistence chưa phủ.
+- Rollback: revert boss fields/handoff/Main apply, regressions và docs U1.12y.
 
 ### Gói tiếp theo
 
-U1.12y persist riêng boss timer/guard theo `NEXT_UPDATE_PROMPT.md`.
+U1.12z persist riêng ambient spawn timer theo `NEXT_UPDATE_PROMPT.md`.

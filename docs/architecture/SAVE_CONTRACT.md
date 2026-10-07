@@ -106,6 +106,10 @@ Resource depletion health parser đồng thời chấp nhận JSON number có gi
 
 `world.cycle_state.raid_triggered_this_cycle` đi cùng clock qua snapshot/apply/coordinator result. `WorldCycleState` cho phép guard true chỉ từ phase 0.72 trở đi của chu kỳ 180 giây; false vẫn tương thích save cũ. Main commit clock + guard trong cùng boundary sau load success, không gọi `trigger_night_raid()` và không serialize raid actor/banner/RNG. Boss/spawn timers chưa thuộc DTO.
 
+## U1.12y boss timer/guard
+
+`WorldCycleState` thêm `boss_spawned` và `boss_timer`: pre-spawn dùng timer `(0,50]`; spawned bắt buộc timer 0. DTO cycle một-field cũ mặc định boss chưa spawn/timer 50. Main commit clock/raid/boss scalars atomically sau load success, không gọi `spawn_boss()` và không serialize actor/HP/banner/species presentation. Ambient spawn timer vẫn ngoài scope.
+
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure

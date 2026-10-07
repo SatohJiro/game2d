@@ -52,14 +52,14 @@ func configure_save_path(primary_path: String) -> bool:
 func save_game(saved_at_unix: int, save_id: StringName = &"save.slot_1") -> RefCounted:
 	if save_coordinator == null:
 		save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
-	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time, raid_triggered_this_cycle)
+	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time, raid_triggered_this_cycle, boss_spawned, boss_timer)
 
 func load_game() -> RefCounted:
 	if save_coordinator == null:
 		save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
 	var result: RefCounted = save_coordinator.load_player(player)
 	if result.is_loaded():
-		apply_world_cycle(result.world_clock_seconds, result.raid_triggered_this_cycle)
+		apply_world_cycle(result.world_clock_seconds, result.raid_triggered_this_cycle, result.boss_spawned, result.boss_timer)
 	return result
 
 func apply_world_clock(clock_seconds: float) -> bool:
@@ -68,11 +68,13 @@ func apply_world_clock(clock_seconds: float) -> bool:
 	update_ambient_light(fmod(day_time / day_duration, 1.0))
 	return true
 
-func apply_world_cycle(clock_seconds: float, raid_triggered: bool) -> bool:
-	var state := WorldCycleState.new(raid_triggered)
+func apply_world_cycle(clock_seconds: float, raid_triggered: bool, restored_boss_spawned: bool = false, restored_boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS) -> bool:
+	var state := WorldCycleState.new(raid_triggered, restored_boss_spawned, restored_boss_timer)
 	if not state.is_valid(clock_seconds): return false
 	if not apply_world_clock(clock_seconds): return false
 	raid_triggered_this_cycle = raid_triggered
+	boss_spawned = restored_boss_spawned
+	boss_timer = restored_boss_timer
 	return true
 
 func _process(delta: float) -> void:
