@@ -153,6 +153,9 @@ func _test_identity_and_shape_guards() -> void:
 	var legacy_workbench := Schema.create_empty(&"save.slot_1", 1)
 	legacy_workbench["world"]["entity_deltas"] = [{"instance_id": "building.instance_workbench_legacy", "building_id": "building.workbench", "position": {"x": 1, "y": 2}, "rotation": 0, "scale": {"x": 1, "y": 1}, "state": {}}]
 	_expect(Schema.validate(legacy_workbench).is_valid(), "legacy empty workbench state must normalize to full durability")
+	var invalid_tree_timer := Schema.create_empty(&"save.slot_1", 1)
+	invalid_tree_timer["world"]["resource_deltas"] = [{"instance_id": "resource.tree_test", "resource_id": "resource.tree", "state": {"health": 20, "respawn_remaining": 4.0}}]
+	_expect(not Schema.validate(invalid_tree_timer).is_valid(), "living tree must reject a respawn timer")
 
 
 func _test_non_serializable_guards() -> void:
@@ -178,7 +181,11 @@ func _test_runtime_snapshot_adapter() -> void:
 	root.add_child(fixture)
 	var player := packed_player.instantiate()
 	fixture.add_child(player)
+	var snapshot_tree: Node = (load("res://scenes/resource_node.tscn") as PackedScene).instantiate()
+	snapshot_tree.resource_instance_id = &"resource.tree_snapshot"
+	fixture.add_child(snapshot_tree)
 	await process_frame
+	snapshot_tree.health = 37
 	player.set("hud_ref", null)
 	var snapshot_base: BaseManager = player.get("base_manager_ref")
 	snapshot_base.apply_persistence_state(BaseProgressStateModel.new(3, &"quest.base.automation", [&"quest.base.survival", &"quest.base.organic_farming"]))
@@ -205,6 +212,7 @@ func _test_runtime_snapshot_adapter() -> void:
 		_expect(snapshot["pets"][1]["stance_id"] == "pet.stance.combat_assist" and snapshot["pets"][1]["trait_id"] == "pet.trait.agile", "inactive pet metadata/stance projection mismatch")
 		_expect(snapshot["base"] == {"base_level": 3, "active_quest_id": "quest.base.automation", "claimed_quest_ids": ["quest.base.survival", "quest.base.organic_farming"]}, "base/quest stable snapshot mismatch")
 		_expect(snapshot["world"]["entity_deltas"][0]["building_id"] == "building.chest", "building placement snapshot mismatch")
+		_expect(snapshot["world"]["resource_deltas"] == [{"instance_id": "resource.tree_snapshot", "resource_id": "resource.tree", "state": {"health": 37, "respawn_remaining": 0.0}}], "tree depletion snapshot must use stable identity and scalar state")
 		_expect(snapshot["player"]["position"] == {"x": 12.5, "y": -7.25} and snapshot["world"]["clock_seconds"] == 45.5, "position/world clock projection mismatch")
 		snapshot["inventory"]["item.wood"] = 9999
 		_expect(source_inventory == inventory_before and party == party_before, "mutating snapshot must not mutate runtime source")
@@ -239,6 +247,9 @@ func _test_runtime_apply_adapter() -> void:
 	root.add_child(fixture)
 	var player := packed_player.instantiate()
 	fixture.add_child(player)
+	var apply_tree: Node = (load("res://scenes/resource_node.tscn") as PackedScene).instantiate()
+	apply_tree.resource_instance_id = &"resource.tree_apply"
+	fixture.add_child(apply_tree)
 	await process_frame
 	player.set("hud_ref", null)
 	var apply_base: BaseManager = player.get("base_manager_ref")
@@ -260,6 +271,7 @@ func _test_runtime_apply_adapter() -> void:
 	save["world"]["clock_seconds"] = 321.5
 	save["base"] = {"base_level": 4, "active_quest_id": "quest.base.fortress", "claimed_quest_ids": ["quest.base.survival", "quest.base.organic_farming", "quest.base.automation"]}
 	save["world"]["entity_deltas"] = [{"instance_id": "building.instance_loaded", "building_id": "building.chest", "position": {"x": 44.0, "y": 55.0}, "rotation": 0.5, "scale": {"x": 1.0, "y": 1.0}, "state": {"inventory": {"item.wood": 17, "item.berry": 4}, "health": 137}}]
+	save["world"]["resource_deltas"] = [{"instance_id": "resource.tree_apply", "resource_id": "resource.tree", "state": {"health": 0, "respawn_remaining": 9.5}}]
 	var applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, save)
 	_expect(applied.is_applied() and is_equal_approx(applied.world_clock_seconds, 321.5), "valid Save v1 must apply and return world clock")
 	_expect(player.global_position == Vector2(91.25, 42.5) and player.get("level") == 4 and player.get("hp") == 77, "player scalar apply mismatch")
@@ -271,6 +283,14 @@ func _test_runtime_apply_adapter() -> void:
 	_expect(loaded_party[1]["stance_id"] == &"pet.stance.follow_protect" and loaded_party[1]["trait"] == "Nhanh Nhẹn", "inactive pet metadata/stance apply mismatch")
 	_expect(is_instance_valid(loaded_pet) and loaded_pet.call("get_stance_id") == &"pet.stance.combat_assist", "active pet and stance apply mismatch")
 	_expect(apply_base.create_persistence_state().to_dto() == save["base"], "base/quest stable apply mismatch")
+	_expect(apply_tree.health == 0, "depleted tree health must restore")
+	_expect(apply_tree.respawn_remaining > 9.0 and apply_tree.respawn_remaining <= 9.5, "depleted tree respawn timer must restore and continue deterministically")
+	_expect(get_nodes_in_group("dropped_items").is_empty(), "depleted tree restore must not emit harvest drops")
+	var invalid_tree_save: Dictionary = save.duplicate(true)
+	invalid_tree_save["world"]["resource_deltas"][0]["state"] = {"health": 61, "respawn_remaining": 0.0}
+	var tree_health_before: int = apply_tree.health
+	var rejected_tree: RefCounted = ApplyAdapter.apply_player_snapshot(player, invalid_tree_save)
+	_expect(rejected_tree.status == ApplyResult.Status.INVALID_SNAPSHOT and apply_tree.health == tree_health_before and apply_tree.respawn_remaining > 9.0, "invalid tree depletion state must fail before runtime mutation")
 	var loaded_buildings := get_nodes_in_group("persistent_player_buildings")
 	_expect(loaded_buildings.size() == 1 and loaded_buildings[0].get_meta("building_instance_id") == &"building.instance_loaded" and loaded_buildings[0].global_position == Vector2(44.0, 55.0), "building placement apply mismatch")
 	var loaded_chest: BuildingChest = loaded_buildings[0] as BuildingChest

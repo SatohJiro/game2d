@@ -9,6 +9,7 @@ var active_pet_index: int
 var active_stance_command_id: StringName
 var base_progress_state: BaseProgressState
 var building_placements: Array[BuildingPlacementRecord]
+var resource_depletions: Array[ResourceDepletionRecord]
 var world_clock_seconds: float
 
 
@@ -21,6 +22,7 @@ func _init(
 	p_active_stance_command_id: StringName,
 	p_base_progress_state: BaseProgressState,
 	p_building_placements: Array[BuildingPlacementRecord],
+	p_resource_depletions: Array[ResourceDepletionRecord],
 	p_world_clock_seconds: float
 ) -> void:
 	player_state = p_player_state.duplicate(true)
@@ -31,4 +33,5 @@ func _init(
 	active_stance_command_id = p_active_stance_command_id
 	base_progress_state = BaseProgressState.new(p_base_progress_state.base_level, p_base_progress_state.active_quest_id, p_base_progress_state.claimed_quest_ids)
 	building_placements = p_building_placements.duplicate()
+	resource_depletions = p_resource_depletions.duplicate()
 	world_clock_seconds = p_world_clock_seconds

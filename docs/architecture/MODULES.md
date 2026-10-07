@@ -33,9 +33,9 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | FARM | Soil/crop/water/fertilizer/harvest | `CropDefinition` berry mirror; `resource_node.gd` vẫn gộp resource và plot | FarmPlot state thuần + CropDefinition | U1.3, U5.3 |
 | BUILD | Placement, cost, structure health | Workbench đã có typed durability DTO/catalog admission; Player + building scripts vẫn authoritative | PlacementRequest/Result, occupancy grid | U1.3, U1.6, U1.12t, U5.5 |
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
-| WORLD | Zone, chunks, spawn, day/night, raid | `main.gd`, scene tĩnh | Chunk admission + persistent delta | U2 |
+| WORLD | Zone, chunks, spawn, day/night, raid | Tree tĩnh có typed depletion delta; rock/spawn vẫn scene-state | Chunk admission + persistent delta | U1.12u, U2 |
 | NAV | Navigation/path requests | Chưa có | Navigation adapter theo chunk | U2.3 |
-| SAVE | Versioned persistence | Save v1 schema, Player/base adapters, atomic repository, migration registry và explicit coordinator | Autosave/UI scheduling, world/building DTO | U1.11–U1.12 |
+| SAVE | Versioned persistence | Save v1 schema, Player/base/building và tree-depletion adapters, atomic repository, migration registry | Autosave/UI scheduling, remaining world delta | U1.11–U1.12 |
 | UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
 | PRESENT | Animation/VFX/camera/audio | Trộn trong actor; `AudioManager` autoload | Event-driven adapters, pooling, accessibility scale | U4 |
 | ASSET | Vendoring/provenance/import | File rời, nguồn chưa biết | Manifest, package receipt, immutable vendor source | U0.2, U4.1 |

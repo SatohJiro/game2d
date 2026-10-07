@@ -6,6 +6,7 @@ const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
 const PetCommandPolicy = preload("res://systems/pet/pet_command_policy.gd")
 const BaseProgressStateModel = preload("res://systems/progression/base_progress_state.gd")
 const BuildingPlacementRecordModel = preload("res://systems/building/building_placement_record.gd")
+const ResourceDepletionRecordModel = preload("res://systems/world/resource_depletion_record.gd")
 const SCHEMA_VERSION := 1
 
 
@@ -29,7 +30,7 @@ static func create_empty(save_id: StringName, saved_at_unix: int) -> Dictionary:
 		"inventory": {},
 		"pets": [],
 		"base": {"base_level": 1, "active_quest_id": "quest.base.survival", "claimed_quest_ids": []},
-		"world": {"clock_seconds": 0.0, "entity_deltas": []},
+		"world": {"clock_seconds": 0.0, "entity_deltas": [], "resource_deltas": []},
 	}
 
 
@@ -143,6 +144,18 @@ static func _validate_world(value: Variant, errors: PackedStringArray) -> void:
 			errors.append("world.entity_deltas must contain valid building placement records")
 			continue
 		if seen.has(record.instance_id): errors.append("building instance_id must be unique")
+		seen[record.instance_id] = true
+	var resource_deltas: Variant = world.get("resource_deltas", [])
+	if typeof(resource_deltas) != TYPE_ARRAY:
+		errors.append("world.resource_deltas must be an Array")
+		return
+	seen.clear()
+	for delta_value: Variant in resource_deltas:
+		var record := ResourceDepletionRecordModel.from_dto(delta_value)
+		if record == null:
+			errors.append("world.resource_deltas must contain valid resource depletion records")
+			continue
+		if seen.has(record.instance_id): errors.append("resource instance_id must be unique")
 		seen[record.instance_id] = true
 
 

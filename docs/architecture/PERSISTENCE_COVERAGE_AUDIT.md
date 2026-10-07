@@ -58,3 +58,7 @@ U1.12b đã tạo manifest gồm 25 key, admit 14 `item.*` definition/mapping c�
 5. World owner commit clock và encounter persistence.
 
 Save/data breaking change trong audit: none. Asset/provenance: none.
+
+## U1.12u tree depletion
+
+Sáu tree tĩnh trong `main.tscn` có stable instance ID `resource.tree_1`…`resource.tree_6`; subtype là `resource.tree`. Save giữ health và respawn time còn lại, validate coherence trước commit rồi apply trực tiếp không gọi hit/break/drop flow. Coroutine respawn của riêng tree được thay bằng timer deterministic trong `_process`; rock vẫn dùng lifecycle cũ và chưa persist. Save v1 cũ thiếu `resource_deltas` vẫn load như state mặc định của scene.

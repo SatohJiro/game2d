@@ -127,21 +127,27 @@ texture = ExtResource("13_stump")
 
 [node name="Tree1" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(-210, -70)
+resource_instance_id = &"resource.tree_1"
 
 [node name="Tree2" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(-230, 60)
+resource_instance_id = &"resource.tree_2"
 
 [node name="Tree3" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(220, -80)
+resource_instance_id = &"resource.tree_3"
 
 [node name="Tree4" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(260, 70)
+resource_instance_id = &"resource.tree_4"
 
 [node name="Tree5" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(130, -220)
+resource_instance_id = &"resource.tree_5"
 
 [node name="Tree6" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(-160, -240)
+resource_instance_id = &"resource.tree_6"
 
 [node name="Rock1" parent="Environment/Resources" instance=ExtResource("3_res")]
 position = Vector2(-190, 160)

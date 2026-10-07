@@ -3,9 +3,11 @@ class_name ResourceNode
 
 enum NodeType { TREE, ROCK, FARM_PLOT }
 @export var node_type: NodeType = NodeType.TREE
+@export var resource_instance_id: StringName = &""
 
 var max_health: int = 60
 var health: int = 60
+var respawn_remaining: float = 0.0
 
 # Farm plot state
 enum CropStage { EMPTY, SEEDED, GROWING, READY }
@@ -83,6 +85,10 @@ func _on_interact_body_exited(body: Node2D) -> void:
 		label.visible = false
 
 func _process(delta: float) -> void:
+	if node_type == NodeType.TREE and respawn_remaining > 0.0:
+		respawn_remaining = maxf(0.0, respawn_remaining - delta)
+		if is_zero_approx(respawn_remaining):
+			_restore_resource_without_rewards()
 	# Subtle natural wind swaying
 	if node_type == NodeType.TREE and has_node("Visual/TreeSprite"):
 		$Visual/TreeSprite.rotation = sin(Time.get_ticks_msec() * 0.0018 + global_position.x * 0.05) * 0.025
@@ -213,12 +219,30 @@ func break_resource(player_ref: Node2D) -> void:
 		spawn_dropped_item("Đá", 3)
 		spawn_dropped_item("Quặng Pal", 2)
 	
-	# Respawn after 18 seconds
-	await get_tree().create_timer(18.0).timeout
+	if node_type == NodeType.TREE:
+		respawn_remaining = ResourceDepletionState.RESPAWN_SECONDS
+	else:
+		await get_tree().create_timer(18.0).timeout
+		_restore_resource_without_rewards()
+
+func _restore_resource_without_rewards() -> void:
 	health = max_health
 	$CollisionShape2D.set_deferred("disabled", false)
 	var respawn_tween = create_tween()
 	respawn_tween.tween_property(visual, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func create_resource_depletion_record() -> ResourceDepletionRecord:
+	if node_type != NodeType.TREE or resource_instance_id.is_empty(): return null
+	return ResourceDepletionRecord.new(resource_instance_id, ResourceDepletionRecord.TREE_ID, ResourceDepletionState.new(health, respawn_remaining))
+
+func apply_resource_depletion_state(state: ResourceDepletionState) -> bool:
+	if node_type != NodeType.TREE or state == null or not state.is_valid(): return false
+	health = state.health
+	respawn_remaining = state.respawn_remaining
+	var depleted := health == 0
+	visual.scale = Vector2.ZERO if depleted else Vector2.ONE
+	$CollisionShape2D.set_deferred("disabled", depleted)
+	return true
 
 func interact(player_ref: Node2D) -> void:
 	if node_type == NodeType.FARM_PLOT:

@@ -7,6 +7,7 @@ const ApplyResult = preload("res://systems/save/save_apply_result.gd")
 const PetMetadata = preload("res://systems/pet/pet_metadata_catalog.gd")
 const BaseProgressStateModel = preload("res://systems/progression/base_progress_state.gd")
 const BuildingPlacementRecordModel = preload("res://systems/building/building_placement_record.gd")
+const ResourceDepletionRecordModel = preload("res://systems/world/resource_depletion_record.gd")
 
 
 static func apply_player_snapshot(player: Node, snapshot: Variant) -> RefCounted:
@@ -90,6 +91,16 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 			errors.append("unsupported building placement record")
 			return null
 		placements.append(record)
+	var resource_depletions: Array[ResourceDepletionRecord] = []
+	for value: Variant in snapshot["world"].get("resource_deltas", []):
+		var record := ResourceDepletionRecordModel.from_dto(value)
+		if record == null:
+			errors.append("unsupported resource depletion record")
+			return null
+		resource_depletions.append(record)
+	if not player.has_method("can_apply_resource_depletion_snapshot") or not bool(player.call("can_apply_resource_depletion_snapshot", resource_depletions)):
+		errors.append("resource depletion owner or instance is unavailable")
+		return null
 	var player_data: Dictionary = snapshot["player"]
 	return ApplyPlan.new(
 		player_data,
@@ -100,6 +111,7 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		active_command_id,
 		base_state,
 		placements,
+		resource_depletions,
 		float(snapshot["world"]["clock_seconds"])
 	)
 
@@ -137,6 +149,8 @@ static func _commit(player: Node, plan: RefCounted) -> RefCounted:
 	if is_instance_valid(base_manager) and not bool(base_manager.call("apply_persistence_state", plan.base_progress_state)):
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	if not bool(player.call("replace_persistent_buildings", plan.building_placements)):
+		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
+	if not bool(player.call("apply_resource_depletion_snapshot", plan.resource_depletions)):
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds)
 

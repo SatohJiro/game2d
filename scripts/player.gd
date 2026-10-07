@@ -841,6 +841,41 @@ func create_building_placement_snapshot() -> Array[Dictionary]:
 		snapshot.append(record.to_dto())
 	return snapshot
 
+func create_resource_depletion_snapshot() -> Array[Dictionary]:
+	var snapshot: Array[Dictionary] = []
+	var seen := {}
+	for node in get_tree().get_nodes_in_group("resource_nodes"):
+		if not is_instance_valid(node) or not node.has_method("create_resource_depletion_record"): continue
+		var record: Variant = node.call("create_resource_depletion_record")
+		if record == null: continue
+		if not record.is_valid() or seen.has(record.instance_id): return []
+		seen[record.instance_id] = true
+		snapshot.append(record.to_dto())
+	snapshot.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return String(a["instance_id"]) < String(b["instance_id"]))
+	return snapshot
+
+func apply_resource_depletion_snapshot(records: Array[ResourceDepletionRecord]) -> bool:
+	if not can_apply_resource_depletion_snapshot(records): return false
+	var nodes_by_id := {}
+	for node in get_tree().get_nodes_in_group("resource_nodes"):
+		if is_instance_valid(node):
+			var instance_id := StringName(node.get("resource_instance_id"))
+			if not instance_id.is_empty(): nodes_by_id[instance_id] = node
+	for record in records:
+		nodes_by_id[record.instance_id].call("apply_resource_depletion_state", record.state)
+	return true
+
+func can_apply_resource_depletion_snapshot(records: Array[ResourceDepletionRecord]) -> bool:
+	var available := {}
+	for node in get_tree().get_nodes_in_group("resource_nodes"):
+		if is_instance_valid(node):
+			var instance_id := StringName(node.get("resource_instance_id"))
+			if not instance_id.is_empty() and node.has_method("apply_resource_depletion_state"):
+				available[instance_id] = true
+	for record in records:
+		if record == null or not record.is_valid() or not available.has(record.instance_id): return false
+	return true
+
 func cancel_build_mode() -> void:
 	is_building = false
 	pending_build_id = ""

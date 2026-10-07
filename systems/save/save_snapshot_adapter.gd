@@ -51,6 +51,9 @@ static func create_player_snapshot(player: Node, save_id: StringName, saved_at_u
 	if not player.has_method("create_building_placement_snapshot"):
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
 	dto["world"]["entity_deltas"] = player.call("create_building_placement_snapshot")
+	if not player.has_method("create_resource_depletion_snapshot"):
+		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
+	dto["world"]["resource_deltas"] = player.call("create_resource_depletion_snapshot")
 	var validation: RefCounted = Schema.validate(dto)
 	if not validation.is_valid():
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SNAPSHOT, {}, validation.errors)
