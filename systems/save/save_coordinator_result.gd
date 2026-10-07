@@ -23,3 +23,6 @@ func _init(
 
 func is_success() -> bool:
 	return status == Status.SAVED or status == Status.LOADED_PRIMARY or status == Status.LOADED_BACKUP
+
+func is_loaded() -> bool:
+	return status == Status.LOADED_PRIMARY or status == Status.LOADED_BACKUP

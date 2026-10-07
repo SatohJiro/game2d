@@ -26,8 +26,10 @@ func to_dto() -> Dictionary:
 static func from_dto(value: Variant, p_max_health: int = TREE_MAX_HEALTH) -> ResourceDepletionState:
 	if typeof(value) != TYPE_DICTIONARY: return null
 	var data: Dictionary = value
-	if data.size() != 2 or typeof(data.get("health")) != TYPE_INT: return null
+	if data.size() != 2: return null
+	var health_value: Variant = data.get("health")
+	if (typeof(health_value) != TYPE_INT and typeof(health_value) != TYPE_FLOAT) or not is_finite(float(health_value)) or not is_equal_approx(float(health_value), floor(float(health_value))): return null
 	var timer: Variant = data.get("respawn_remaining")
 	if typeof(timer) != TYPE_INT and typeof(timer) != TYPE_FLOAT: return null
-	var state := ResourceDepletionState.new(int(data["health"]), float(timer), p_max_health)
+	var state := ResourceDepletionState.new(int(health_value), float(timer), p_max_health)
 	return state if state.is_valid() else null

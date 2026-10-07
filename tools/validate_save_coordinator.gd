@@ -2,6 +2,8 @@ extends SceneTree
 
 const Coordinator = preload("res://systems/save/save_coordinator.gd")
 const CoordinatorResult = preload("res://systems/save/save_coordinator_result.gd")
+const SnapshotAdapter = preload("res://systems/save/save_snapshot_adapter.gd")
+const Schema = preload("res://systems/save/save_v1_schema.gd")
 
 var _failures := PackedStringArray()
 
@@ -54,6 +56,8 @@ func _run() -> void:
 	_expect(rejected.status == CoordinatorResult.Status.REPOSITORY_FAILED, "corrupt primary and backup must fail before migration/apply")
 	_expect(_runtime_snapshot(player) == state_before, "failed coordinator load must not mutate runtime")
 
+	await _test_world_clock_owner()
+
 	root.remove_child(fixture)
 	fixture.free()
 	await process_frame
@@ -66,6 +70,41 @@ func _run() -> void:
 		for failure in _failures:
 			printerr("SAVE COORDINATOR VALIDATION FAILURE: %s" % failure)
 		quit.call_deferred(1)
+
+
+func _test_world_clock_owner() -> void:
+	var packed_main := load("res://scenes/main.tscn") as PackedScene
+	if packed_main == null:
+		_failures.append("unable to load Main scene for world clock owner")
+		return
+	var directory := "user://world_clock_owner_test_%d" % Time.get_ticks_usec()
+	var primary := "%s/slot_1.json" % directory
+	var world: Node = packed_main.instantiate()
+	root.add_child(world)
+	await process_frame
+	world.set_process(false)
+	_expect(world.call("configure_save_path", primary), "world owner must accept an explicit repository path")
+	world.set("day_time", 73.25)
+	var direct_snapshot: RefCounted = SnapshotAdapter.create_player_snapshot(world.get("player"), &"save.slot_1", 300, 73.25)
+	if direct_snapshot.is_accepted():
+		var decoded: Variant = JSON.parse_string(JSON.stringify(direct_snapshot.snapshot))
+		var decoded_validation: RefCounted = Schema.validate(decoded)
+		_expect(decoded_validation.is_valid(), "world owner JSON snapshot must remain valid: %s" % decoded_validation.errors)
+	var saved: RefCounted = world.call("save_game", 300, &"save.slot_1")
+	_expect(saved.status == CoordinatorResult.Status.SAVED and is_equal_approx(saved.world_clock_seconds, 73.25), "world owner must pass its clock into save (status=%s errors=%s)" % [saved.status, saved.errors])
+	world.set("day_time", 9.0)
+	var loaded: RefCounted = world.call("load_game")
+	_expect(loaded.is_loaded() and is_equal_approx(float(world.get("day_time")), 73.25), "world owner must commit clock only after successful load (status=%s errors=%s)" % [loaded.status, loaded.errors])
+	_write_corrupt(primary)
+	_write_corrupt("%s.bak" % primary)
+	world.set("day_time", 44.0)
+	var rejected_world_load: RefCounted = world.call("load_game")
+	_expect(not rejected_world_load.is_loaded() and is_equal_approx(float(world.get("day_time")), 44.0), "failed world load must preserve runtime clock")
+	root.remove_child(world)
+	world.free()
+	await process_frame
+	await process_frame
+	_cleanup(directory, primary)
 
 
 func _set_runtime(player: Node, position: Vector2, level: int, hp: int, wood: int) -> void:

@@ -5,9 +5,11 @@ extends Node2D
 @onready var campfire_light: PointLight2D = $Environment/BaseCamp/Campfire/FlameLight
 @onready var decorations: Node2D = $Environment/Decorations
 @onready var water_pond: Node2D = $Environment/WaterPond
+@onready var player: CharacterBody2D = $Player
 
 const CREATURE_SCENE = preload("res://scenes/creature.tscn")
 const SPARK_TEX = preload("res://assets/fx/spark.png")
+const DEFAULT_SAVE_PATH := "user://saves/slot_1.json"
 
 var max_wild_creatures: int = 10
 var spawn_timer: float = 3.0
@@ -30,8 +32,10 @@ var boss_timer: float = 50.0
 
 var raid_triggered_this_cycle: bool = false
 var fireflies: Array[Sprite2D] = []
+var save_coordinator: RefCounted
 
 func _ready() -> void:
+	save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
 	hud.add_to_group("hud")
 	
 	ambient_modulate = CanvasModulate.new()
@@ -39,6 +43,30 @@ func _ready() -> void:
 	
 	spawn_initial_creatures()
 	hud.show_banner("PALORIA 2.0: CÀY CUỐC, NÔNG TRẠI, CHĂN NUÔI & SĂN PET!\n[E] Nông Trại/Chuồng Thú | Chuột Phải Ném Cầu (Quỹ đạo vòng cung) | [G] Kỹ Năng Pet | [C] Chế Tạo", 6.5)
+
+func configure_save_path(primary_path: String) -> bool:
+	if primary_path.is_empty(): return false
+	save_coordinator = SaveCoordinator.new(primary_path)
+	return true
+
+func save_game(saved_at_unix: int, save_id: StringName = &"save.slot_1") -> RefCounted:
+	if save_coordinator == null:
+		save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
+	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time)
+
+func load_game() -> RefCounted:
+	if save_coordinator == null:
+		save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
+	var result: RefCounted = save_coordinator.load_player(player)
+	if result.is_loaded():
+		apply_world_clock(result.world_clock_seconds)
+	return result
+
+func apply_world_clock(clock_seconds: float) -> bool:
+	if not is_finite(clock_seconds) or clock_seconds < 0.0: return false
+	day_time = clock_seconds
+	update_ambient_light(fmod(day_time / day_duration, 1.0))
+	return true
 
 func _process(delta: float) -> void:
 	if campfire_light:

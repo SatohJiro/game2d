@@ -1,3 +1,3 @@
-# Prompt cho model tiếp theo — U1.12w world clock owner
+# Prompt cho model tiếp theo — U1.12x raid-cycle persistence
 
-Tiếp tục bằng đúng một package U1.12w: nối `main.gd` làm owner thật của `world.clock_seconds` qua explicit save/load boundary hiện có. Không để save module tìm scene bằng path hoặc mutate Main ngầm; world owner truyền clock khi save và chỉ commit clock sau load success. Giữ day duration/raid/boss/spawn rules hiện tại, chứng minh round-trip clock và failed load không đổi runtime clock; không mở autosave/UI hoặc encounter persistence. Chạy full gate + leak-aware log scan và cập nhật contract/checkpoint docs.
+Tiếp tục bằng đúng một package U1.12x: persist riêng `raid_triggered_this_cycle` cùng world clock để load giữa cửa sổ đêm không phát raid lặp. Dùng typed world-cycle state/coherence với phase clock hiện tại; không serialize raid creature Node, localized banner, spawn positions hoặc RNG. Chứng minh active-night round-trip, failed/invalid load không mutate clock/raid guard và load không tự spawn raid; giữ boss/spawn timer ngoài scope. Chạy full gate + leak-aware log scan và cập nhật contract/checkpoint docs.

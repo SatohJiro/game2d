@@ -26,7 +26,7 @@ Transient animation, cooldown ngắn, target Node, tween và VFX không được
 | Furnace/compost/cooking | input/output queue, timer, ready count, health | Không có order/instance ID | Không | Mất nguyên liệu hoặc tiến độ đang xử lý | CRITICAL/NONE |
 | `ResourceNode` farm plot | crop type/stage, growth timer, moisture, watered/fertilized | `crop.berry` chỉ là typed canary; plot không có instance ID | Không | Cây trồng và đầu tư nước/phân trở về mặc định | CRITICAL/NONE |
 | Resource/tree/rock | health/depleted existence | Scene node name/path tạm thời | Không | Resource bị phá hồi sinh sau reload | HIGH/NONE |
-| `main.gd` clock | `day_time` | Scalar `world.clock_seconds` | Snapshot + load result handoff có; `main.gd` chưa commit | Coordinator trả đúng clock nhưng game world chưa nhận | HIGH/PARTIAL |
+| `main.gd` clock | `day_time` | Scalar `world.clock_seconds` | Main explicit save/load boundary commit sau success | Clock round-trip; raid/boss/spawn timers vẫn riêng | FULL (clock) |
 | `main.gd` encounter | raid-cycle flag, boss spawned/timer/defeat, wild population | Không | Không | Raid/boss có thể spawn lại hoặc reset timer | HIGH/NONE |
 | `world.entity_deltas` | placeholder Array | Chưa có entity/chunk instance identity | Schema shape có, payload chưa admit | Không thể giữ building/crop/resource changes | CRITICAL/NONE |
 
@@ -66,3 +66,7 @@ Sáu tree tĩnh trong `main.tscn` có stable instance ID `resource.tree_1`…`re
 ## U1.12v rock depletion
 
 Bốn rock tĩnh có ID `resource.rock_1`…`resource.rock_4` và subtype `resource.rock`. `ResourceDepletionState` nhận max health từ subtype khi parse record, nên tree không nhận health 61–80 và rock không vượt 80. Rock dùng cùng deterministic respawn countdown; restore không chọn/serialize texture ngẫu nhiên và không chạy hit/drop/VFX. Tree + rock static depletion hiện FULL; chunk-spawned resource chưa tồn tại.
+
+## U1.12w world clock owner
+
+Main truyền `day_time` khi save và chỉ commit clock trả về sau load primary/backup thành công. Failed load giữ clock runtime; apply clock refresh ambient nhưng không tự chạy raid/boss/spawn transaction. Regression chạy Main scene thật qua repository JSON, đồng thời khóa resource health JSON-integer compatibility. Raid-cycle flag, boss và spawn timers vẫn là gap encounter riêng.

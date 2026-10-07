@@ -96,6 +96,12 @@ Repository chưa tự gọi migration trong U1.11e: repository tiếp tục ch�
 
 Load success phân biệt `LOADED_PRIMARY` với `LOADED_BACKUP`, đồng thời trả `world_clock_seconds` để world owner commit. Coordinator không giữ state gameplay, không tự pause và không phát UI; caller sở hữu thời điểm gọi và feedback. Scene-level regression dùng Player thật chứng minh primary round-trip, backup recovery và corrupt-both no-mutation.
 
+## U1.12w world clock owner
+
+`main.gd` sở hữu explicit `save_game(saved_at_unix, save_id)` và `load_game()` boundary. Save truyền `day_time` vào coordinator; load chỉ gọi `apply_world_clock()` khi `SaveCoordinatorResult.is_loaded()` đúng, sau đó refresh ambient từ clock mới. Repository/coordinator không tìm scene hoặc mutate Main. Failed repository/migration/apply giữ nguyên runtime clock. `configure_save_path()` cho phép composition/test chọn repository mà không đổi gameplay owner; autosave và UI vẫn ngoài scope.
+
+Resource depletion health parser đồng thời chấp nhận JSON number có giá trị nguyên sau encode/decode, nhưng vẫn từ chối phân số/non-finite; việc này đóng lỗi repository verification của `resource_deltas` mà in-memory schema test trước đó chưa phát hiện.
+
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure
