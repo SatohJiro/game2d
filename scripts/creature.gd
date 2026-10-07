@@ -1,6 +1,8 @@
 extends CharacterBody2D
 class_name WildCreature
 
+signal defeated(actor: Node2D, encounter_instance_id: StringName)
+
 @export var species_index: int = 0
 @export var level: int = 1
 
@@ -1258,6 +1260,8 @@ func die(killer: Node2D) -> void:
 	if is_elite or is_alpha:
 		if killer and killer.has_method("shake_camera"):
 			killer.shake_camera(6.0)
+
+	defeated.emit(self, get_meta("encounter_instance_id", &"") as StringName)
 
 	var tween = create_tween()
 	tween.tween_property(self, "scale", Vector2.ZERO, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)

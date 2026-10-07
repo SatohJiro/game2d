@@ -86,3 +86,7 @@ Ambient countdown round-trip trong `(0,4]`, default-compatible 3 giây. Load kh�
 ## U1.12aa world-boss actor audit
 
 `boss_spawned` hiện không phân biệt active/defeated; Main không giữ actor reference/stable group và Creature không signal defeat về world owner. `WorldBossState` đã khóa future DTO bằng lifecycle pending/active/defeated, fixed `boss.world_dragon_1`, HP 1–380 và finite position. Coverage vẫn PARTIAL: state chưa thuộc Save v1 cho tới khi actor ownership, defeat callback và reward suppression được triển khai/test.
+
+## U1.12ab world-boss ownership
+
+Main đã sở hữu một actor `boss.world_dragon_1`; duplicate spawn fail closed và defeat signal chỉ commit actor reference/group/ID trùng khớp. Coverage vẫn PARTIAL vì lifecycle/HP/position chưa đi qua Save v1; reward/drop và actor thường/altar không đổi.

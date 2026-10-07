@@ -29,6 +29,8 @@ var day_duration: float = 180.0
 var ambient_modulate: CanvasModulate = null
 var boss_spawned: bool = false
 var boss_timer: float = 50.0
+var world_boss_state := WorldBossState.new()
+var world_boss_actor: Node2D = null
 
 var raid_triggered_this_cycle: bool = false
 var fireflies: Array[Sprite2D] = []
@@ -182,13 +184,18 @@ func trigger_night_raid() -> void:
 		c.attack_power = int(c.attack_power * 1.25)
 		c.target = $Player
 
-func spawn_boss() -> void:
+func spawn_boss(show_presentation: bool = true) -> bool:
+	if world_boss_state.lifecycle_id != WorldBossState.PENDING or is_instance_valid(world_boss_actor):
+		return false
 	boss_spawned = true
 	var creature = CREATURE_SCENE.instantiate()
 	creature.global_position = Vector2(340, 220)
 	creature.species_index = 4 # Dragon Boss
 	creature.level = 8
+	creature.set_meta("encounter_instance_id", WorldBossState.INSTANCE_ID)
+	creature.add_to_group("persistent_world_bosses")
 	creature_container.add_child(creature)
+	world_boss_actor = creature
 	
 	var vis = creature.get_node_or_null("Visual")
 	if vis: vis.scale = Vector2(2.2, 2.2)
@@ -201,10 +208,26 @@ func spawn_boss() -> void:
 	creature.hp = 380
 	creature.attack_power = 28
 	creature.update_overhead()
+	world_boss_state = WorldBossState.new(WorldBossState.ACTIVE, WorldBossState.INSTANCE_ID, creature.hp, creature.global_position)
+	creature.defeated.connect(_on_world_boss_defeated)
 	
-	hud.show_banner("⚠️ CẢNH BÁO: HỎA LONG THẦN (DRAGON BOSS LV.8) ĐÃ XUẤT HIỆN!", 6.5)
-	if AudioManager:
-		AudioManager.play_sound("level_up")
+	if show_presentation:
+		hud.show_banner("⚠️ CẢNH BÁO: HỎA LONG THẦN (DRAGON BOSS LV.8) ĐÃ XUẤT HIỆN!", 6.5)
+		if AudioManager:
+			AudioManager.play_sound("level_up")
+	return true
+
+func _on_world_boss_defeated(actor: Node2D, encounter_instance_id: StringName) -> void:
+	commit_world_boss_defeat(actor, encounter_instance_id)
+
+func commit_world_boss_defeat(actor: Node2D, encounter_instance_id: StringName) -> bool:
+	if not is_instance_valid(actor) or actor != world_boss_actor: return false
+	if encounter_instance_id != WorldBossState.INSTANCE_ID: return false
+	if not actor.is_in_group("persistent_world_bosses"): return false
+	if actor.get_meta("encounter_instance_id", &"") as StringName != WorldBossState.INSTANCE_ID: return false
+	world_boss_state = WorldBossState.new(WorldBossState.DEFEATED, WorldBossState.INSTANCE_ID, 0, Vector2.ZERO)
+	world_boss_actor = null
+	return true
 
 func spawn_initial_creatures() -> void:
 	# 1. Bầy Nhớt Thủy Sinh tụ tập gần hồ nước

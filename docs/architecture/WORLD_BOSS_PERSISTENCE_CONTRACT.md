@@ -14,6 +14,8 @@ World boss do `scripts/main.gd` tạo hiện chỉ có guard `boss_spawned`. Mai
 
 DTO chỉ chứa lifecycle ID, instance ID, HP và hai scalar position. Không chứa Node, scene path, banner, target, reward/drop state hoặc RNG.
 
-## Boundary chưa được phép nối
+## U1.12ab actor ownership
 
-State này chưa thuộc Save v1 và chưa được apply vào Main. Package sau chỉ được nối khi world owner giữ đúng một actor reference/group, Creature phát defeat signal trước khi free, restore path suppress presentation/reward, và defeated lifecycle ngăn respawn/reward lặp. Rollback hiện tại là xóa state/validator/docs; không có migration hay save breaking change.
+Main hiện giữ đúng một `world_boss_actor`, gắn group `persistent_world_bosses` và metadata `boss.world_dragon_1`. Creature phát `defeated(actor, encounter_instance_id)` trước khi tween/free; Main chỉ commit `DEFEATED` khi actor reference, group và ID cùng khớp. Callback lặp, quái thường và altar boss đều fail closed. `spawn_boss(false)` chỉ suppress banner/audio để test và chuẩn bị restore, không đổi damage/reward/drop.
+
+State vẫn chưa thuộc Save v1. Package sau mới được admit HP/position/lifecycle qua snapshot/apply và restore không thưởng; không serialize actor Node, signal connection hoặc presentation state.
