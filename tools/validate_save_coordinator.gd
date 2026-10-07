@@ -145,7 +145,7 @@ func _test_world_boss_round_trip() -> void:
 	_expect(active_load.is_loaded() and restored_state.lifecycle_id == WorldBossState.ACTIVE, "active world boss lifecycle must round-trip")
 	_expect(is_instance_valid(restored_actor) and int(restored_actor.get("hp")) == 217 and restored_actor.global_position.is_equal_approx(Vector2(301.5, 177.25)), "active load must restore boss HP and position")
 	_expect(get_nodes_in_group("persistent_world_bosses").size() == 1 and int(world.get("player").get("exp_val")) == player_exp_before and get_nodes_in_group("dropped_items").size() == drops_before, "active load must create one actor without EXP or drops")
-	world.call("commit_world_boss_defeat", restored_actor, WorldBossState.INSTANCE_ID)
+	restored_actor.emit_signal("removed", restored_actor, WorldBossState.INSTANCE_ID, &"creature.removal.captured")
 	if restored_actor.get_parent() != null: restored_actor.get_parent().remove_child(restored_actor)
 	restored_actor.free()
 	_expect(world.call("save_game", 402, &"save.slot_1").is_success(), "defeated world boss save must succeed")

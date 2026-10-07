@@ -94,3 +94,7 @@ Main đã sở hữu một actor `boss.world_dragon_1`; duplicate spawn fail clo
 ## U1.12ac world-boss Save v1
 
 Lifecycle/instance ID/HP/position đã round-trip và Main restore active đúng một actor, defeated/pending không spawn. Invalid/corrupt load không thay actor hiện tại; restore không tạo EXP/drop hoặc presentation. Defeat coverage FULL; capture/despawn ngoài defeat vẫn cần lifecycle event riêng.
+
+## U1.12ad world-boss capture lifecycle
+
+Accepted capture phát stable removal reason và Main terminal-commit đúng owned world boss trước actor free. Reject/duplicate/foreign actor không mutate; save sau captured state không respawn. World-boss defeat + capture coverage hiện FULL; generic external despawn vẫn fail snapshot thay vì suy đoán lifecycle.

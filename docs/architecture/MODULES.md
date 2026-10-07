@@ -33,7 +33,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | FARM | Soil/crop/water/fertilizer/harvest | `CropDefinition` berry mirror; `resource_node.gd` vẫn gộp resource và plot | FarmPlot state thuần + CropDefinition | U1.3, U5.3 |
 | BUILD | Placement, cost, structure health | Workbench đã có typed durability DTO/catalog admission; Player + building scripts vẫn authoritative | PlacementRequest/Result, occupancy grid | U1.3, U1.6, U1.12t, U5.5 |
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
-| WORLD | Zone, chunks, spawn, day/night, raid | Main owns typed clock/raid/boss/ambient timers; tree/rock depletion typed; world-boss actor lifecycle/save | Capture/removal lifecycle, chunk admission + actor deltas | U1.12u–ac, U2 |
+| WORLD | Zone, chunks, spawn, day/night, raid | Main owns typed clock/raid/boss/ambient timers; tree/rock depletion typed; world-boss defeat/capture lifecycle/save | Raid actor lifecycle, chunk admission + actor deltas | U1.12u–ad, U2 |
 | NAV | Navigation/path requests | Chưa có | Navigation adapter theo chunk | U2.3 |
 | SAVE | Versioned persistence | Main→coordinator explicit clock boundary; Player/base/building/resource adapters; atomic repository | Autosave/UI scheduling, encounter delta | U1.11–U1.12 |
 | UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
@@ -138,6 +138,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.12aa thêm `WorldBossState` với pending/active/defeated lifecycle, fixed instance ID và HP/position DTO. Chưa nối Save v1 vì Main chưa sở hữu actor reference và Creature chưa phát defeat event.
 - U1.12ab Main sở hữu duy nhất world boss qua actor reference, stable group/meta và Creature defeat signal. Identity mismatch, actor thường/altar và callback lặp không được commit; Save v1 chưa đổi.
 - U1.12ac admit `WorldBossState` vào Save v1; Main projects live HP/position và restore active/defeated/pending không presentation hoặc reward. Legacy spawned guard suy ra defeated để không respawn.
+- U1.12ad Creature phát stable captured-removal event sau ownership accepted; Main chỉ terminal-commit owned world boss, không can thiệp roster/reward.
 
 ### UI và PRESENTATION
 

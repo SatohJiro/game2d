@@ -67,7 +67,7 @@ Từ U1.12c, resolver đồng thời phát stable `pet.rarity.*` và `pet.trait.
 4. Actor lấy đúng hai `randf()` cho rarity và trait rồi gọi `Player.on_pet_captured(...)`.
 5. Player tạo request, đánh dấu duplicate từ `committed_capture_tokens`, rồi gọi resolver.
 6. Chỉ accepted mới append `pet_party`, lưu token, thưởng EXP, shake, HUD và quest progress.
-7. Actor chỉ phát success feedback và `queue_free()` sau accepted.
+7. Actor chỉ phát success feedback và `queue_free()` sau accepted. Trước free, actor phát stable removal event `creature.removal.captured`; event không quyết định roster/reward và chỉ cho world owner cập nhật encounter lifecycle.
 8. Rejection clear active attempt, phục hồi visual và chuyển sang CHASE nếu Player hợp lệ, nếu không về IDLE.
 
 `committed_capture_tokens` và token dựa trên wild instance đều transient. Chúng chặn callback lặp trong runtime, không phải save identity. U1.10a đã tạo unique `pet.*` ID riêng cho party entry; U1.11 phải lưu roster bằng DTO/versioned schema.

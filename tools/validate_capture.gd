@@ -396,12 +396,17 @@ func _test_ownership_lifecycle_adapter() -> void:
 	accepted_creature.set("species_index", 1)
 	fixture.add_child(accepted_creature)
 	await process_frame
+	var removal_events: Array[StringName] = []
+	accepted_creature.removed.connect(func(_actor: Node2D, _encounter_instance_id: StringName, reason_id: StringName) -> void:
+		removal_events.append(reason_id)
+	)
 	var party_before_creature := party.size()
 	var exp_before_creature := int(player.get("exp_val"))
 	var creature_result: CaptureOwnershipResult = accepted_creature.call("capture_succeeded", player)
 	_expect(creature_result.is_accepted(), "WildCreature must accept valid ownership commit")
 	_expect(bool(accepted_creature.get("capture_ownership_committed")), "WildCreature accepted ownership flag mismatch")
 	_expect(accepted_creature.is_queued_for_deletion(), "accepted WildCreature must queue despawn")
+	_expect(removal_events == [&"creature.removal.captured"], "accepted ownership must emit one stable captured removal reason")
 	var repeated_result: CaptureOwnershipResult = accepted_creature.call("capture_succeeded", player)
 	_expect(repeated_result.status == CaptureOwnershipResult.Status.DUPLICATE, "WildCreature repeated success callback must be duplicate")
 	_expect(party.size() == party_before_creature + 1, "WildCreature repeated callback must append exactly once")
@@ -414,6 +419,9 @@ func _test_ownership_lifecycle_adapter() -> void:
 	rejected_creature.set("species_index", 2)
 	fixture.add_child(rejected_creature)
 	await process_frame
+	rejected_creature.removed.connect(func(_actor: Node2D, _encounter_instance_id: StringName, reason_id: StringName) -> void:
+		removal_events.append(reason_id)
+	)
 	var rejected_data: Dictionary = rejected_creature.get("cur_data")
 	rejected_data["id"] = &"creature.unknown"
 	rejected_creature.set("capture_attempt_active", true)
@@ -424,6 +432,7 @@ func _test_ownership_lifecycle_adapter() -> void:
 	_expect(not rejected_creature.is_queued_for_deletion(), "rejected WildCreature must remain in world")
 	_expect(not bool(rejected_creature.get("capture_attempt_active")), "rejected ownership must clear capture attempt")
 	_expect(party.size() == party_before_reject and int(player.get("exp_val")) == exp_before_reject, "rejected ownership must not mutate roster/reward")
+	_expect(removal_events.size() == 1, "rejected ownership must not emit removal")
 
 	if success_sound != null:
 		sounds["success"] = success_sound

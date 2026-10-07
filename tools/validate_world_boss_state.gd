@@ -52,6 +52,14 @@ func _test_world_owner() -> void:
 	var state := world.get("world_boss_state") as WorldBossState
 	_expect(state.lifecycle_id == WorldBossState.DEFEATED and world.get("world_boss_actor") == null, "owned actor defeat signal must commit defeated lifecycle exactly once")
 	_expect(not bool(world.call("commit_world_boss_defeat", actor, WorldBossState.INSTANCE_ID)), "duplicate defeat callback must fail closed")
+	world.call("apply_world_boss_state", WorldBossState.new())
+	_expect(bool(world.call("spawn_boss", false)), "capture lifecycle fixture must spawn a fresh owned boss")
+	var captured_actor := world.get("world_boss_actor") as Node2D
+	_expect(not bool(world.call("commit_world_boss_removal", captured_actor, WorldBossState.INSTANCE_ID, &"creature.removal.unknown")), "unknown removal reason must fail closed")
+	captured_actor.emit_signal("removed", captured_actor, WorldBossState.INSTANCE_ID, &"creature.removal.captured")
+	state = world.get("world_boss_state") as WorldBossState
+	_expect(state.lifecycle_id == WorldBossState.DEFEATED and world.get("world_boss_actor") == null, "owned captured removal must commit terminal lifecycle")
+	_expect(not bool(world.call("commit_world_boss_removal", captured_actor, WorldBossState.INSTANCE_ID, &"creature.removal.captured")), "duplicate captured removal must fail closed")
 	root.remove_child(world)
 	world.free()
 	await process_frame

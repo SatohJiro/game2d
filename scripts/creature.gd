@@ -2,6 +2,9 @@ extends CharacterBody2D
 class_name WildCreature
 
 signal defeated(actor: Node2D, encounter_instance_id: StringName)
+signal removed(actor: Node2D, encounter_instance_id: StringName, reason_id: StringName)
+
+const REMOVAL_CAPTURED := &"creature.removal.captured"
 
 @export var species_index: int = 0
 @export var level: int = 1
@@ -1468,6 +1471,7 @@ func capture_succeeded(player_ref: Node2D) -> CaptureOwnershipResult:
 	spawn_floating_text("★ THU PHỤC HOÀN TOÀN! ★", Color(0.2, 1.0, 0.4))
 	if AudioManager:
 		AudioManager.play_sound("success")
+	removed.emit(self, get_meta("encounter_instance_id", &"") as StringName, REMOVAL_CAPTURED)
 	queue_free()
 	return ownership_result
 

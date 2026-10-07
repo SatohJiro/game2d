@@ -21,3 +21,7 @@ Main hiện giữ đúng một `world_boss_actor`, gắn group `persistent_world
 ## U1.12ac Save v1 admission
 
 Save mới ghi `world.world_boss_state`; save cũ thiếu field suy ra PENDING khi guard chưa spawn và DEFEATED khi guard đã spawn. Schema khóa coherence với `WorldCycleState`. Active restore thay actor cũ bằng đúng một actor có HP/position đã lưu qua đường không banner/audio/reward; pending/defeated không spawn. Corrupt/invalid snapshot dừng trước Main apply. Node, target, signal connection, scene path, EXP/drop và RNG không serialize.
+
+## U1.12ad capture lifecycle
+
+Sau accepted ownership commit và trước `queue_free()`, Creature phát `removed(actor, encounter_instance_id, creature.removal.captured)`. Main chỉ nhận reason này từ đúng owned actor/group/meta/ID rồi dùng cùng terminal commit như defeat. Reject, duplicate callback, actor thường, altar boss và reason lạ đều không đổi world state. Save sau capture ghi DEFEATED nên reload không respawn boss; roster/reward capture giữ nguyên owner cũ.

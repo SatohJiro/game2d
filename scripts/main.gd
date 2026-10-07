@@ -10,6 +10,7 @@ extends Node2D
 const CREATURE_SCENE = preload("res://scenes/creature.tscn")
 const SPARK_TEX = preload("res://assets/fx/spark.png")
 const DEFAULT_SAVE_PATH := "user://saves/slot_1.json"
+const WORLD_BOSS_CAPTURED_REASON := &"creature.removal.captured"
 
 var max_wild_creatures: int = 10
 var spawn_timer: float = 3.0
@@ -215,6 +216,7 @@ func spawn_boss(show_presentation: bool = true) -> bool:
 	creature.update_overhead()
 	world_boss_state = WorldBossState.new(WorldBossState.ACTIVE, WorldBossState.INSTANCE_ID, creature.hp, creature.global_position)
 	creature.defeated.connect(_on_world_boss_defeated)
+	creature.removed.connect(_on_world_boss_removed)
 	
 	if show_presentation:
 		hud.show_banner("⚠️ CẢNH BÁO: HỎA LONG THẦN (DRAGON BOSS LV.8) ĐÃ XUẤT HIỆN!", 6.5)
@@ -225,7 +227,17 @@ func spawn_boss(show_presentation: bool = true) -> bool:
 func _on_world_boss_defeated(actor: Node2D, encounter_instance_id: StringName) -> void:
 	commit_world_boss_defeat(actor, encounter_instance_id)
 
+func _on_world_boss_removed(actor: Node2D, encounter_instance_id: StringName, reason_id: StringName) -> void:
+	commit_world_boss_removal(actor, encounter_instance_id, reason_id)
+
 func commit_world_boss_defeat(actor: Node2D, encounter_instance_id: StringName) -> bool:
+	return _commit_world_boss_terminal(actor, encounter_instance_id)
+
+func commit_world_boss_removal(actor: Node2D, encounter_instance_id: StringName, reason_id: StringName) -> bool:
+	if reason_id != WORLD_BOSS_CAPTURED_REASON: return false
+	return _commit_world_boss_terminal(actor, encounter_instance_id)
+
+func _commit_world_boss_terminal(actor: Node2D, encounter_instance_id: StringName) -> bool:
 	if not is_instance_valid(actor) or actor != world_boss_actor: return false
 	if encounter_instance_id != WorldBossState.INSTANCE_ID: return false
 	if not actor.is_in_group("persistent_world_bosses"): return false

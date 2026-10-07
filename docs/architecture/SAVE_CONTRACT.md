@@ -124,6 +124,8 @@ U1.12ab đã đóng actor ownership và defeat-event gate; `spawn_boss(false)` s
 
 `world.world_boss_state` chứa exact DTO lifecycle/instance/HP/position và phải coherent với cycle boss guard. Field thiếu từ save v1 pre-release được suy ra bảo thủ: pending nếu chưa spawn, defeated nếu đã spawn. Snapshot active đọc live actor; restore active thay đúng một actor qua presentation-suppressed path, còn defeated/pending không spawn. Validation hoàn tất trước mutation; Node/target/signal/scene/reward/RNG không thuộc DTO.
 
+U1.12ad không đổi schema: accepted capture chuyển runtime state sang DEFEATED trước free, nên snapshot kế tiếp dùng terminal DTO hiện hữu. Reject hoặc duplicate không đổi DTO.
+
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure
