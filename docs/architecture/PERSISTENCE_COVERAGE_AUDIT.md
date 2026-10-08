@@ -102,3 +102,7 @@ Accepted capture phát stable removal reason và Main terminal-commit đúng own
 ## U1.12ae night-raid actor audit
 
 Ba raid actor hiện không có stable identity/reference và owner không nhận defeat/capture removal; guard true không phân biệt active/cleared. Pure `NightRaidState` đã khóa cycle-scoped encounter cùng ba actor slot, resolved species, level/HP/position và JSON validation. Coverage vẫn PARTIAL; chưa admit Save v1 hoặc spawn khi load.
+
+## U1.12af night-raid runtime ownership
+
+Main nay sở hữu map ba stable raid slot, metadata/group encounter và aggregate đúng owned defeat/captured removal thành remaining roster hoặc CLEARED. Foreign/duplicate callback và duplicate trigger fail closed. Coverage vẫn PARTIAL vì Save v1 chưa snapshot/apply raid DTO và chưa restore actor.

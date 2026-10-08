@@ -1,6 +1,6 @@
-# Night raid persistence contract — U1.12ae
+# Night raid persistence contract — U1.12ae–af
 
-## Audit hiện trạng
+## Audit ban đầu
 
 `trigger_night_raid()` roll species/angle/radius/level rồi spawn ba Creature nhưng Main không giữ encounter state, actor reference hay stable instance ID. Defeat/capture chỉ xử lý reward/despawn; không báo remaining roster về raid owner. `raid_triggered_this_cycle` chỉ ngăn trigger lặp, không phân biệt raid active với cleared. Vì vậy restore actor lúc này có thể duplicate encounter hoặc reward.
 
@@ -12,4 +12,10 @@ Pending coherent với `raid_triggered_this_cycle=false`. Active/cleared coheren
 
 ## Admission gate
 
-State chưa thuộc Save v1 và Main chưa apply nó. Trước admission, Main phải sở hữu ba slot actor, gắn encounter metadata/group, nhận defeat/capture removal đúng một lần và chuyển ACTIVE→CLEARED khi roster rỗng. Restore phải suppress telegraph/reward và không reroll species/position. Save/data breaking change hiện tại: none.
+State chưa thuộc Save v1. Restore tương lai phải suppress telegraph/reward và không reroll species/position. Save/data breaking change hiện tại: none.
+
+## Runtime ownership — U1.12af
+
+Main giữ map ba stable slot sang đúng ba Creature đã spawn. Trigger resolve toàn bộ spawn roll trước khi commit, gắn encounter/instance metadata và group `persistent_night_raid_actors`, rồi publish ACTIVE ledger; guard/state/reference không pending thì fail closed trước RNG và spawn.
+
+Defeat hoặc captured removal chỉ được aggregate khi actor reference, slot ID, encounter metadata và group đều khớp ownership. Foreign, unknown-reason và duplicate callback không đổi state. Mỗi removal tái tạo ACTIVE ledger từ roster còn lại; roster rỗng chuyển CLEARED đúng một lần. Sang đầu chu kỳ mới chỉ reset CLEARED/PENDING, không orphan một encounter ACTIVE. Reward, drop và capture resolution vẫn thuộc Creature/capture systems.

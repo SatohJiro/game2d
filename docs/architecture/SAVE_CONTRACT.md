@@ -130,6 +130,8 @@ U1.12ad không đổi schema: accepted capture chuyển runtime state sang DEFEA
 
 `NightRaidState` và `NightRaidActorState` là pure contract chưa thuộc Save v1. Chỉ admit sau khi Main sở hữu stable actor slots và aggregate defeat/capture removal thành CLEARED. DTO tương lai không chứa Node, target, scene path hay species/position RNG.
 
+U1.12af đã đóng prerequisite runtime ownership/removal: Main giữ đúng ba slot và terminal CLEARED idempotent. Save v1 vẫn chưa đổi; package kế tiếp phải snapshot/apply resolved actor state, không serialize Node và không replay presentation/reward/RNG.
+
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure

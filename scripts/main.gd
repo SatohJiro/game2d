@@ -11,6 +11,7 @@ const CREATURE_SCENE = preload("res://scenes/creature.tscn")
 const SPARK_TEX = preload("res://assets/fx/spark.png")
 const DEFAULT_SAVE_PATH := "user://saves/slot_1.json"
 const WORLD_BOSS_CAPTURED_REASON := &"creature.removal.captured"
+const NIGHT_RAID_ACTOR_GROUP := &"persistent_night_raid_actors"
 
 var max_wild_creatures: int = 10
 var spawn_timer: float = 3.0
@@ -34,6 +35,8 @@ var world_boss_state := WorldBossState.new()
 var world_boss_actor: Node2D = null
 
 var raid_triggered_this_cycle: bool = false
+var night_raid_state := NightRaidState.new()
+var night_raid_actors: Dictionary = {}
 var fireflies: Array[Sprite2D] = []
 var save_coordinator: RefCounted
 
@@ -111,8 +114,9 @@ func _process(delta: float) -> void:
 	# Night Raid check (at 72% of day cycle)
 	if progress >= 0.72 and progress < 0.92 and not raid_triggered_this_cycle:
 		trigger_night_raid()
-	elif progress < 0.20:
+	elif progress < 0.20 and raid_triggered_this_cycle and night_raid_state.lifecycle_id != NightRaidState.ACTIVE:
 		raid_triggered_this_cycle = false
+		night_raid_state = NightRaidState.new()
 	
 	spawn_timer -= delta
 	if spawn_timer <= 0.0:
@@ -170,24 +174,74 @@ func update_fireflies(progress: float, delta: float) -> void:
 			ff.position += Vector2(sin(t_msec + i) * 12.0, cos(t_msec + i * 1.5) * 8.0) * delta
 			ff.modulate.a = clampf(0.4 + sin(t_msec * 2.0 + i) * 0.4, 0.1, 0.85)
 
-func trigger_night_raid() -> void:
+func trigger_night_raid(show_presentation: bool = true) -> bool:
+	if raid_triggered_this_cycle or night_raid_state.lifecycle_id != NightRaidState.PENDING or not night_raid_actors.is_empty():
+		return false
+	var resolved_spawns: Array[Dictionary] = []
+	for i in range(NightRaidActorState.VALID_INSTANCE_IDS.size()):
+		var angle := randf_range(0.0, TAU)
+		resolved_spawns.append({
+			"instance_id": NightRaidActorState.VALID_INSTANCE_IDS[i],
+			"position": Vector2(cos(angle), sin(angle)) * randf_range(320.0, 380.0),
+			"species_index": randi() % NightRaidActorState.VALID_SPECIES_IDS.size(),
+			"level": randi_range(2, 5),
+		})
+	var actor_states: Array[NightRaidActorState] = []
+	for spawn: Dictionary in resolved_spawns:
+		var creature = CREATURE_SCENE.instantiate()
+		var instance_id := spawn["instance_id"] as StringName
+		creature.global_position = spawn["position"] as Vector2
+		creature.species_index = spawn["species_index"] as int
+		creature.level = spawn["level"] as int
+		creature.is_night_raider = true
+		creature.set_meta("encounter_id", NightRaidState.ENCOUNTER_ID)
+		creature.set_meta("encounter_instance_id", instance_id)
+		creature.add_to_group(NIGHT_RAID_ACTOR_GROUP)
+		creature_container.add_child(creature)
+		creature.scale = Vector2(1.2, 1.2)
+		creature.attack_power = int(creature.attack_power * 1.25)
+		creature.target = player
+		creature.defeated.connect(_on_night_raid_actor_defeated)
+		creature.removed.connect(_on_night_raid_actor_removed)
+		night_raid_actors[instance_id] = creature
+		var species_id := creature.cur_data.get("id", &"") as StringName
+		actor_states.append(NightRaidActorState.new(instance_id, species_id, creature.level, creature.hp, creature.global_position))
 	raid_triggered_this_cycle = true
-	hud.show_banner("⚠️ BÁO ĐỘNG: ĐÊM XÂM LĂNG! BẦY QUÁI MẮT ĐỎ ĐANG TIẾN VỀ CĂN CỨ!", 6.0)
-	if AudioManager:
-		AudioManager.play_sound("shake")
-	
-	# Spawn 3 aggressive raid monsters heading to base camp
-	for i in range(3):
-		var c = CREATURE_SCENE.instantiate()
-		var ang = randf_range(0, TAU)
-		c.global_position = Vector2(cos(ang), sin(ang)) * randf_range(320, 380)
-		c.species_index = randi() % 4
-		c.level = randi_range(2, 5)
-		c.is_night_raider = true
-		creature_container.add_child(c)
-		c.scale = Vector2(1.2, 1.2)
-		c.attack_power = int(c.attack_power * 1.25)
-		c.target = $Player
+	night_raid_state = NightRaidState.new(NightRaidState.ACTIVE, NightRaidState.ENCOUNTER_ID, int(floor(day_time / day_duration)), actor_states)
+	if show_presentation:
+		hud.show_banner("⚠️ BÁO ĐỘNG: ĐÊM XÂM LĂNG! BẦY QUÁI MẮT ĐỎ ĐANG TIẾN VỀ CĂN CỨ!", 6.0)
+		if AudioManager:
+			AudioManager.play_sound("shake")
+	return true
+
+func _on_night_raid_actor_defeated(actor: Node2D, encounter_instance_id: StringName) -> void:
+	commit_night_raid_actor_removal(actor, encounter_instance_id)
+
+func _on_night_raid_actor_removed(actor: Node2D, encounter_instance_id: StringName, reason_id: StringName) -> void:
+	if reason_id == WORLD_BOSS_CAPTURED_REASON:
+		commit_night_raid_actor_removal(actor, encounter_instance_id)
+
+func commit_night_raid_actor_removal(actor: Node2D, encounter_instance_id: StringName) -> bool:
+	if night_raid_state.lifecycle_id != NightRaidState.ACTIVE or actor == null:
+		return false
+	if not NightRaidActorState.VALID_INSTANCE_IDS.has(encounter_instance_id):
+		return false
+	if night_raid_actors.get(encounter_instance_id) != actor:
+		return false
+	if not actor.is_in_group(NIGHT_RAID_ACTOR_GROUP):
+		return false
+	if actor.get_meta("encounter_id", &"") as StringName != NightRaidState.ENCOUNTER_ID:
+		return false
+	if actor.get_meta("encounter_instance_id", &"") as StringName != encounter_instance_id:
+		return false
+	night_raid_actors.erase(encounter_instance_id)
+	var remaining: Array[NightRaidActorState] = []
+	for actor_state in night_raid_state.actors:
+		if actor_state.instance_id != encounter_instance_id:
+			remaining.append(actor_state)
+	var lifecycle_id := NightRaidState.ACTIVE if not remaining.is_empty() else NightRaidState.CLEARED
+	night_raid_state = NightRaidState.new(lifecycle_id, NightRaidState.ENCOUNTER_ID, night_raid_state.cycle_index, remaining)
+	return true
 
 func spawn_boss(show_presentation: bool = true) -> bool:
 	if world_boss_state.lifecycle_id != WorldBossState.PENDING or is_instance_valid(world_boss_actor):
