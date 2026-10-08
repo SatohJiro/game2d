@@ -1,5 +1,25 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U2.6d — minimap/fog presentation + destination picker
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- Thêm `MinimapView` (render tile read-only từ discovery snapshot) và `MinimapPanel` (scene riêng `scenes/minimap.tscn`, không sửa `hud.gd`): picker chỉ liệt kê discovered chunk qua `FastTravelDestinationCatalog`, UI chỉ phát intent `travel_requested(destination_id)`, mọi mutation qua `Main.try_fast_travel()`.
+- Tile states phân biệt bằng ký hiệu (viền vàng + chấm tròn = hiện tại, vạch góc = đã khám phá, gạch chéo = sương mù) kèm legend chữ; toggle bằng M; ItemList hỗ trợ keyboard/gamepad; không flash/motion.
+- `Main.toggle_minimap()` refresh snapshot khi mở; `_on_minimap_travel_requested()` gọi travel, hiển thị kết quả tiếng Việt, refresh snapshot.
+- Không đổi policy/cost/guard/cooldown U2.6c; không autosave. Save/data breaking change: none. Asset/provenance: none.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass bằng Godot 4.7.2 headless, 49 Markdown files và toàn bộ checks xanh.
+- `tools/validate_minimap.gd` pass: pure layout mapping (coordinate → rect, signed coords, empty), picker discovered-only, invalid intent không phát signal, valid intent phát đúng ID, Main integration (toggle → select → confirm → teleport → snapshot refresh current tile).
+- Full gate cuối: pass (headless editor load, 25 validator gồm minimap mới, main-scene smoke). Strict scan `build/checks` sạch `SCRIPT ERROR`/`Parse Error`/`ERROR:`.
+- File mới: `scripts/minimap.gd`, `scripts/minimap_view.gd`, `scenes/minimap.tscn`, `tools/validate_minimap.gd` (+ `.uid`); sửa `scripts/main.gd`, `tools/check_project.ps1`, MODULES/FEATURES/roadmap/CHECKPOINT/NEXT_UPDATE_PROMPT.
+- Rollback: xóa 4 file mới, bỏ MINIMAP_SCENE/minimap_panel/toggle/handler/M-key trong `main.gd`, revert docs U2.6d.
+- Package kế tiếp: U2.7 ambient spawn persistent cooldown/delta theo `NEXT_UPDATE_PROMPT.md`.
+
 ## U2.6c — fast-travel domain boundary
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.

@@ -157,6 +157,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 ### UI và PRESENTATION
 
 - UI phát intent, coordinator xử lý và trả ViewModel/snapshot. Modal quản lý focus và pause policy.
+- U2.6d: `MinimapPanel`/`MinimapView` render read-only discovery snapshot (tile discovered/active/current phân biệt bằng ký hiệu, không chỉ màu) và destination picker chỉ liệt kê discovered chunk; UI chỉ phát `travel_requested(destination_id)`, mọi mutation qua `Main.try_fast_travel()`; toggle bằng M, keyboard/gamepad navigation qua ItemList, không flash/motion.
 - Animation marker phát event presentation; kết quả combat/craft không phụ thuộc frame animation đã render.
 - Screen shake, flash và motion có multiplier hoặc tắt được. Audio API nhận semantic event thay vì đường dẫn asset từ gameplay.
 

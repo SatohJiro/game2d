@@ -8,6 +8,7 @@ extends Node2D
 @onready var player: CharacterBody2D = $Player
 
 const CREATURE_SCENE = preload("res://scenes/creature.tscn")
+const MINIMAP_SCENE = preload("res://scenes/minimap.tscn")
 const SPARK_TEX = preload("res://assets/fx/spark.png")
 const DEFAULT_SAVE_PATH := "user://saves/slot_1.json"
 const WORLD_BOSS_CAPTURED_REASON := &"creature.removal.captured"
@@ -36,6 +37,7 @@ var ambient_spawn_adapter: AmbientSpawnAdapter
 var chunk_discovery_adapter := ChunkDiscoveryAdapter.new()
 var chunk_debug_overlay: ChunkDebugOverlay
 var fast_travel_cooldown_until_msec: int = 0
+var minimap_panel: MinimapPanel
 
 func _ready() -> void:
 	save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
@@ -57,6 +59,10 @@ func _ready() -> void:
 	chunk_navigation_adapter.apply(ChunkNavigationRequest.from_delta(initial_chunk_delta))
 	chunk_discovery_adapter.observe_center(initial_chunk_delta.center)
 	chunk_debug_overlay.render_snapshot(chunk_admission.create_debug_snapshot())
+	minimap_panel = MINIMAP_SCENE.instantiate() as MinimapPanel
+	hud.add_child(minimap_panel)
+	minimap_panel.travel_requested.connect(_on_minimap_travel_requested)
+	minimap_panel.render_snapshot(get_chunk_discovery_view_snapshot())
 	
 	maintain_creatures()
 	hud.show_banner("PALORIA 2.0: CÀY CUỐC, NÔNG TRẠI, CHĂN NUÔI & SĂN PET!\n[E] Nông Trại/Chuồng Thú | Chuột Phải Ném Cầu (Quỹ đạo vòng cung) | [G] Kỹ Năng Pet | [C] Chế Tạo", 6.5)
@@ -302,6 +308,22 @@ func toggle_chunk_debug_overlay() -> bool:
 	return chunk_debug_overlay.toggle() if is_instance_valid(chunk_debug_overlay) else false
 
 
+func toggle_minimap() -> bool:
+	if minimap_panel == null or not is_instance_valid(minimap_panel):
+		return false
+	if not minimap_panel.is_open():
+		minimap_panel.render_snapshot(get_chunk_discovery_view_snapshot())
+	return minimap_panel.toggle()
+
+
+func _on_minimap_travel_requested(destination_id: StringName) -> void:
+	if minimap_panel == null or not is_instance_valid(minimap_panel):
+		return
+	var result := try_fast_travel(destination_id)
+	minimap_panel.show_travel_result(result)
+	minimap_panel.render_snapshot(get_chunk_discovery_view_snapshot())
+
+
 func is_fast_travel_encounter_blocked() -> bool:
 	if night_raid_state.lifecycle_id == NightRaidState.ACTIVE:
 		return true
@@ -361,8 +383,11 @@ func try_fast_travel(destination_id: StringName) -> FastTravelResult:
 	return planned
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F8:
-		toggle_chunk_debug_overlay()
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F8:
+			toggle_chunk_debug_overlay()
+		elif event.keycode == KEY_M:
+			toggle_minimap()
 
 func _exit_tree() -> void:
 	if ambient_spawn_adapter != null: ambient_spawn_adapter.cleanup()

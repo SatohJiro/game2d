@@ -39,6 +39,7 @@ $ambientSpawnLog = Join-Path $LogDirectory 'ambient-spawn-validation.log'
 $chunkDiscoveryLog = Join-Path $LogDirectory 'chunk-discovery-validation.log'
 $discoverySaveLog = Join-Path $LogDirectory 'discovery-save-validation.log'
 $fastTravelLog = Join-Path $LogDirectory 'fast-travel-validation.log'
+$minimapLog = Join-Path $LogDirectory 'minimap-validation.log'
 $smokeLog = Join-Path $LogDirectory 'headless-smoke.log'
 $failurePattern = 'SCRIPT ERROR|Parse Error|Failed to load script|Cannot open file|Node not found|Invalid get index|^ERROR:'
 
@@ -136,6 +137,9 @@ Invoke-GodotCheck -Name 'Discovery save validation' -LogPath $discoverySaveLog -
 )
 Invoke-GodotCheck -Name 'Fast travel validation' -LogPath $fastTravelLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_fast_travel.gd')
+)
+Invoke-GodotCheck -Name 'Minimap validation' -LogPath $minimapLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_minimap.gd')
 )
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')
