@@ -6,11 +6,11 @@ Generated: 2026-10-08
 
 ## Gate status
 
-- Source assets: 166
+- Source assets: 185
 - Referenced by current scripts/scenes: 68
-- Unreferenced: 98
+- Unreferenced: 117
 - Duplicate hash groups: 2 (16 files)
-- Verified provenance: 61
+- Verified provenance: 80
 - Quarantined/unknown: 105
 
 `VERIFIED` assets are original project-generated content (CC0-1.0) or have a provenance receipt; they are cleared for distributable builds.
@@ -29,6 +29,7 @@ Generated: 2026-10-08
 | music | 2 | 1 | 1300488 |
 | sfx | 8 | 8 | 134850 |
 | tilesets | 86 | 12 | 316386 |
+| town | 19 | 0 | 15405 |
 
 ## Exact duplicate groups
 
