@@ -36,6 +36,7 @@ var town_builder: TownBuilder
 var lighting_director: LightingDirector
 var weather_director: WeatherDirector
 var ecosystem: AmbientEcosystem
+var district_banner: DistrictBanner
 var current_save_id: StringName = &"slot_1"
 var chunk_navigation_adapter: ChunkNavigationAdapter
 var ambient_spawn_adapter: AmbientSpawnAdapter
@@ -75,6 +76,9 @@ func _ready() -> void:
 	ecosystem = AmbientEcosystem.new()
 	ecosystem.name = "AmbientEcosystem"
 	add_child(ecosystem)
+	district_banner = DistrictBanner.new()
+	district_banner.name = "DistrictBanner"
+	add_child(district_banner)
 	chunk_navigation_adapter = ChunkNavigationAdapter.new(get_world_2d().navigation_map)
 	ambient_spawn_adapter = AmbientSpawnAdapter.new(creature_container, CREATURE_SCENE)
 	chunk_debug_overlay = ChunkDebugOverlay.new()
@@ -510,6 +514,7 @@ func update_chunk_admission(world_position: Vector2) -> bool:
 var _audio_tick := 0.0
 var _town_life_tick := 0.0
 var _last_phase := &""
+var _last_district := &"__none__"
 
 
 func _tick_town_life(progress: float, weather: int, delta: float) -> void:
@@ -519,6 +524,13 @@ func _tick_town_life(progress: float, weather: int, delta: float) -> void:
 		for npc in get_tree().get_nodes_in_group("town_npc"):
 			if npc.has_method("set_phase"):
 				npc.set_phase(phase)
+	var district := TownDistrictDB.district_at(player.global_position)
+	if district != _last_district:
+		_last_district = district
+		if district != &"" and district_banner != null:
+			var data := TownDistrictDB.find(district)
+			if not data.is_empty():
+				district_banner.show_district(String(data["name_key"]), GameSettings.reduce_motion)
 	if ecosystem != null:
 		ecosystem.update_ecosystem(phase, weather == WeatherDirector.Weather.RAIN, GameSettings.reduce_motion, delta, player.global_position)
 

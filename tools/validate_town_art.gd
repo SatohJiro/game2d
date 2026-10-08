@@ -8,7 +8,7 @@ extends SceneTree
 
 const PALORIA16 := [
 	"1D2433", "E8D8B8", "8A5A3B", "D9B382", "F2C230", "F2812E", "D6405E",
-	"4FAE4F", "2F7D3A", "3FA7D6", "2474A3", "F2F5F7", "C97B2D", "8E8E93",
+	"4FAE4F", "2F7D3A", "3FA7D6", "2474A3", "EEF3F8", "C97B2D", "8E8E93",
 	"6B7280", "3B3B3B",
 ]
 const AT_EXTENSIONS := [
@@ -34,13 +34,12 @@ func _test_art_files() -> void:
 	var palette := {}
 	for hex in PALORIA16 + AT_EXTENSIONS:
 		palette[hex] = true
-	var allowed: Dictionary = TownBuilder.KIND_ART.duplicate()
-	for alt in (TownBuilder.KIND_ART_ALT as Dictionary).values():
-		for path in alt as Array:
-			allowed[path] = true
 	var art_paths := {}
-	for key in allowed.keys():
-		art_paths[String(allowed[key])] = true
+	for kind_key in (TownBuilder.KIND_ART as Dictionary).keys():
+		art_paths[String((TownBuilder.KIND_ART as Dictionary)[kind_key])] = true
+	for alt_list in (TownBuilder.KIND_ART_ALT as Dictionary).values():
+		for art_path in alt_list as Array:
+			art_paths[String(art_path)] = true
 	_expect(art_paths.size() > 10, "town art table must cover structure kinds")
 	for res_path in art_paths.keys():
 		_expect(ResourceLoader.exists(res_path), "town art must exist: %s" % res_path)

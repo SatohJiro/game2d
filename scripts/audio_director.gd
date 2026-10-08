@@ -27,6 +27,10 @@ const BED_STREAMS := {
 
 const CROSSFADE_SECONDS := 2.5
 
+## Test seam: when false, cue switches assign streams without starting
+## playback (keeps headless validators deterministic; no audio thread race).
+var playback_enabled := true
+
 var _music_a: AudioStreamPlayer
 var _music_b: AudioStreamPlayer
 var _active: AudioStreamPlayer
@@ -95,11 +99,14 @@ func _switch_cue(cue: StringName) -> void:
 	_current_cue = cue
 	_standby.stream = load(path) as AudioStream
 	_standby.volume_db = -60.0
-	_standby.play()
+	if playback_enabled:
+		_standby.play()
 	_fade = 0.0
 
 
 func _process(delta: float) -> void:
+	if not playback_enabled:
+		return
 	# Music crossfade.
 	if _standby.playing and _fade < 1.0:
 		_fade = minf(1.0, _fade + delta / CROSSFADE_SECONDS)

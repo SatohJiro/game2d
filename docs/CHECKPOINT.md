@@ -1,17 +1,21 @@
 # Checkpoint triển khai Paloria 3.0
 
-## AT — thị trấn anime (đang thực hiện)
+## AT — thị trấn anime (HOÀN TẤT 2026-10-08)
 
-Trạng thái: `IMPLEMENTING` ngày 2026-10-08. User feedback sau phase AT.
+Trạng thái: `DONE` ngày 2026-10-08. Chờ user feedback gameplay.
 
 ### AT-A — art direction + greybox (xong)
+### AT-B — town art (xong): 19 sprite gốc CC0 VERIFIED
+### AT-C — WorldClock + lighting/weather (xong)
+### AT-D — hero + palfox + 3 NPC (xong): art gốc CC0 VERIFIED
+### AT-E — MusicContext/AudioDirector + 13 track gốc (xong)
+### AT-F — NPC schedule + ambient ecosystem (xong)
+### AT-G — polish (xong)
 
-- `docs/assets/AT_ART_DIRECTION.md`: Paloria Luminous Town — shape language, palette mở rộng, ánh sáng, 7 quận + gameplay anchor.
-- `systems/town/town_district_db.gd`: 10 districts trên 3×3 chunk (0..2, -1..1), rect + anchors (fast travel, shop, vista, fishing...).
-- `systems/town/town_layout.gd`: 19 structure authored (station, clock tower, stalls, houses, torii, shrine, lake, bridge...).
-- `scripts/town_builder.gd`: dựng greybox (footprint + label) dưới chunk node, unload theo chunk.
-- Main hook chunk admission; tên quận localized vi/en.
-- `tools/validate_town_greybox.gd` pass.
+- Dây điện võng giữa cột, banner tên quận khi vào quận mới.
+- Screenshot checklist: docs/AT_SCREENSHOT_CHECKLIST.md.
+- Gate: 42/42 xanh (36 cũ + 6 AT mới), static gate sạch, git diff --check sạch.
+- Asset: 203 files, 98 VERIFIED (61 cũ + 37 AT mới), 105 quarantined/unknown (không tăng).
 
 ## U4 — art/animation/audio
 

@@ -33,6 +33,7 @@ const FALLBACK_COLOR := Color(0.6, 0.6, 0.6, 0.3)
 func build_for_chunk(chunk_node: Node, coordinate: Vector2i) -> int:
 	var built := 0
 	var kind_counts := {}
+	var origin := ChunkCoordinate.world_origin(coordinate)
 	for entry in TownLayout.for_chunk(coordinate):
 		var s := entry as Dictionary
 		var node_name := "TownStructure_%s" % String(s["id"])
@@ -41,7 +42,7 @@ func build_for_chunk(chunk_node: Node, coordinate: Vector2i) -> int:
 		var holder := Node2D.new()
 		holder.name = node_name
 		var size := s["size"] as Vector2
-		holder.position = s["position"] as Vector2
+		holder.position = (s["position"] as Vector2) - origin
 		var kind := s["kind"] as StringName
 		var art_path := _art_for_kind(kind, kind_counts)
 		if art_path.is_empty():
@@ -85,6 +86,7 @@ const ANCHOR_DIALOGUE := {
 
 func build_anchors_for_chunk(chunk_node: Node, coordinate: Vector2i) -> int:
 	var built := 0
+	var origin := ChunkCoordinate.world_origin(coordinate)
 	for district in TownDistrictDB.for_chunk(coordinate):
 		for anchor in (district as Dictionary)["anchors"]:
 			var a := anchor as Dictionary
@@ -96,7 +98,7 @@ func build_anchors_for_chunk(chunk_node: Node, coordinate: Vector2i) -> int:
 				continue
 			var node := TownAnchor.new()
 			node.name = node_name
-			node.position = a["position"] as Vector2
+			node.position = (a["position"] as Vector2) - origin
 			chunk_node.add_child(node)
 			node.setup(anchor_id, ANCHOR_DIALOGUE[anchor_id])
 			built += 1
@@ -118,4 +120,32 @@ func build_npcs_for_chunk(chunk_node: Node, coordinate: Vector2i) -> int:
 		chunk_node.add_child(node)
 		node.setup(npc["id"])
 		built += 1
+	_build_wires(chunk_node, coordinate)
 	return built
+
+
+## Catenary power lines between poles of the same chunk.
+func _build_wires(chunk_node: Node, coordinate: Vector2i) -> void:
+	var origin := ChunkCoordinate.world_origin(coordinate)
+	var poles: Array[Vector2] = []
+	for entry in TownLayout.for_chunk(coordinate):
+		var s := entry as Dictionary
+		if (s["kind"] as StringName) == &"pole":
+			poles.append((s["position"] as Vector2) + Vector2(0, -38))
+	poles.sort()
+	for i in range(poles.size() - 1):
+		var a := poles[i]
+		var b := poles[i + 1]
+		if a.distance_to(b) > 700.0:
+			continue
+		var line := Line2D.new()
+		line.name = "PowerWire_%d" % i
+		var points := PackedVector2Array()
+		for t in 13:
+			var p := a.lerp(b, t / 12.0)
+			p.y += sin(PI * t / 12.0) * 18.0
+			points.append(p - origin)
+		line.points = points
+		line.width = 1.5
+		line.default_color = Color(0.15, 0.15, 0.2, 0.8)
+		chunk_node.add_child(line)

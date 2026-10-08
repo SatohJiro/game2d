@@ -79,6 +79,10 @@ func _test_greybox_build() -> void:
 		await physics_frame
 	var station_node := _find_structure(main, "station_hall")
 	_expect(station_node != null, "greybox station_hall must build under its chunk node")
+	if station_node != null:
+		var gp := (station_node as Node2D).global_position
+		_expect(gp.distance_to(Vector2(1400, 220)) < 2.0,
+			"station_hall must sit at its authored world position, got %s" % str(gp))
 	var shrine_node := _find_structure(main, "shrine_hall")
 	# Shrine is in chunk (1,-1); may not be admitted from the station position.
 	if shrine_node == null:

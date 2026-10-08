@@ -14,6 +14,20 @@ const PALETTE := [
 	Color8(242, 129, 46), Color8(242, 194, 48), Color8(214, 64, 94), Color8(79, 111, 181),
 	Color8(238, 243, 248),
 ]
+## AT palette extensions (documented in docs/assets/AT_ART_DIRECTION.md):
+## town art, hero, palfox and NPC originals.
+const PALETTE_AT := [
+	Color8(63, 95, 138), Color8(44, 68, 99), Color8(240, 230, 210), Color8(217, 201, 168),
+	Color8(192, 57, 43), Color8(142, 42, 32), Color8(247, 217, 160), Color8(255, 179, 71),
+	Color8(242, 167, 195), Color8(214, 127, 158), Color8(43, 51, 85), Color8(122, 95, 160),
+	Color8(138, 148, 166), Color8(46, 58, 92), Color8(74, 95, 138),
+	Color8(201, 111, 46), Color8(142, 74, 30), Color8(59, 59, 74), Color8(107, 74, 46),
+	Color8(210, 160, 120), Color8(232, 150, 80), Color8(190, 110, 55), Color8(247, 235, 210),
+	Color8(200, 200, 210), Color8(90, 70, 125), Color8(235, 190, 150), Color8(150, 110, 70),
+	Color8(90, 60, 40), Color8(70, 130, 90), Color8(50, 95, 65),
+	Color8(60, 50, 70), Color8(230, 120, 90), Color8(185, 90, 60), Color8(245, 210, 170),
+	Color8(242, 200, 155),
+]
 const EXPECTED_SFX := {
 	"slash": "res://assets/sfx/sword.wav",
 	"hit": "res://assets/sfx/hit.wav",
@@ -72,12 +86,24 @@ func _manifest_rows() -> Array:
 	return rows
 
 
+func _receipt_text() -> String:
+	var combined := ""
+	var dir := DirAccess.open("res://docs/assets/receipts")
+	if dir == null:
+		return combined
+	for file_name in dir.get_files():
+		if not file_name.ends_with(".md"):
+			continue
+		var receipt := FileAccess.open("res://docs/assets/receipts/" + file_name, FileAccess.READ)
+		if receipt != null:
+			combined += receipt.get_as_text() + "\n"
+			receipt.close()
+	return combined
+
+
 func _test_verified_assets() -> void:
-	var receipt := FileAccess.open("res://docs/assets/receipts/u4.2-original-assets.md", FileAccess.READ)
-	var receipt_text := receipt.get_as_text() if receipt != null else ""
-	if receipt != null:
-		receipt.close()
-	_expect(not receipt_text.is_empty(), "U4.2 receipt must exist")
+	var receipt_text := _receipt_text()
+	_expect(not receipt_text.is_empty(), "at least one asset receipt must exist")
 	var verified := 0
 	for row in _manifest_rows():
 		if String(row.get("provenance_status", "")) != "VERIFIED":
@@ -98,7 +124,10 @@ func _check_texture(path: String) -> void:
 	_expect(img != null and not img.is_empty(), "texture must load: %s" % path)
 	if img == null or img.is_empty():
 		return
-	_expect(img.get_width() % 8 == 0 and img.get_height() % 8 == 0, "texture grid must be 8px multiples: %s (%dx%d)" % [path, img.get_width(), img.get_height()])
+	# Town/hero art is placed at authored world positions, not on a tile grid.
+	var grid_exempt := path.contains("/assets/town/") or path.contains("/assets/hero/")
+	if not grid_exempt:
+		_expect(img.get_width() % 8 == 0 and img.get_height() % 8 == 0, "texture grid must be 8px multiples: %s (%dx%d)" % [path, img.get_width(), img.get_height()])
 	img.convert(Image.FORMAT_RGBA8)
 	var foreign := 0
 	for y in img.get_height():
@@ -107,7 +136,7 @@ func _check_texture(path: String) -> void:
 			if pixel.a < 0.02:
 				continue
 			var rgb := Color8(int(pixel.r * 255.0), int(pixel.g * 255.0), int(pixel.b * 255.0))
-			if not PALETTE.has(rgb):
+			if not PALETTE.has(rgb) and not PALETTE_AT.has(rgb):
 				foreign += 1
 				if foreign > 4:
 					break

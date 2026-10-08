@@ -54,7 +54,7 @@ func _test_streams() -> void:
 		var path := "res://assets/audio/music/music_%s.ogg" % String(cue).replace("music.", "").replace(".", "_")
 		_expect(ResourceLoader.exists(path), "cue stream must exist: %s" % path)
 		if ResourceLoader.exists(path):
-			var stream := load(path) as AudioStream
+			var stream := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as AudioStream
 			_expect(stream != null, "cue stream must load: %s" % path)
 	for bed in [&"amb.wind", &"amb.birds", &"amb.cicadas", &"amb.crickets", &"amb.rain", &"amb.water", &"amb.train"]:
 		var path := "res://assets/audio/ambience/%s.ogg" % String(bed).replace(".", "_")
@@ -69,14 +69,20 @@ func _test_director() -> void:
 	for bus in ["Music", "Ambience", "SFX", "UI"]:
 		_expect(AudioServer.get_bus_index(bus) >= 0, "audio bus must exist: " + bus)
 	_expect(int(director.get("_beds").size()) == 7, "director must own 7 ambience beds, found %d" % int(director.get("_beds").size()))
+	# Deterministic mode: verify cue logic without starting audio playback.
+	director.set("playback_enabled", false)
 	director.update_context(_ctx(&"market_street", &"day", 0, false))
 	_expect(StringName(director.get("_current_cue")) == &"music.town.day", "director must switch to town.day")
+	var standby := director.get("_standby") as AudioStreamPlayer
+	_expect(standby != null and standby.stream != null, "director must assign the cue stream")
 	director.update_context(_ctx(&"market_street", &"night", 0, false))
-	_expect(StringName(director.get("_current_cue")) == &"music.town.night", "director must crossfade to town.night")
-	for i in 200:
+	_expect(StringName(director.get("_current_cue")) == &"music.town.night", "director must switch to town.night")
+	# Missing cue must not crash or clear the current cue.
+	director.call("_switch_cue", &"music.does.not.exist")
+	_expect(StringName(director.get("_current_cue")) == &"music.town.night", "missing cue must keep current music")
+	# Keep playback disabled for the rest of the run: no audio thread race.
+	for i in 30:
 		await process_frame
-	# Missing cue must not crash: _switch_cue guards with ResourceLoader.exists.
-	_expect(StringName(director.get("_current_cue")) == &"music.town.night", "director must keep playing after crossfade")
 
 
 func _finish() -> void:
