@@ -2,7 +2,7 @@
 
 ## U2.6c — fast-travel domain boundary
 
-Trạng thái: `IMPLEMENTING` ngày 2026-10-08 (chờ full gate trên máy Windows + Godot 4.7.2).
+Trạng thái: `VERIFIED` ngày 2026-10-08.
 
 ### Mục tiêu và kết quả
 
@@ -15,19 +15,12 @@ Trạng thái: `IMPLEMENTING` ngày 2026-10-08 (chờ full gate trên máy Windo
 - Không UI/minimap art, không autosave, không named destination.
 - Save/data breaking change: none. Asset/provenance: none.
 
-### Validation
+### Validation và bàn giao
 
-- Mới: `tools/validate_fast_travel.gd` phủ catalog round-trip/canonical rejection, policy guards (unknown/stale/undiscovered/same/guard/cooldown/cost/invalid), cost conservation (spend → refund), và Main integration (teleport xa, trừ đúng 1 sphere, cooldown, discovery không đổi, navigation 9/active ambient 10, duplicate/undiscovered/unknown/guard qua scene thật, Save discovery compatibility).
-- Đã hook vào `tools/check_project.ps1` (`fast-travel-validation.log`).
-- Chưa kiểm chứng: toàn bộ gate Godot headless (editor load, 25 validator, smoke) — môi trường agent không có Godot 4.7.2. Cần chạy trên máy Windows:
-  `powershell -NoProfile -ExecutionPolicy Bypass -File tools/check_project.ps1`
-  và kiểm tra strict scan `build/checks` không có `SCRIPT ERROR`/`Parse Error`/`ERROR:` trước khi đánh VERIFIED.
-
-### Bàn giao
-
-- File mới: `systems/world/fast_travel/fast_travel_request.gd`, `fast_travel_result.gd`, `fast_travel_destination_catalog.gd`, `fast_travel_policy.gd`, `tools/validate_fast_travel.gd`, `docs/architecture/FAST_TRAVEL_CONTRACT.md`.
-- File sửa: `scripts/main.gd` (thêm `fast_travel_cooldown_until_msec`, `is_fast_travel_encounter_blocked()`, `try_fast_travel()`), `tools/check_project.ps1`, `docs/architecture/MODULES.md`, `docs/architecture/FAST_TRAVEL_CONTRACT.md` (mới), `docs/gameplay/FEATURES.md`, `docs/roadmap/IMPLEMENTATION_PHASES.md`, `docs/INDEX.md`, `docs/NEXT_UPDATE_PROMPT.md`.
-- Rollback: xóa `systems/world/fast_travel/`, bỏ 3 member/method trong `scripts/main.gd`, bỏ validator + hook ps1, revert docs U2.6c.
+- Baseline full gate: pass bằng Godot 4.7.2 (Linux headless, tương đương `tools/check_project.ps1`), 49 Markdown files và toàn bộ checks xanh.
+- Mới: `tools/validate_fast_travel.gd` pass; phủ catalog round-trip/canonical rejection, policy guards (unknown/stale/undiscovered/same/guard/cooldown/cost/invalid), cost conservation (spend → refund), và Main integration qua scene thật (teleport xa, trừ đúng 1 sphere, cooldown, discovery không đổi, navigation 9 chunk, ambient budget 10, duplicate/undiscovered/unknown/guard, Save discovery compatibility).
+- Full gate cuối: pass (headless editor load, 24 validator gồm fast-travel mới, main-scene smoke). Strict scan `build/checks` không có `SCRIPT ERROR`, `Parse Error`, missing dependency, invalid node path, RID/ObjectDB leak hoặc `ERROR:`; `git diff --check` sạch.
+- Trong quá trình verify đã sửa 3 lỗi do gate phát hiện: `:=` suy luận từ Variant trong validator, expectation sai cho chunk âm, và scenario test dùng crossing làm sai current center.
 - Package kế tiếp: U2.6d minimap/fog presentation + destination picker theo `NEXT_UPDATE_PROMPT.md`.
 
 ## U2.6b — discovery Save v1 admission

@@ -34,7 +34,7 @@ func _test_catalog() -> void:
 	var landing: Array[Vector2] = []
 	_expect(FastTravelDestinationCatalog.try_landing_position(&"chunk.p1.p0", landing) and landing[0] == Vector2(1536.0, 512.0), "landing must be the destination chunk center")
 	landing.clear()
-	_expect(FastTravelDestinationCatalog.try_landing_position(&"chunk.n1.p1", landing) and landing[0] == Vector2(-512.0, -512.0), "signed chunk landing must be deterministic")
+	_expect(FastTravelDestinationCatalog.try_landing_position(&"chunk.n1.p1", landing) and landing[0] == Vector2(-512.0, 1536.0), "signed chunk landing must be deterministic")
 	landing.clear()
 	_expect(not FastTravelDestinationCatalog.try_landing_position(&"bogus", landing) and landing.is_empty(), "invalid chunk key must not produce a landing")
 
@@ -134,11 +134,15 @@ func _test_main_integration() -> void:
 	root.add_child(main)
 	await process_frame
 	main.set_process(false)
-	var player := main.get("player")
+	var player: Node2D = main.get("player")
 	var inventory: Dictionary = player.get("inventory")
 	InventoryTransaction.new(inventory).add(FastTravelPolicy.COST_ITEM_ID, 2)
-	_expect(bool(main.call("update_chunk_admission", Vector2(1024.0, 0.0))), "crossing must discover chunk.p1.p0")
-	var discovery_before: Dictionary = (main.get("chunk_discovery_adapter") as ChunkDiscoveryAdapter).export_dto()
+	var adapter := main.get("chunk_discovery_adapter") as ChunkDiscoveryAdapter
+	# Discover remote chunks through the adapter without moving admission,
+	# so the travel destinations differ from the current center.
+	_expect(adapter.observe_center(Vector2i(1, 0)).is_success(), "remote chunk must be discoverable via the adapter")
+	_expect(adapter.observe_center(Vector2i(0, 0)).is_success(), "origin chunk must be discoverable via the adapter")
+	var discovery_before: Dictionary = adapter.export_dto()
 	var dest_p1 := FastTravelDestinationCatalog.destination_id_for_chunk(&"chunk.p1.p0")
 	var dest_origin := FastTravelDestinationCatalog.destination_id_for_chunk(&"chunk.p0.p0")
 	var spheres_before: int = InventoryTransaction.new(inventory).get_count(FastTravelPolicy.COST_ITEM_ID)
@@ -165,7 +169,7 @@ func _test_main_integration() -> void:
 	_expect((player.get("global_position") as Vector2) == Vector2(1536.0, 512.0), "player must land on the destination chunk center")
 	_expect(InventoryTransaction.new(inventory).get_count(FastTravelPolicy.COST_ITEM_ID) == spheres_before - 1, "successful travel must spend exactly one sphere")
 	_expect(int(main.get("fast_travel_cooldown_until_msec")) > 0, "successful travel must arm the cooldown")
-	_expect((main.get("chunk_discovery_adapter") as ChunkDiscoveryAdapter).export_dto() == discovery_before, "travel must not mutate discovery state")
+	_expect(adapter.export_dto() == discovery_before, "travel to an already-discovered chunk must not mutate discovery")
 	_expect((main.call("get_chunk_navigation_debug_snapshot") as Dictionary).get("active_count") == 9, "travel must keep exact navigation ownership")
 	_expect((main.call("get_ambient_spawn_debug_snapshot") as Dictionary).get("active_count") == 10, "travel must keep exact ambient budget")
 
@@ -190,11 +194,12 @@ func _test_main_integration() -> void:
 
 	main.set("world_boss_state", WorldBossState.new(WorldBossState.ACTIVE, WorldBossState.INSTANCE_ID, 100, Vector2(10.0, 10.0)))
 	_expect(bool(main.call("is_fast_travel_encounter_blocked")), "active world boss must raise the encounter guard")
+	var discovery_guarded: Dictionary = adapter.export_dto()
 	var blocked: FastTravelResult = main.call("try_fast_travel", dest_p1)
 	_expect(blocked.status == FastTravelResult.Status.ENCOUNTER_GUARD, "Main must block travel during an active encounter")
 	main.set("world_boss_state", WorldBossState.new())
 	_expect(not bool(main.call("is_fast_travel_encounter_blocked")), "encounter guard must clear when the boss is gone")
-	_expect((main.get("chunk_discovery_adapter") as ChunkDiscoveryAdapter).export_dto() == discovery_before, "guarded attempts must leave discovery untouched")
+	_expect(adapter.export_dto() == discovery_guarded, "guarded attempts must leave discovery untouched")
 	main.queue_free()
 	await process_frame
 	await process_frame
