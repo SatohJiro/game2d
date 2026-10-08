@@ -38,7 +38,7 @@ Gate U1: **VERIFIED 2026-10-08**. Vertical slice combat → capture → pet → 
 3. **Persistent world delta foundation — VERIFIED:** building/resource records có typed chunk envelope và Save v1 fallback; crop nằm trong building record, captured/ambient spawn chờ spawn identity.
 4. **Navigation theo chunk — VERIFIED foundation:** typed request/result, exact region ownership, revision-guarded whole-region obstacle state và RID cleanup; terrain bake/path requests còn chờ content package.
 5. **Spawn director — VERIFIED foundation:** deterministic active-chunk/biome/time/budget policy, stable ambient slot identity và runtime registry tách boss/raid; persistent cooldown/authored biome table còn chờ package sau.
-6. **Discovery/fog — VERIFIED data + persistence:** center-entry state, revision guard, detached tile snapshot và Save v1 round-trip; minimap renderer/UI và fast travel còn chờ package kế tiếp.
+6. **Discovery/fog — VERIFIED data + persistence + fast travel domain:** center-entry state, revision guard, detached tile snapshot và Save v1 round-trip; fast travel chỉ tới discovered chunk với stable ID, cost, cooldown, encounter guard và atomic commit; minimap renderer/UI còn chờ package kế tiếp.
 
 Gate U2: qua 9 chunk không mất state; soak 20 phút; không hitch vượt budget đã chốt; save/load ở chunk khác hoạt động.
 

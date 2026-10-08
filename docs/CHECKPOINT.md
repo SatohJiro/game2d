@@ -1,5 +1,35 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U2.6c — fast-travel domain boundary
+
+Trạng thái: `IMPLEMENTING` ngày 2026-10-08 (chờ full gate trên máy Windows + Godot 4.7.2).
+
+### Mục tiêu và kết quả
+
+- Thêm typed fast-travel `Request/Result/Policy` dựa trên `ChunkDiscoveryState`, stable destination ID/catalog và explicit cost/cooldown rule.
+- Destination ID `fast_travel.<chunk_key>` ánh xạ 1–1 tới canonical chunk key; điểm đáp là tâm chunk đích (deterministic). Không dùng localized text/asset path/scene path làm identity.
+- Policy pure fail closed trước mutation theo thứ tự: unknown destination, stale discovery revision, undiscovered, same destination, encounter guard, cooldown 30s, insufficient cost.
+- Cost: 1 × `item.pal_sphere.basic` (stable ID có sẵn). Cooldown transient do Main sở hữu, chưa persist Save.
+- Encounter guard: night raid ACTIVE, world boss ACTIVE, hoặc creature còn sống đang target player (scan chỉ khi ra lệnh travel).
+- `Main.try_fast_travel()` commit atomic: resolve → trừ cost qua `InventoryTransaction` → teleport qua pipeline `update_chunk_admission` chuẩn; admission fail thì refund cost, khôi phục vị trí, re-sync admission và trả `COMMIT_FAILED`.
+- Không UI/minimap art, không autosave, không named destination.
+- Save/data breaking change: none. Asset/provenance: none.
+
+### Validation
+
+- Mới: `tools/validate_fast_travel.gd` phủ catalog round-trip/canonical rejection, policy guards (unknown/stale/undiscovered/same/guard/cooldown/cost/invalid), cost conservation (spend → refund), và Main integration (teleport xa, trừ đúng 1 sphere, cooldown, discovery không đổi, navigation 9/active ambient 10, duplicate/undiscovered/unknown/guard qua scene thật, Save discovery compatibility).
+- Đã hook vào `tools/check_project.ps1` (`fast-travel-validation.log`).
+- Chưa kiểm chứng: toàn bộ gate Godot headless (editor load, 25 validator, smoke) — môi trường agent không có Godot 4.7.2. Cần chạy trên máy Windows:
+  `powershell -NoProfile -ExecutionPolicy Bypass -File tools/check_project.ps1`
+  và kiểm tra strict scan `build/checks` không có `SCRIPT ERROR`/`Parse Error`/`ERROR:` trước khi đánh VERIFIED.
+
+### Bàn giao
+
+- File mới: `systems/world/fast_travel/fast_travel_request.gd`, `fast_travel_result.gd`, `fast_travel_destination_catalog.gd`, `fast_travel_policy.gd`, `tools/validate_fast_travel.gd`, `docs/architecture/FAST_TRAVEL_CONTRACT.md`.
+- File sửa: `scripts/main.gd` (thêm `fast_travel_cooldown_until_msec`, `is_fast_travel_encounter_blocked()`, `try_fast_travel()`), `tools/check_project.ps1`, `docs/architecture/MODULES.md`, `docs/architecture/FAST_TRAVEL_CONTRACT.md` (mới), `docs/gameplay/FEATURES.md`, `docs/roadmap/IMPLEMENTATION_PHASES.md`, `docs/INDEX.md`, `docs/NEXT_UPDATE_PROMPT.md`.
+- Rollback: xóa `systems/world/fast_travel/`, bỏ 3 member/method trong `scripts/main.gd`, bỏ validator + hook ps1, revert docs U2.6c.
+- Package kế tiếp: U2.6d minimap/fog presentation + destination picker theo `NEXT_UPDATE_PROMPT.md`.
+
 ## U2.6b — discovery Save v1 admission
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.

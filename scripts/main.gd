@@ -35,6 +35,7 @@ var chunk_navigation_adapter: ChunkNavigationAdapter
 var ambient_spawn_adapter: AmbientSpawnAdapter
 var chunk_discovery_adapter := ChunkDiscoveryAdapter.new()
 var chunk_debug_overlay: ChunkDebugOverlay
+var fast_travel_cooldown_until_msec: int = 0
 
 func _ready() -> void:
 	save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
@@ -299,6 +300,65 @@ func update_chunk_admission(world_position: Vector2) -> bool:
 
 func toggle_chunk_debug_overlay() -> bool:
 	return chunk_debug_overlay.toggle() if is_instance_valid(chunk_debug_overlay) else false
+
+
+func is_fast_travel_encounter_blocked() -> bool:
+	if night_raid_state.lifecycle_id == NightRaidState.ACTIVE:
+		return true
+	if world_boss_state.lifecycle_id == WorldBossState.ACTIVE:
+		return true
+	for child in creature_container.get_children():
+		if child == null or not is_instance_valid(child):
+			continue
+		var hp_value: Variant = child.get("hp")
+		if child.get("target") == player and hp_value != null and int(hp_value) > 0:
+			return true
+	return false
+
+
+## Atomic fast-travel command: pure policy resolves first, then cost is spent
+## via inventory transaction and the player is teleported through the normal
+## chunk admission pipeline. If admission fails, the cost is refunded and the
+## player is restored; no partial teleport is ever committed.
+func try_fast_travel(destination_id: StringName) -> FastTravelResult:
+	var now_msec := Time.get_ticks_msec()
+	var counts := {
+		FastTravelPolicy.COST_ITEM_ID: InventoryTransaction.new(player.get("inventory")).get_count(FastTravelPolicy.COST_ITEM_ID),
+	}
+	var request := FastTravelRequest.new(destination_id, chunk_discovery_adapter.state.revision)
+	var planned := FastTravelPolicy.resolve(
+		request,
+		chunk_discovery_adapter.state,
+		ChunkCoordinate.to_key(chunk_admission.center),
+		counts,
+		is_fast_travel_encounter_blocked(),
+		fast_travel_cooldown_until_msec,
+		now_msec
+	)
+	if not planned.is_success():
+		return planned
+	var previous_position := player.global_position
+	var spend := InventoryTransaction.new(player.get("inventory")).remove(planned.cost_item_id, planned.cost_amount)
+	if not spend.is_success():
+		return FastTravelResult.new(
+			FastTravelResult.Status.COMMIT_FAILED,
+			planned.destination_id, planned.chunk_key, planned.landing_position,
+			planned.cost_item_id, planned.cost_amount, planned.discovery_revision
+		)
+	player.global_position = planned.landing_position
+	player.velocity = Vector2.ZERO
+	if not update_chunk_admission(player.global_position):
+		player.global_position = previous_position
+		player.velocity = Vector2.ZERO
+		InventoryTransaction.new(player.get("inventory")).add(planned.cost_item_id, planned.cost_amount)
+		update_chunk_admission(previous_position)
+		return FastTravelResult.new(
+			FastTravelResult.Status.COMMIT_FAILED,
+			planned.destination_id, planned.chunk_key, planned.landing_position,
+			planned.cost_item_id, planned.cost_amount, planned.discovery_revision
+		)
+	fast_travel_cooldown_until_msec = now_msec + FastTravelPolicy.COOLDOWN_MSEC
+	return planned
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F8:

@@ -33,7 +33,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | FARM | Soil/crop/water/fertilizer/harvest | `CropDefinition` berry mirror; `resource_node.gd` vẫn gộp resource và plot | FarmPlot state thuần + CropDefinition | U1.3, U5.3 |
 | BUILD | Placement, cost, structure health | Workbench đã có typed durability DTO/catalog admission; Player + building scripts vẫn authoritative | PlacementRequest/Result, occupancy grid | U1.3, U1.6, U1.12t, U5.5 |
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
-| WORLD | Zone, chunks, spawn, discovery, day/night, raid | Main owns typed clock/raid/boss timers; chunk adapters own scene/navigation/discovery, U2.5 director owns transient ambient population | Fast travel boundary, persistent spawn delta, authored biome tables | U1.12u–ag, U2.1–U2.6b |
+| WORLD | Zone, chunks, spawn, discovery, day/night, raid | Main owns typed clock/raid/boss timers; chunk adapters own scene/navigation/discovery, U2.5 director owns transient ambient population; Main owns atomic fast-travel command | Persistent spawn delta, authored biome tables | U1.12u–ag, U2.1–U2.6c |
 | NAV | Navigation/path requests | U2.4 có revision-guarded chunk region lifecycle và placeholder blocked state | Terrain bake, obstacle polygon và actor path request | U2.4 |
 | SAVE | Versioned persistence | Main→coordinator explicit clock boundary; Player/base/building/resource adapters; atomic repository | Autosave/UI scheduling, encounter delta | U1.11–U1.12 |
 | UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
@@ -152,6 +152,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U2.5: `AmbientSpawnPolicy` resolve deterministic spec theo active chunk/biome/time/seed/budget; `AmbientSpawnAdapter` chỉ sở hữu ambient registry, không scan SceneTree và không trộn boss/night-raid ownership.
 - U2.6: `ChunkDiscoveryState` đánh dấu accepted center entry qua typed revision guard; adapter expose detached minimap/fog data snapshot và JSON-safe DTO nhưng chưa nối Save/HUD.
 - U2.6b: Save v1 mang optional discovery DTO qua schema/snapshot/apply/coordinator; Main restore typed clone sau load success, legacy thiếu field về rỗng và failure không mutate discovery.
+- U2.6c: `FastTravelDestinationCatalog` ánh xạ stable `fast_travel.<chunk_key>`; `FastTravelPolicy` pure fail closed theo thứ tự unknown/stale/undiscovered/same/guard/cooldown/cost; `Main.try_fast_travel()` commit atomic (resolve → trừ 1 `item.pal_sphere.basic` → teleport qua admission pipeline, rollback refund + restore khi admission fail); encounter guard gồm night raid/world boss active và creature đang target player; cooldown 30s transient.
 
 ### UI và PRESENTATION
 

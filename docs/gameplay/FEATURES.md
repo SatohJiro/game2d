@@ -242,5 +242,6 @@ U2.2b hiện thực admission bằng đúng 9 placeholder Node và overlay F8; p
 
 - Player discover đúng chunk center đã enter; neighbor chỉ active để streaming vẫn được coi là chưa khám phá.
 - Same-chunk movement và revisit không tăng discovery revision. Crossing theo tọa độ âm/dương dùng cùng canonical chunk key.
-- Snapshot minimap/fog hiện chỉ là dữ liệu read-only; chưa có art/HUD, fog renderer hoặc fast travel.
+- Snapshot minimap/fog hiện chỉ là dữ liệu read-only; chưa có art/HUD hoặc fog renderer.
 - U2.6b đã persist exact discovered chunk set trong Save v1; save cũ thiếu field nhận state rỗng. Load không tự di chuyển player hoặc phát chunk/spawn side effect.
+- U2.6c fast travel (domain): chỉ tới chunk đã discover qua stable destination ID `fast_travel.<chunk_key>`; tốn 1 Cầu Thu Phục (`item.pal_sphere.basic`), cooldown 30s; bị chặn khi night raid/world boss active hoặc quái đang nhắm player; commit atomic — admission fail thì refund cost và khôi phục vị trí, không partial teleport. Chưa có UI chọn điểm đến, chưa autosave.

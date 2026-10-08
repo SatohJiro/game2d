@@ -42,6 +42,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 30. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
 31. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 32. `docs/decisions/ADR-0003-deterministic-ambient-spawn.md`: seed, stable slot identity và ownership cho ambient spawn U2.5.
+33. `docs/architecture/FAST_TRAVEL_CONTRACT.md`: stable destination ID, pure policy guard, cost/cooldown, encounter guard và atomic commit cho fast travel U2.6c.
 
 ## Nguồn sự thật
 
