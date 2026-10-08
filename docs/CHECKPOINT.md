@@ -1,5 +1,29 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U3.4 — settings + localization + context prompt
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- `Localization` (`systems/i18n/`): static lookup qua CSV `assets/i18n/<locale>.csv` (cột key,text); fallback en rồi trả về key; text hiển thị mới (settings, slots, prompt) dùng keys; inventory/save giữ stable ID.
+- `GameSettings` (`systems/settings/`): static state (master volume, UI scale, reduce motion, locale, input remap) lưu `user://settings.cfg`, tách khỏi save game; Main load/apply lúc startup.
+- Settings panel (F10): slider volume/scale, CheckButton reduce motion, OptionButton locale, remap 3 phím (tương tác/né/ném cầu) với capture mode; chỉ phát intent, Main apply + persist.
+- `PlayerActionInputMapper`: `REMAPPABLE_DEFAULTS` + `action_key()`/`apply_remap()`; remap thay thế hoàn toàn default binding.
+- Context prompt: `player.get_interaction_target()` (nearest, tách từ try_interact); `ContextPrompt` Label nổi gần target (world→screen, clamp viewport), text `[E] Nồi nấu ăn` từ keys; ẩn khi modal mở; Main update 10Hz.
+- reduce_motion gate `player.shake_camera` (amount → 0).
+- Không đụng: migrate string legacy sang keys, device detection, command wheel.
+
+### Validation và bàn giao
+
+- Baseline: tái tạo gate scripts Linux (`/tmp/gate_godot.sh`, `/tmp/gate_static.py`; bản durable ở `~/workspace/tools/gate/`) sau khi VM bị thay thế làm mất /tmp; static gate pass đúng format cũ (26 docs, 166 assets, 69 runtime P0).
+- `tools/validate_settings_i18n.gd` pass: localization vi/en + fallback + format, settings persist/apply (volume→AudioServer, locale, remap→mapper), remap dispatch (phím mới ăn, phím cũ hết), settings panel intents (volume/scale/motion/locale/remap capture), context prompt (hiện gần pot với tên localized + phím, ẩn khi xa/modal), UI scale (HUD transform).
+- Trong lúc verify sửa 2 lỗi: `ConfigFile.get_section_keys` trên section chưa tồn tại (guard `has_section`), và test prompt phải di chuyển player (base camp có nhiều interactable trong tầm).
+- Full gate cuối: pass (static + headless editor load + 32 validator gồm settings/i18n mới + main-scene smoke = 34/34). Strict scan `build/checks` sạch; `git diff --check` sạch.
+- File mới: `systems/i18n/localization.gd`, `assets/i18n/vi.csv`, `assets/i18n/en.csv`, `systems/settings/game_settings.gd`, `scripts/settings_panel.gd`, `scenes/settings.tscn`, `scripts/context_prompt.gd`, `tools/validate_settings_i18n.gd` (+ `.uid`); sửa `scripts/main.gd` (settings/prompt wiring, F10, banner localization), `scripts/save_slots.gd` (localization keys), `scripts/player.gd` (get_interaction_target, shake gate), `systems/player/player_action_input_mapper.gd` (remap), `scripts/resource_node.gd` + `scripts/building_cooking_pot.gd` (interaction_prompt_name), `tools/check_project.ps1`, MODULES/roadmap/CHECKPOINT/NEXT_UPDATE_PROMPT.
+- Rollback: xóa 8 file mới, revert code/docs (git revert commit này).
+- Package kế tiếp: U4 art/animation/audio pass theo `NEXT_UPDATE_PROMPT.md`.
+
 ## U3.3 — save/load slot UI + autosave controls
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.

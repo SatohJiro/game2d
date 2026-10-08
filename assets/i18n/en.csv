@@ -1,0 +1,42 @@
+key,text
+settings.title,SETTINGS
+settings.volume,Master volume
+settings.ui_scale,UI scale
+settings.reduce_motion,Reduce shake/flash
+settings.language,Language
+settings.remap_title,Remap keys
+settings.remap_interact,Interact
+settings.remap_roll,Dodge roll
+settings.remap_throw,Throw capture sphere
+settings.press_key,Press a key...
+settings.hint,F10: toggle settings
+slots.title,SAVE / LOAD GAME
+slots.slot_label,Slot {n}
+slots.autosave_label,Autosave
+slots.empty,{label} — Empty
+slots.info,"{label} — Level {player} • Base Level {base} • {minutes} min played"
+slots.current, (current)
+slots.load,Load
+slots.save,Save
+slots.save_new,New save
+slots.delete,Delete
+slots.confirm_delete,Press again to delete
+slots.autosave_check,Autosave (every 5 minutes, when safe)
+slots.hint,F9: toggle  •  F5: quicksave to current slot
+slots.loaded,Loaded {slot}.
+slots.load_failed,Failed to load save.
+slots.saved,Saved to {slot}.
+slots.save_failed,Failed to save.
+slots.deleted,Deleted {slot}.
+slots.autosave_on,Autosave: ON
+slots.autosave_off,Autosave: OFF
+slots.autosaved,Game autosaved.
+slots.quicksaved,Quicksaved.
+slots.quicksave_failed,Quicksave failed.
+prompt.interact_hint,"[{key}] {target}"
+prompt.target.tree,Timber tree
+prompt.target.rock,Rock node
+prompt.target.farm_plot,Farm plot
+prompt.target.cooking_pot,Cooking pot
+prompt.target.water_pond,Water pond
+prompt.target.generic,Object

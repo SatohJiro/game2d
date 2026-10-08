@@ -241,6 +241,17 @@ func apply_resource_depletion_state(state: ResourceDepletionState) -> bool:
 	$CollisionShape2D.set_deferred("disabled", depleted)
 	return true
 
+## Localization key for the context prompt (U3.4); display text stays in the CSV.
+func interaction_prompt_name() -> String:
+	match node_type:
+		NodeType.TREE:
+			return "prompt.target.tree"
+		NodeType.ROCK:
+			return "prompt.target.rock"
+		NodeType.FARM_PLOT:
+			return "prompt.target.farm_plot"
+	return "prompt.target.generic"
+
 func interact(player_ref: Node2D) -> void:
 	if node_type == NodeType.FARM_PLOT:
 		match crop_stage:

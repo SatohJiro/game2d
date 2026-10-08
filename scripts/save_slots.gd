@@ -65,16 +65,16 @@ func _build_row(slot: Dictionary, current_slot: StringName) -> Control:
 	hbox.add_child(info)
 	if exists:
 		var load_button := Button.new()
-		load_button.text = "Tải"
+		load_button.text = Localization.text("slots.load")
 		load_button.pressed.connect(func() -> void: load_requested.emit(slot_id))
 		hbox.add_child(load_button)
 	var save_button := Button.new()
-	save_button.text = "Lưu" if exists else "Lưu mới"
+	save_button.text = Localization.text("slots.save") if exists else Localization.text("slots.save_new")
 	save_button.pressed.connect(func() -> void: save_requested.emit(slot_id))
 	hbox.add_child(save_button)
 	if exists:
 		var delete_button := Button.new()
-		delete_button.text = "Xóa"
+		delete_button.text = Localization.text("slots.delete")
 		delete_button.pressed.connect(func() -> void: _on_delete_pressed(slot_id, delete_button))
 		hbox.add_child(delete_button)
 	return row
@@ -82,19 +82,19 @@ func _build_row(slot: Dictionary, current_slot: StringName) -> Control:
 
 func _slot_info_text(slot: Dictionary, current_slot: StringName) -> String:
 	var slot_id := String(slot.get("slot_id", ""))
-	var label := "Ô %s" % slot_id.trim_prefix("slot_")
+	var label := Localization.text("slots.slot_label", {"n": slot_id.trim_prefix("slot_")})
 	if slot_id == "autosave":
-		label = "Tự động lưu"
+		label = Localization.text("slots.autosave_label")
 	if not bool(slot.get("exists", false)):
-		return "%s — Trống" % label
-	var text := "%s — Cấp %d • Căn cứ Cấp %d • %d phút chơi" % [
-		label,
-		int(slot.get("player_level", 1)),
-		int(slot.get("base_level", 1)),
-		int(float(slot.get("clock_seconds", 0.0)) / 60.0),
-	]
+		return Localization.text("slots.empty", {"label": label})
+	var text := Localization.text("slots.info", {
+		"label": label,
+		"player": int(slot.get("player_level", 1)),
+		"base": int(slot.get("base_level", 1)),
+		"minutes": int(float(slot.get("clock_seconds", 0.0)) / 60.0),
+	})
 	if StringName(slot_id) == current_slot:
-		text += " (đang dùng)"
+		text += Localization.text("slots.current")
 	return text
 
 
@@ -104,7 +104,7 @@ func _on_delete_pressed(slot_id: StringName, button: Button) -> void:
 		delete_requested.emit(slot_id)
 	else:
 		_armed_delete = slot_id
-		button.text = "Nhấn lại để xóa"
+		button.text = Localization.text("slots.confirm_delete")
 
 
 func _build_ui() -> void:
@@ -125,7 +125,7 @@ func _build_ui() -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "LƯU / TẢI GAME"
+	title.text = Localization.text("slots.title")
 	title.add_theme_font_size_override("font_size", PaloriaTheme.FONT_TITLE)
 	vbox.add_child(title)
 
@@ -138,11 +138,11 @@ func _build_ui() -> void:
 	autosave_row.add_theme_constant_override("separation", PaloriaTheme.SEPARATION_NORMAL)
 	vbox.add_child(autosave_row)
 	_autosave_check = CheckButton.new()
-	_autosave_check.text = "Tự động lưu (mỗi 5 phút, khi an toàn)"
+	_autosave_check.text = Localization.text("slots.autosave_check")
 	_autosave_check.toggled.connect(func(enabled: bool) -> void: autosave_toggled.emit(enabled))
 	autosave_row.add_child(_autosave_check)
 
 	var hint := Label.new()
-	hint.text = "F9: đóng/mở  •  F5: lưu nhanh vào ô đang dùng"
+	hint.text = Localization.text("slots.hint")
 	hint.add_theme_font_size_override("font_size", PaloriaTheme.FONT_TINY)
 	vbox.add_child(hint)

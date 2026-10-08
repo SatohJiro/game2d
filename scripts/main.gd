@@ -9,6 +9,7 @@ extends Node2D
 const CREATURE_SCENE = preload("res://scenes/creature.tscn")
 const MINIMAP_SCENE = preload("res://scenes/minimap.tscn")
 const SAVE_SLOTS_SCENE = preload("res://scenes/save_slots.tscn")
+const SETTINGS_SCENE = preload("res://scenes/settings.tscn")
 const SPARK_TEX = preload("res://assets/fx/spark.png")
 const DEFAULT_SAVE_PATH := "user://saves/slot_1.json"
 const WORLD_BOSS_CAPTURED_REASON := &"creature.removal.captured"
@@ -44,9 +45,14 @@ var current_save_slot: StringName = &"slot_1"
 var autosave_enabled := false
 var autosave_interval := 300.0
 var _autosave_elapsed := 0.0
+var settings_panel: SettingsPanel
+var context_prompt: ContextPrompt
+var _prompt_timer := 0.0
 
 func _ready() -> void:
 	save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
+	GameSettings.load()
+	GameSettings.apply()
 	hud.add_to_group("hud")
 	
 	ambient_modulate = CanvasModulate.new()
@@ -76,6 +82,17 @@ func _ready() -> void:
 	save_slot_panel.delete_requested.connect(_on_save_slot_delete_requested)
 	save_slot_panel.autosave_toggled.connect(_on_save_slot_autosave_toggled)
 	save_slot_panel.render_slots(list_save_slots(), autosave_enabled, current_save_slot)
+	settings_panel = SETTINGS_SCENE.instantiate() as SettingsPanel
+	hud.add_child(settings_panel)
+	settings_panel.volume_changed.connect(_on_settings_volume_changed)
+	settings_panel.ui_scale_changed.connect(_on_settings_ui_scale_changed)
+	settings_panel.reduce_motion_toggled.connect(_on_settings_reduce_motion_toggled)
+	settings_panel.locale_selected.connect(_on_settings_locale_selected)
+	settings_panel.remap_changed.connect(_on_settings_remap_changed)
+	settings_panel.render(settings_snapshot())
+	context_prompt = ContextPrompt.new()
+	hud.add_child(context_prompt)
+	_apply_ui_scale()
 	
 	maintain_creatures()
 	hud.show_banner("PALORIA 2.0: CÀY CUỐC, NÔNG TRẠI, CHĂN NUÔI & SĂN PET!\n[E] Nông Trại/Chuồng Thú | Chuột Phải Ném Cầu (Quỹ đạo vòng cung) | [G] Kỹ Năng Pet | [C] Chế Tạo", 6.5)
@@ -165,7 +182,7 @@ func try_autosave_tick(delta: float) -> bool:
 	_autosave_elapsed = 0.0
 	var result := save_game_to_slot(SaveSlotManager.AUTOSAVE_SLOT, int(Time.get_unix_time_from_system()), false)
 	if result.is_success():
-		hud.show_banner("Đã tự động lưu game.", 2.0)
+		hud.show_banner(Localization.text("slots.autosaved"), 2.0)
 	return result.is_success()
 
 func _refresh_save_slot_panel() -> void:
@@ -175,20 +192,100 @@ func _refresh_save_slot_panel() -> void:
 func _on_save_slot_load_requested(slot_id: StringName) -> void:
 	var result := load_game_from_slot(slot_id)
 	_refresh_save_slot_panel()
-	hud.show_banner("Đã tải %s." % String(slot_id) if result.is_loaded() else "Tải save thất bại.", 2.5)
+	hud.show_banner(Localization.text("slots.loaded", {"slot": String(slot_id)}) if result.is_loaded() else Localization.text("slots.load_failed"), 2.5)
 
 func _on_save_slot_save_requested(slot_id: StringName) -> void:
 	var result := save_game_to_slot(slot_id, int(Time.get_unix_time_from_system()))
 	_refresh_save_slot_panel()
-	hud.show_banner("Đã lưu vào %s." % String(slot_id) if result.is_success() else "Lưu save thất bại.", 2.5)
+	hud.show_banner(Localization.text("slots.saved", {"slot": String(slot_id)}) if result.is_success() else Localization.text("slots.save_failed"), 2.5)
 
 func _on_save_slot_delete_requested(slot_id: StringName) -> void:
 	if delete_save_slot(slot_id):
-		hud.show_banner("Đã xóa %s." % String(slot_id), 2.0)
+		hud.show_banner(Localization.text("slots.deleted", {"slot": String(slot_id)}), 2.0)
 
 func _on_save_slot_autosave_toggled(enabled: bool) -> void:
 	set_autosave_enabled(enabled)
-	hud.show_banner("Tự động lưu: BẬT" if enabled else "Tự động lưu: TẮT", 2.0)
+	hud.show_banner(Localization.text("slots.autosave_on") if enabled else Localization.text("slots.autosave_off"), 2.0)
+
+func settings_snapshot() -> Dictionary:
+	return {
+		"master_volume": GameSettings.master_volume,
+		"ui_scale": GameSettings.ui_scale,
+		"reduce_motion": GameSettings.reduce_motion,
+		"locale": GameSettings.locale,
+		"input_remap": GameSettings.input_remap.duplicate(),
+		"remap_actions": [
+			{"id": PlayerActionIntent.ACTION_INTERACT, "label_key": "settings.remap_interact"},
+			{"id": PlayerActionIntent.ACTION_ROLL, "label_key": "settings.remap_roll"},
+			{"id": PlayerActionIntent.ACTION_CAPTURE_THROW, "label_key": "settings.remap_throw"},
+		],
+	}
+
+func toggle_settings() -> bool:
+	if settings_panel == null or not is_instance_valid(settings_panel):
+		return false
+	if not settings_panel.is_open():
+		settings_panel.render(settings_snapshot())
+	return settings_panel.toggle()
+
+func _apply_ui_scale() -> void:
+	var scale_factor: float = GameSettings.ui_scale
+	var center := get_viewport().get_visible_rect().size * 0.5
+	hud.transform = Transform2D(0, Vector2(scale_factor, scale_factor), 0, center * (1.0 - scale_factor))
+
+func _on_settings_volume_changed(value: float) -> void:
+	GameSettings.master_volume = clampf(value, 0.0, 1.0)
+	GameSettings.apply()
+	GameSettings.save()
+
+func _on_settings_ui_scale_changed(value: float) -> void:
+	GameSettings.ui_scale = clampf(value, 0.75, 1.5)
+	_apply_ui_scale()
+	GameSettings.save()
+
+func _on_settings_reduce_motion_toggled(enabled: bool) -> void:
+	GameSettings.reduce_motion = enabled
+	GameSettings.save()
+
+func _on_settings_locale_selected(locale: String) -> void:
+	GameSettings.locale = locale
+	GameSettings.apply()
+	GameSettings.save()
+	settings_panel.render(settings_snapshot())
+	_refresh_save_slot_panel()
+
+func _on_settings_remap_changed(action_id: StringName, keycode: int) -> void:
+	GameSettings.input_remap[String(action_id)] = keycode
+	GameSettings.apply()
+	GameSettings.save()
+
+func _prompt_key_for(target: Node) -> String:
+	if target.has_method("interaction_prompt_name"):
+		return String(target.call("interaction_prompt_name"))
+	if String(target.name) == "WaterPond":
+		return "prompt.target.water_pond"
+	return "prompt.target.generic"
+
+func _world_to_screen(world_position: Vector2) -> Vector2:
+	var camera := get_viewport().get_camera_2d()
+	if camera == null:
+		return get_viewport().get_visible_rect().size * 0.5
+	return (world_position - camera.get_screen_center_position()) * camera.zoom + get_viewport().get_visible_rect().size * 0.5
+
+func _update_context_prompt() -> void:
+	if context_prompt == null or not is_instance_valid(context_prompt):
+		return
+	if hud.is_crafting_visible() or hud.is_cooking_modal_visible() or hud.is_stat_modal_visible():
+		context_prompt.hide_prompt()
+		return
+	var target: Node = player.get_interaction_target()
+	if target == null or not is_instance_valid(target) or not target is Node2D:
+		context_prompt.hide_prompt()
+		return
+	var key_name := OS.get_keycode_string(PlayerActionInputMapper.action_key(PlayerActionIntent.ACTION_INTERACT))
+	var text := Localization.text("prompt.interact_hint", {"key": key_name, "target": Localization.text(_prompt_key_for(target))})
+	var screen_position := _world_to_screen((target as Node2D).global_position + Vector2(0, -48))
+	context_prompt.show_prompt(text, screen_position)
 
 func apply_world_clock(clock_seconds: float) -> bool:
 	if not is_finite(clock_seconds) or clock_seconds < 0.0: return false
@@ -244,6 +341,11 @@ func _process(delta: float) -> void:
 
 	if autosave_enabled:
 		try_autosave_tick(delta)
+
+	_prompt_timer += delta
+	if _prompt_timer >= 0.15:
+		_prompt_timer = 0.0
+		_update_context_prompt()
 	
 	if not boss_spawned:
 		boss_timer -= delta
@@ -489,9 +591,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			toggle_minimap()
 		elif event.keycode == KEY_F5:
 			var quicksave := save_game_to_slot(current_save_slot, int(Time.get_unix_time_from_system()))
-			hud.show_banner("Đã lưu nhanh." if quicksave.is_success() else "Lưu nhanh thất bại.", 2.0)
+			hud.show_banner(Localization.text("slots.quicksaved") if quicksave.is_success() else Localization.text("slots.quicksave_failed"), 2.0)
 		elif event.keycode == KEY_F9:
 			toggle_save_slots()
+		elif event.keycode == KEY_F10:
+			toggle_settings()
 
 func _exit_tree() -> void:
 	if ambient_spawn_adapter != null: ambient_spawn_adapter.cleanup()

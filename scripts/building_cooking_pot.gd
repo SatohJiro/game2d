@@ -112,6 +112,10 @@ func _process(delta: float) -> void:
 		if smoke_particles:
 			smoke_particles.emitting = false
 
+## Localization key for the context prompt (U3.4).
+func interaction_prompt_name() -> String:
+	return "prompt.target.cooking_pot"
+
 func interact(player_ref: CharacterBody2D) -> void:
 	if is_cooking:
 		spawn_floating_text("🍲 Đang nấu: %.1fs..." % cooking_timer, Color(1.0, 0.85, 0.3))

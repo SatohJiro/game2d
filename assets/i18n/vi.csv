@@ -1,0 +1,42 @@
+key,text
+settings.title,CÀI ĐẶT
+settings.volume,Âm lượng
+settings.ui_scale,Tỉ lệ giao diện
+settings.reduce_motion,Giảm rung/chớp hình
+settings.language,Ngôn ngữ
+settings.remap_title,Đổi phím
+settings.remap_interact,Tương tác
+settings.remap_roll,Né đòn
+settings.remap_throw,Ném cầu thu phục
+settings.press_key,Nhấn phím...
+settings.hint,F10: đóng/mở cài đặt
+slots.title,LƯU / TẢI GAME
+slots.slot_label,Ô {n}
+slots.autosave_label,Tự động lưu
+slots.empty,{label} — Trống
+slots.info,"{label} — Cấp {player} • Căn cứ Cấp {base} • {minutes} phút chơi"
+slots.current, (đang dùng)
+slots.load,Tải
+slots.save,Lưu
+slots.save_new,Lưu mới
+slots.delete,Xóa
+slots.confirm_delete,Nhấn lại để xóa
+slots.autosave_check,Tự động lưu (mỗi 5 phút, khi an toàn)
+slots.hint,F9: đóng/mở  •  F5: lưu nhanh vào ô đang dùng
+slots.loaded,Đã tải {slot}.
+slots.load_failed,Tải save thất bại.
+slots.saved,Đã lưu vào {slot}.
+slots.save_failed,Lưu save thất bại.
+slots.deleted,Đã xóa {slot}.
+slots.autosave_on,Tự động lưu: BẬT
+slots.autosave_off,Tự động lưu: TẮT
+slots.autosaved,Đã tự động lưu game.
+slots.quicksaved,Đã lưu nhanh.
+slots.quicksave_failed,Lưu nhanh thất bại.
+prompt.interact_hint,"[{key}] {target}"
+prompt.target.tree,Cây gỗ
+prompt.target.rock,Mỏ đá
+prompt.target.farm_plot,Luống đất
+prompt.target.cooking_pot,Nồi nấu ăn
+prompt.target.water_pond,Hồ nước
+prompt.target.generic,Vật thể

@@ -430,6 +430,8 @@ func perform_attack(aim_dir: Vector2) -> void:
 	velocity += aim_dir * 70.0
 
 func shake_camera(amount: float) -> void:
+	if GameSettings.reduce_motion:
+		amount = 0.0
 	shake_amount = max(shake_amount, amount)
 
 func throw_pal_sphere() -> bool:
@@ -839,21 +841,36 @@ func commit_capture_ownership(request: CaptureOwnershipRequest) -> CaptureOwners
 	return result
 
 
-func try_interact() -> void:
+## Nearest interactable in range, for the context prompt (U3.4). Mirrors the
+## target priority of try_interact without triggering any effect.
+func get_interaction_target() -> Node:
+	var best: Node = null
+	var best_distance := INF
 	var overlapping = interact_detector.get_overlapping_bodies()
 	for body in overlapping:
-		if body.has_method("interact"):
-			body.interact(self)
-			return
-		elif body.has_method("hit_by_tool"):
-			body.hit_by_tool(35, self)
-			return
-	
+		if body.has_method("interact") or body.has_method("hit_by_tool"):
+			var distance := global_position.distance_to((body as Node2D).global_position)
+			if distance < best_distance:
+				best_distance = distance
+				best = body
 	var overlapping_areas = interact_detector.get_overlapping_areas()
 	for area in overlapping_areas:
 		var parent_node = area.get_parent()
 		if parent_node and parent_node.has_method("interact"):
-			parent_node.interact(self)
+			var distance := global_position.distance_to((parent_node as Node2D).global_position)
+			if distance < best_distance:
+				best_distance = distance
+				best = parent_node
+	return best
+
+func try_interact() -> void:
+	var target := get_interaction_target()
+	if target != null:
+		if target.has_method("interact"):
+			target.interact(self)
+			return
+		elif target.has_method("hit_by_tool"):
+			target.hit_by_tool(35, self)
 			return
 	
 	# Check if standing near Water Pond to drink natural water
