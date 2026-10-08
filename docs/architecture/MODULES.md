@@ -158,6 +158,7 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 
 - UI phát intent, coordinator xử lý và trả ViewModel/snapshot. Modal quản lý focus và pause policy.
 - U3.1: `PaloriaTheme` là source of truth cho colors/type/radii/spacing (code-built UI dùng factories); `HUDViewModel.from_player()` là điểm duy nhất đọc player state, `hud.render_view_model()` render snapshot — HUD không đọc node gameplay.
+- U3.2: crafting/cooking modals render từ typed `CraftingViewModel`/`CookingViewModel` (affordability tính trong ViewModel); mọi nút chỉ phát intent (`recipe_crafted`, `cooking_requested`); cooking pot là coordinator của modal session (mở/đóng, execute, ngắt kết nối) — HUD không còn giữ reference domain.
 - U2.6d: `MinimapPanel`/`MinimapView` render read-only discovery snapshot (tile discovered/active/current phân biệt bằng ký hiệu, không chỉ màu) và destination picker chỉ liệt kê discovered chunk; UI chỉ phát `travel_requested(destination_id)`, mọi mutation qua `Main.try_fast_travel()`; toggle bằng M, keyboard/gamepad navigation qua ItemList, không flash/motion.
 - Animation marker phát event presentation; kết quả combat/craft không phụ thuộc frame animation đã render.
 - Screen shake, flash và motion có multiplier hoặc tắt được. Audio API nhận semantic event thay vì đường dẫn asset từ gameplay.

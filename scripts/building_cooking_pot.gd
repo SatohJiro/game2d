@@ -118,15 +118,49 @@ func interact(player_ref: CharacterBody2D) -> void:
 		return
 	open_cooking_menu(player_ref)
 
+var _session_player: CharacterBody2D = null
+
+
+## U3.2: the pot is the coordinator for its cooking modal. The HUD only
+## renders CookingViewModel cards and emits cooking_requested intents.
 func open_cooking_menu(player_ref: CharacterBody2D) -> void:
 	var hud = get_tree().get_first_node_in_group("hud")
-	if hud and hud.has_method("open_cooking_modal"):
-		hud.open_cooking_modal(self, player_ref, cooking_recipes)
+	if hud == null or not hud.has_method("open_cooking_modal"):
+		return
+	_session_player = player_ref
+	if not hud.is_connected("cooking_requested", _on_cooking_requested):
+		hud.connect("cooking_requested", _on_cooking_requested)
+	hud.open_cooking_modal(cooking_recipes)
 
 func close_cooking_menu() -> void:
+	_disconnect_cooking_intent()
 	var hud = get_tree().get_first_node_in_group("hud")
 	if hud and hud.has_method("close_cooking_modal"):
 		hud.close_cooking_modal()
+
+func _disconnect_cooking_intent() -> void:
+	_session_player = null
+	var hud = get_tree().get_first_node_in_group("hud")
+	if hud != null and hud.is_connected("cooking_requested", _on_cooking_requested):
+		hud.disconnect("cooking_requested", _on_cooking_requested)
+
+func _on_cooking_requested(recipe_id: String) -> void:
+	if _session_player == null or not is_instance_valid(_session_player):
+		return
+	var recipe := _find_recipe(recipe_id)
+	if recipe.is_empty():
+		return
+	if start_cooking(recipe, _session_player):
+		_disconnect_cooking_intent()
+		var hud = get_tree().get_first_node_in_group("hud")
+		if hud and hud.has_method("close_cooking_modal"):
+			hud.close_cooking_modal()
+
+func _find_recipe(recipe_id: String) -> Dictionary:
+	for rec in cooking_recipes:
+		if String(rec.get("id", "")) == recipe_id:
+			return rec
+	return {}
 
 func start_cooking(recipe: Dictionary, player_ref: CharacterBody2D) -> bool:
 	if is_cooking:

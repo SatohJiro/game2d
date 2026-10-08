@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 signal recipe_crafted(recipe_id: String)
+signal cooking_requested(recipe_id: String)
 signal stat_upgrade_requested(stat_name: String)
 
 @onready var player_level_label: Label = $TopLeft/PlayerCard/Margin/HBox/VBox/LevelLabel
@@ -64,9 +65,6 @@ var current_recipes: Array = []
 var cached_inventory: Dictionary = {}
 var cached_base_level: int = 1
 
-# Active cooking references
-var active_cooking_pot: Node2D = null
-var active_player_ref: CharacterBody2D = null
 var cached_cooking_recipes: Array = []
 
 
@@ -223,11 +221,12 @@ func build_recipe_cards() -> void:
 	for child in recipe_grid.get_children():
 		child.queue_free()
 	
-	for rec in current_recipes:
-		var card = create_recipe_card(rec)
+	var vm := CraftingViewModel.from_recipes(current_recipes, cached_inventory, cached_base_level)
+	for card_data in vm.cards:
+		var card = create_recipe_card(card_data)
 		recipe_grid.add_child(card)
 
-func create_recipe_card(rec: Dictionary) -> Control:
+func create_recipe_card(card_data: Dictionary) -> Control:
 	var card = PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_theme_stylebox_override("panel", PaloriaTheme.card_stylebox())
@@ -248,8 +247,11 @@ func create_recipe_card(rec: Dictionary) -> Control:
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	if rec.has("icon") and ResourceLoader.exists(rec["icon"]):
-		icon.texture = load(rec["icon"])
+	var icon_value: Variant = card_data.get("icon")
+	if icon_value is String and ResourceLoader.exists(icon_value):
+		icon.texture = load(icon_value)
+	elif icon_value is Texture2D:
+		icon.texture = icon_value
 	hbox.add_child(icon)
 	
 	var vbox = VBoxContainer.new()
@@ -258,35 +260,22 @@ func create_recipe_card(rec: Dictionary) -> Control:
 	hbox.add_child(vbox)
 	
 	var title = Label.new()
-	title.text = rec.get("name", "Vật phẩm")
+	title.text = card_data.get("name", "Vật phẩm")
 	title.add_theme_font_size_override("font_size", PaloriaTheme.FONT_NORMAL)
 	title.add_theme_color_override("font_color", PaloriaTheme.ACCENT_GOLD)
 	vbox.add_child(title)
 	
 	var desc = Label.new()
-	desc.text = rec.get("desc", "")
+	desc.text = card_data.get("desc", "")
 	desc.add_theme_font_size_override("font_size", PaloriaTheme.FONT_SMALL)
 	desc.add_theme_color_override("font_color", PaloriaTheme.TEXT_MUTED)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(desc)
 	
-	var cost_parts: Array[String] = []
-	var can_afford = true
-	var reqs = rec.get("req", {})
-	for mat in reqs.keys():
-		var need = reqs[mat]
-		var have = cached_inventory.get(mat, 0)
-		cost_parts.append("%s: %d/%d" % [mat, have, need])
-		if have < need:
-			can_afford = false
-	
-	var lvl_req = rec.get("base_lvl", 1)
-	if cached_base_level < lvl_req:
-		can_afford = false
-		cost_parts.append("[Cần Căn Cứ Lv.%d]" % lvl_req)
+	var can_afford := bool(card_data.get("can_afford", false))
 	
 	var cost_lbl = Label.new()
-	cost_lbl.text = " • ".join(cost_parts)
+	cost_lbl.text = String(card_data.get("cost_text", ""))
 	cost_lbl.add_theme_font_size_override("font_size", PaloriaTheme.FONT_SMALL)
 	cost_lbl.add_theme_color_override("font_color", PaloriaTheme.AFFORDABLE if can_afford else PaloriaTheme.UNAFFORDABLE)
 	vbox.add_child(cost_lbl)
@@ -295,8 +284,9 @@ func create_recipe_card(rec: Dictionary) -> Control:
 	btn.text = "Chế Tạo"
 	btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	btn.disabled = not can_afford
+	var recipe_id := String(card_data.get("id", ""))
 	btn.pressed.connect(func():
-		emit_signal("recipe_crafted", rec["id"])
+		emit_signal("recipe_crafted", recipe_id)
 	)
 	hbox.add_child(btn)
 	return card
@@ -305,9 +295,9 @@ func refresh_crafting_buttons() -> void:
 	build_recipe_cards()
 
 # Cooking Modal Handling
-func open_cooking_modal(pot_ref: Node2D, player_ref: CharacterBody2D, recipes_list: Array) -> void:
-	active_cooking_pot = pot_ref
-	active_player_ref = player_ref
+## U3.2: the cooking pot (coordinator) owns the modal session and connects
+## to cooking_requested; the HUD only renders cards and emits intents.
+func open_cooking_modal(recipes_list: Array) -> void:
 	cached_cooking_recipes = recipes_list
 	if cooking_modal:
 		cooking_modal.visible = true
@@ -316,7 +306,6 @@ func open_cooking_modal(pot_ref: Node2D, player_ref: CharacterBody2D, recipes_li
 func close_cooking_modal() -> void:
 	if cooking_modal:
 		cooking_modal.visible = false
-	active_cooking_pot = null
 
 func is_cooking_modal_visible() -> bool:
 	return cooking_modal != null and cooking_modal.visible
@@ -326,11 +315,12 @@ func build_cooking_cards() -> void:
 	for child in cooking_grid.get_children():
 		child.queue_free()
 	
-	for rec in cached_cooking_recipes:
-		var card = create_cooking_recipe_card(rec)
+	var vm := CookingViewModel.from_recipes(cached_cooking_recipes, cached_inventory)
+	for card_data in vm.cards:
+		var card = create_cooking_recipe_card(card_data)
 		cooking_grid.add_child(card)
 
-func create_cooking_recipe_card(rec: Dictionary) -> Control:
+func create_cooking_recipe_card(card_data: Dictionary) -> Control:
 	var card = PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_theme_stylebox_override("panel", PaloriaTheme.cooking_card_stylebox())
@@ -351,8 +341,11 @@ func create_cooking_recipe_card(rec: Dictionary) -> Control:
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	if rec.has("icon"):
-		icon.texture = rec["icon"]
+	var icon_value: Variant = card_data.get("icon")
+	if icon_value is Texture2D:
+		icon.texture = icon_value
+	elif icon_value is String and ResourceLoader.exists(icon_value):
+		icon.texture = load(icon_value)
 	hbox.add_child(icon)
 	
 	var vbox = VBoxContainer.new()
@@ -361,29 +354,20 @@ func create_cooking_recipe_card(rec: Dictionary) -> Control:
 	hbox.add_child(vbox)
 	
 	var title = Label.new()
-	title.text = rec.get("name", "")
+	title.text = card_data.get("name", "")
 	title.add_theme_font_size_override("font_size", PaloriaTheme.FONT_NORMAL)
 	title.add_theme_color_override("font_color", PaloriaTheme.TEXT_WARM)
 	vbox.add_child(title)
 	
 	var desc = Label.new()
-	desc.text = rec.get("desc", "")
+	desc.text = card_data.get("desc", "")
 	desc.add_theme_font_size_override("font_size", PaloriaTheme.FONT_SMALL)
 	desc.add_theme_color_override("font_color", PaloriaTheme.TEXT_FRESH)
 	vbox.add_child(desc)
 	
-	var cost = rec.get("cost", {})
-	var cost_parts: Array[String] = []
-	var can_afford = true
-	for mat in cost.keys():
-		var need = cost[mat]
-		var have = cached_inventory.get(mat, 0)
-		cost_parts.append("%s: %d/%d" % [mat, have, need])
-		if have < need:
-			can_afford = false
-	
+	var can_afford := bool(card_data.get("can_afford", false))
 	var cost_lbl = Label.new()
-	cost_lbl.text = "Nguyên liệu: " + " • ".join(cost_parts)
+	cost_lbl.text = String(card_data.get("cost_text", ""))
 	cost_lbl.add_theme_font_size_override("font_size", PaloriaTheme.FONT_SMALL)
 	cost_lbl.add_theme_color_override("font_color", PaloriaTheme.SUCCESS_GREEN if can_afford else PaloriaTheme.UNAFFORDABLE)
 	vbox.add_child(cost_lbl)
@@ -392,11 +376,9 @@ func create_cooking_recipe_card(rec: Dictionary) -> Control:
 	btn.text = "Nấu Món"
 	btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	btn.disabled = not can_afford
+	var recipe_id := String(card_data.get("id", ""))
 	btn.pressed.connect(func():
-		if is_instance_valid(active_cooking_pot) and active_cooking_pot.has_method("start_cooking"):
-			var success = active_cooking_pot.start_cooking(rec, active_player_ref)
-			if success:
-				close_cooking_modal()
+		emit_signal("cooking_requested", recipe_id)
 	)
 	hbox.add_child(btn)
 	return card

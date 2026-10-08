@@ -1,5 +1,26 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U3.2 — modal intent/ViewModel cleanup (crafting + cooking)
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- `CraftingViewModel`/`CookingViewModel` (`ui/`): typed card data build từ domain state (recipes, inventory, base level); affordability tính trong ViewModel, HUD chỉ render.
+- Mọi nút modal chỉ phát intent: `recipe_crafted` (đã có) + `cooking_requested` (mới); cooking pot là coordinator của modal session — mở modal, nối/ngắt signal, execute `start_cooking`, đóng modal. HUD không còn giữ `active_cooking_pot`/`active_player_ref`.
+- Giữ PaloriaTheme tokens, keyboard/gamepad navigation, modal focus/pause policy.
+- Không đụng save/load slot UI, pet roster, settings, localization.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass bằng Godot 4.7.2 headless, 49 Markdown files và toàn bộ checks xanh.
+- `tools/validate_modal_viewmodel.gd` pass: ViewModel affordability/cost text, intent boundary (button chỉ emit đúng recipe ID, HUD không giữ domain ref), pot integration qua scene thật (mở modal → intent → nấu thành công → trừ đúng cost → đóng modal; unknown recipe không phá session).
+- Trong lúc verify phát hiện và sửa 3 lỗi: helper test phải bỏ qua nút disabled, leak headless do floating-text tween (chờ 90 frames), và blank line ở EOF (git diff --check).
+- Full gate cuối: pass (headless editor load, 30 validator gồm modal ViewModel mới, main-scene smoke). Strict scan `build/checks` sạch `SCRIPT ERROR`/`Parse Error`/`ERROR:`; `git diff --check` sạch.
+- File mới: `ui/crafting_view_model.gd`, `ui/cooking_view_model.gd`, `tools/validate_modal_viewmodel.gd` (+ `.uid`); sửa `scripts/hud.gd` (intent + ViewModel + theme), `scripts/building_cooking_pot.gd` (coordinator), `tools/check_project.ps1`, MODULES/roadmap/CHECKPOINT/NEXT_UPDATE_PROMPT.
+- Rollback: xóa 3 file mới, revert hud/pot/validator/docs (git revert commit này).
+- Package kế tiếp: U3.3 save/load slot UI + autosave controls theo `NEXT_UPDATE_PROMPT.md`.
+
 ## U3.1 — theme/tokens + HUD ViewModel
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.
