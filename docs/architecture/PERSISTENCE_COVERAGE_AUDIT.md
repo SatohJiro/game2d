@@ -137,3 +137,15 @@ Các phần cố ý không thuộc closure:
 - Autosave scheduling và slot UI không thay đổi explicit-save data coverage; route sang U3 UI/UX. Multi-slot corruption/recovery hardening cuối cùng vẫn thuộc U6.
 
 Kết luận: U1.12 persistence coverage đủ điều kiện `VERIFIED`. Gate U1 tổng thể chưa đóng vì tiêu chí giảm trách nhiệm Player/Creature chưa có baseline/threshold đạt gate: tại audit, `scripts/player.gd` có 1.262 dòng, `scripts/creature.gd` có 1.523 dòng, và craft/build handler vẫn authoritative trong Player. U1.13 phải đo ownership/writer surface và chốt extraction nhỏ cần thiết trước khi quyết định chuyển U2; đây là gap kiến trúc, không phải gap Save.
+
+## U2.3 chunk delta attribution
+
+Building placement và static resource depletion nay có chunk-scoped envelope với deterministic signed key. Save/load giữ backward compatibility với flat U1 lists; invalid/cross-chunk identity fail atomic. Coverage không mở sang ambient wild population vì spawn identity vẫn phụ thuộc U2.5.
+
+## U2.6 discovery persistence audit
+
+Discovery là world progression state mới: runtime owner `ChunkDiscoveryState` có canonical chunk keys, revision và JSON-safe DTO nhưng Save v1 hiện không snapshot/apply field này. Đây là coverage `NONE/MEDIUM` trong U2: reload trả state rỗng nên fog có thể che lại vùng đã khám phá, nhưng không làm mất inventory/building/encounter state. Không admit field trong U2.6 foundation để tránh mở schema cùng lúc với contract; package U2.6b phải nối snapshot/apply/coordinator với legacy missing-field fallback rỗng trước khi fast travel dùng discovery làm điều kiện.
+
+Ambient U2.5 vẫn transient theo quyết định riêng; discovery DTO không chứa ambient actor, Node, navigation RID hoặc scene path.
+
+U2.6b đã nâng discovery lên `FULL` trong contract hiện tại: primary/backup round-trip exact set, legacy missing-field fallback rỗng, corrupt/apply failure giữ runtime state và restore không phát side effect chunk/navigation/spawn. Ambient actor/cooldown vẫn là gap transient riêng, không nằm trong discovery DTO.

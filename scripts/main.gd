@@ -16,16 +16,6 @@ const NIGHT_RAID_ACTOR_GROUP := &"persistent_night_raid_actors"
 var max_wild_creatures: int = 10
 var spawn_timer: float = 3.0
 
-var spawn_offsets: Array = [
-	Vector2(260, -180),
-	Vector2(380, 80),
-	Vector2(220, 260),
-	Vector2(-240, 220),
-	Vector2(-350, -120),
-	Vector2(-220, -260),
-	Vector2(420, -220)
-]
-
 var day_time: float = 0.0
 var day_duration: float = 180.0
 var ambient_modulate: CanvasModulate = null
@@ -39,6 +29,12 @@ var night_raid_state := NightRaidState.new()
 var night_raid_actors: Dictionary = {}
 var fireflies: Array[Sprite2D] = []
 var save_coordinator: RefCounted
+var chunk_admission := ChunkAdmissionCoordinator.new()
+var chunk_scene_adapter: ChunkSceneAdapter
+var chunk_navigation_adapter: ChunkNavigationAdapter
+var ambient_spawn_adapter: AmbientSpawnAdapter
+var chunk_discovery_adapter := ChunkDiscoveryAdapter.new()
+var chunk_debug_overlay: ChunkDebugOverlay
 
 func _ready() -> void:
 	save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
@@ -46,8 +42,22 @@ func _ready() -> void:
 	
 	ambient_modulate = CanvasModulate.new()
 	add_child(ambient_modulate)
+	var chunk_container := Node2D.new()
+	chunk_container.name = "ChunkPlaceholders"
+	add_child(chunk_container)
+	chunk_scene_adapter = ChunkSceneAdapter.new(chunk_container)
+	chunk_navigation_adapter = ChunkNavigationAdapter.new(get_world_2d().navigation_map)
+	ambient_spawn_adapter = AmbientSpawnAdapter.new(creature_container, CREATURE_SCENE)
+	chunk_debug_overlay = ChunkDebugOverlay.new()
+	chunk_debug_overlay.name = "ChunkDebugOverlay"
+	add_child(chunk_debug_overlay)
+	var initial_chunk_delta := chunk_admission.update_world_position(player.global_position)
+	chunk_scene_adapter.apply_delta(initial_chunk_delta)
+	chunk_navigation_adapter.apply(ChunkNavigationRequest.from_delta(initial_chunk_delta))
+	chunk_discovery_adapter.observe_center(initial_chunk_delta.center)
+	chunk_debug_overlay.render_snapshot(chunk_admission.create_debug_snapshot())
 	
-	spawn_initial_creatures()
+	maintain_creatures()
 	hud.show_banner("PALORIA 2.0: CÀY CUỐC, NÔNG TRẠI, CHĂN NUÔI & SĂN PET!\n[E] Nông Trại/Chuồng Thú | Chuột Phải Ném Cầu (Quỹ đạo vòng cung) | [G] Kỹ Năng Pet | [C] Chế Tạo", 6.5)
 
 func configure_save_path(primary_path: String) -> bool:
@@ -64,7 +74,7 @@ func save_game(saved_at_unix: int, save_id: StringName = &"save.slot_1") -> RefC
 	var raid_state := create_night_raid_persistence_state()
 	if raid_state == null:
 		return SaveCoordinatorResult.new(SaveCoordinatorResult.Status.SNAPSHOT_FAILED)
-	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time, raid_triggered_this_cycle, boss_spawned, boss_timer, spawn_timer, boss_state, raid_state)
+	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time, raid_triggered_this_cycle, boss_spawned, boss_timer, spawn_timer, boss_state, raid_state, chunk_discovery_adapter.create_persistence_state())
 
 func load_game() -> RefCounted:
 	if save_coordinator == null:
@@ -74,6 +84,7 @@ func load_game() -> RefCounted:
 		apply_world_cycle(result.world_clock_seconds, result.raid_triggered_this_cycle, result.boss_spawned, result.boss_timer, result.spawn_timer)
 		apply_world_boss_state(result.world_boss_state)
 		apply_night_raid_state(result.night_raid_state)
+		chunk_discovery_adapter.import_dto(result.chunk_discovery_state.to_dto())
 	return result
 
 func apply_world_clock(clock_seconds: float) -> bool:
@@ -93,6 +104,7 @@ func apply_world_cycle(clock_seconds: float, raid_triggered: bool, restored_boss
 	return true
 
 func _process(delta: float) -> void:
+	update_chunk_admission(player.global_position)
 	if campfire_light:
 		campfire_light.energy = 1.35 + sin(Time.get_ticks_msec() * 0.012) * 0.25
 	
@@ -251,6 +263,52 @@ func commit_night_raid_actor_removal(actor: Node2D, encounter_instance_id: Strin
 func get_world_chunk_context(world_position: Vector2) -> WorldChunkContext:
 	return WorldChunkCatalog.resolve_world_position(world_position)
 
+
+func get_chunk_admission_debug_snapshot() -> Dictionary:
+	return chunk_admission.create_debug_snapshot().duplicate(true)
+
+func get_chunk_navigation_debug_snapshot() -> Dictionary:
+	return chunk_navigation_adapter.create_debug_snapshot().duplicate(true) if chunk_navigation_adapter != null else {}
+
+func get_ambient_spawn_debug_snapshot() -> Dictionary:
+	return ambient_spawn_adapter.create_debug_snapshot().duplicate(true) if ambient_spawn_adapter != null else {}
+
+func get_chunk_discovery_view_snapshot() -> Dictionary:
+	return chunk_discovery_adapter.create_view_snapshot(chunk_admission.center, chunk_admission.get_active_keys())
+
+func update_chunk_obstacle(chunk_key: StringName, obstacle_revision: int, blocked: bool) -> ChunkNavigationResult:
+	if chunk_navigation_adapter == null:
+		return ChunkNavigationResult.new(ChunkNavigationResult.Status.INVALID, 0, 0)
+	return chunk_navigation_adapter.apply(ChunkNavigationRequest.obstacle(chunk_key, chunk_navigation_adapter.applied_revision, obstacle_revision, blocked))
+
+func update_chunk_admission(world_position: Vector2) -> bool:
+	var chunk_delta := chunk_admission.update_world_position(world_position)
+	if chunk_delta.status == ChunkAdmissionDelta.Status.NO_CHANGE:
+		return true
+	if not chunk_delta.is_changed() or not chunk_scene_adapter.apply_delta(chunk_delta):
+		return false
+	var navigation_result := chunk_navigation_adapter.apply(ChunkNavigationRequest.from_delta(chunk_delta))
+	if not navigation_result.is_success():
+		return false
+	if not maintain_creatures():
+		return false
+	if not chunk_discovery_adapter.observe_center(chunk_delta.center).is_success():
+		return false
+	chunk_debug_overlay.render_snapshot(chunk_admission.create_debug_snapshot())
+	return true
+
+func toggle_chunk_debug_overlay() -> bool:
+	return chunk_debug_overlay.toggle() if is_instance_valid(chunk_debug_overlay) else false
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F8:
+		toggle_chunk_debug_overlay()
+
+func _exit_tree() -> void:
+	if ambient_spawn_adapter != null: ambient_spawn_adapter.cleanup()
+	if chunk_navigation_adapter != null: chunk_navigation_adapter.cleanup()
+	if chunk_scene_adapter != null: chunk_scene_adapter.cleanup()
+
 func create_night_raid_persistence_state() -> NightRaidState:
 	if night_raid_state.lifecycle_id != NightRaidState.ACTIVE:
 		return NightRaidState.from_dto(night_raid_state.to_dto())
@@ -385,37 +443,16 @@ func _remove_world_boss_actor() -> void:
 			actor.free()
 	world_boss_actor = null
 
-func spawn_initial_creatures() -> void:
-	# 1. Bầy Nhớt Thủy Sinh tụ tập gần hồ nước
-	spawn_creature_pack(1, Vector2(240, 220), 3) # Slime Herd near Pond
-	# 2. Bầy Sói Săn Beast Pack ở đồng cỏ phía Tây
-	spawn_creature_pack(3, Vector2(-280, 180), 2) # Beast Hunting Pack
-	# 3. Bầy Cáo Lửa Flam Pack ở khu vực phía Đông Bắc
-	spawn_creature_pack(0, Vector2(320, -180), 2) # Flam Pack
-	# 4. Khóm Nấm Bào Tử Mushroom Grove
-	spawn_creature_pack(2, Vector2(-260, -160), 2) # Mushroom Grove
-
-func maintain_creatures() -> void:
-	var count = creature_container.get_child_count()
-	if count < max_wild_creatures:
-		var species = randi() % 4
-		var base_pos = spawn_offsets[randi() % spawn_offsets.size()]
-		var pack_size = randi_range(1, 2)
-		spawn_creature_pack(species, base_pos, pack_size)
-
-func spawn_creature_pack(species: int, center_pos: Vector2, count: int) -> void:
-	var leader_assigned = false
-	for i in range(count):
-		var creature = CREATURE_SCENE.instantiate()
-		var offset = Vector2(randf_range(-45, 45), randf_range(-45, 45))
-		creature.global_position = center_pos + offset
-		creature.species_index = species
-		
-		if not leader_assigned and count > 1:
-			creature.level = randi_range(3, 5)
-			creature.is_alpha = true
-			leader_assigned = true
-		else:
-			creature.level = randi_range(1, 3)
-		
-		creature_container.add_child(creature)
+func maintain_creatures() -> bool:
+	if ambient_spawn_adapter == null: return false
+	var time_bucket := clampi(floori(fmod(day_time / day_duration, 1.0) * 4.0), 0, 3)
+	var request := ambient_spawn_adapter.create_request(
+		chunk_admission.center,
+		chunk_admission.get_active_keys(),
+		WorldChunkCatalog.DEFAULT_BIOME_ID,
+		time_bucket,
+		max_wild_creatures,
+		730201,
+		chunk_admission.revision
+	)
+	return ambient_spawn_adapter.reconcile(request).is_success()

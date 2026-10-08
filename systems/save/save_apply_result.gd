@@ -12,9 +12,10 @@ var boss_timer: float
 var spawn_timer: float
 var world_boss_state: WorldBossState
 var night_raid_state: NightRaidState
+var chunk_discovery_state: ChunkDiscoveryState
 
 
-func _init(p_status: Status, p_world_clock_seconds: float = 0.0, p_errors: PackedStringArray = PackedStringArray(), p_raid_triggered_this_cycle: bool = false, p_boss_spawned: bool = false, p_boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS, p_spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS, p_world_boss_state: WorldBossState = null, p_night_raid_state: NightRaidState = null) -> void:
+func _init(p_status: Status, p_world_clock_seconds: float = 0.0, p_errors: PackedStringArray = PackedStringArray(), p_raid_triggered_this_cycle: bool = false, p_boss_spawned: bool = false, p_boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS, p_spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS, p_world_boss_state: WorldBossState = null, p_night_raid_state: NightRaidState = null, p_chunk_discovery_state: ChunkDiscoveryState = null) -> void:
 	status = p_status
 	world_clock_seconds = p_world_clock_seconds
 	errors = p_errors.duplicate()
@@ -24,6 +25,7 @@ func _init(p_status: Status, p_world_clock_seconds: float = 0.0, p_errors: Packe
 	spawn_timer = p_spawn_timer
 	world_boss_state = WorldBossState.new(p_world_boss_state.lifecycle_id, p_world_boss_state.instance_id, p_world_boss_state.hp, p_world_boss_state.position) if p_world_boss_state != null else WorldBossState.new()
 	night_raid_state = NightRaidState.from_dto(p_night_raid_state.to_dto()) if p_night_raid_state != null else NightRaidState.new()
+	chunk_discovery_state = ChunkDiscoveryState.from_dto(p_chunk_discovery_state.to_dto()) if p_chunk_discovery_state != null else ChunkDiscoveryState.new()
 
 
 func is_applied() -> bool:

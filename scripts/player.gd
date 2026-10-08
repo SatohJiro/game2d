@@ -673,6 +673,15 @@ func create_resource_depletion_snapshot() -> Array[Dictionary]:
 	snapshot.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return String(a["instance_id"]) < String(b["instance_id"]))
 	return snapshot
 
+func create_chunk_resource_projection() -> Array[Dictionary]:
+	var output: Array[Dictionary] = []
+	for node in get_tree().get_nodes_in_group("resource_nodes"):
+		if not is_instance_valid(node) or not node.has_method("create_resource_depletion_record"): continue
+		var record: Variant = node.call("create_resource_depletion_record")
+		if record != null and record.is_valid():
+			output.append({"position": {"x": node.global_position.x, "y": node.global_position.y}, "payload": record.to_dto()})
+	return output
+
 func apply_resource_depletion_snapshot(records: Array[ResourceDepletionRecord]) -> bool:
 	if not can_apply_resource_depletion_snapshot(records): return false
 	var nodes_by_id := {}

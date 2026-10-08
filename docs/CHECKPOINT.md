@@ -1,5 +1,138 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U2.6b — discovery Save v1 admission
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- Thêm optional `world.discovery_state` vào Save v1 create/schema/snapshot/apply plan/result/coordinator result và Main boundary.
+- Snapshot/apply dùng typed clone; canonical unique keys + revision được resolve trước commit. Main import chỉ sau load success và không gọi admission/navigation/spawn.
+- Primary restore exact set; backup restore commit trước; legacy thiếu field về empty discovery. Corrupt DTO, duplicate/revision mismatch và apply failure giữ nguyên runtime discovery.
+- Schema version giữ 1 theo pre-release extension có fallback. Không serialize active chunks, view snapshot, Node/RID hoặc ambient actor.
+- Asset/provenance: none. Minimap UI/renderer và fast travel: ngoài scope.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass bằng Godot 4.7.2, 48 Markdown files và toàn bộ checks xanh.
+- Focused editor import, save schema/coordinator và `validate_discovery_save.gd`: pass; phủ JSON normalization, primary/backup, signed exact set, legacy, corruption, apply failure atomicity và no-side-effect ownership.
+- Full gate cuối: pass (`check_project.ps1`, 48 Markdown files, toàn bộ validator gồm discovery Save, editor load và main-scene smoke).
+- Strict scan `build/checks` không có `SCRIPT ERROR`, `Parse Error`, missing dependency, invalid node path, RID/ObjectDB leak hoặc `ERROR:`; `git diff --check` sạch ngoài cảnh báo LF→CRLF của Git trên Windows.
+- Package kế tiếp: U2.6c fast-travel domain boundary theo `NEXT_UPDATE_PROMPT.md`.
+
+## U2.6 — discovery/fog data foundation
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- Thêm typed discovery request/result/state và Main adapter; chỉ accepted center admission được discover, active neighbor vẫn fog.
+- Same-chunk/revisit không tăng revision; stale, invalid/noncanonical key fail không mutate. Positive/negative crossing dùng canonical key.
+- Detached view snapshot union discovered + active tiles với cờ discovered/active/current; không giữ Node/RID và không đổi scene/navigation/spawn ownership.
+- JSON-safe DTO có lexical ordering, duplicate/key/revision guard và legacy missing/empty fallback. Save v1 chưa đổi; coverage audit đánh dấu `NONE/MEDIUM` và route admission sang U2.6b.
+- Asset/provenance: none. UI/minimap art/fog renderer/fast travel: ngoài scope.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass bằng Godot 4.7.2, 48 Markdown files và toàn bộ checks xanh.
+- Focused editor import + `validate_chunk_discovery.gd`: pass; phủ center-only initial, same-chunk/revisit, stale/invalid, signed crossing, DTO JSON/legacy/corruption, snapshot isolation và ownership không ảnh hưởng.
+- Full gate cuối: pass (`check_project.ps1`, 48 Markdown files, toàn bộ validator gồm chunk discovery, editor load và main-scene smoke).
+- Strict scan `build/checks` không có `SCRIPT ERROR`, `Parse Error`, missing dependency, invalid node path, RID/ObjectDB leak hoặc `ERROR:`; `git diff --check` sạch ngoài cảnh báo LF→CRLF của Git trên Windows.
+- Package kế tiếp: U2.6b discovery Save v1 admission theo `NEXT_UPDATE_PROMPT.md`.
+
+## U2.5 — ambient spawn director foundation
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- Thay ambient initial/maintenance RNG trong Main bằng typed request/result/spec, pure deterministic policy và adapter registry riêng.
+- Budget 10 chỉ đếm ambient owner; boss/night raid bị loại khỏi species/budget. Identity `ambient.<coordinate>_s<slot>` không phụ thuộc Node, text hoặc scene path.
+- Same-chunk population đầy không reroll theo timer/time/seed; signed crossing cleanup actor chunk inactive và fill deterministic trong active 3×3. Stale/gapped revision, duplicate/malformed key fail closed.
+- Save/data breaking change: none; ambient vẫn transient, chưa persist defeat/capture cooldown. Asset/provenance: none.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass bằng Godot 4.7.2, 47 Markdown files và toàn bộ checks xanh.
+- Focused editor import + `validate_ambient_spawns.gd`: pass; phủ exact budget, deterministic replay, identity/spec validity, no-reroll, duplicate/stale guard, signed crossing, boss/raid exclusion và exit cleanup.
+- Full gate đầu phát hiện freed ambient actor bị cast trước validity check trong capture cleanup; `_free_actor` đã đổi sang guard Variant trước cast và focused capture/ambient cùng xanh.
+- Full gate cuối: pass (`check_project.ps1`, 48 Markdown files, toàn bộ validator gồm ambient spawn, editor load và main-scene smoke). Strict scan `build/checks` không có `SCRIPT ERROR`, `Parse Error`, missing dependency, invalid node path, RID/ObjectDB leak hoặc `ERROR:`.
+- Package kế tiếp: U2.6 discovery/minimap/fog foundation theo `NEXT_UPDATE_PROMPT.md`.
+
+## U2.4 — navigation chunk contract
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- Thêm typed navigation request/result và `ChunkNavigationAdapter` sở hữu exact region RID theo active 3×3 chunk lifecycle.
+- Initial tạo 9 rectangular placeholder region; crossing chỉ thay ownership difference; same-chunk no-op không rebake/churn.
+- Sync admission có revision/key-set guard; obstacle placeholder có per-chunk monotonic revision và bật/tắt whole region. Stale, duplicate, revision gap hoặc inactive key fail không mutate.
+- Unload/exit detach rồi free RID; detached debug snapshot không chứa RID. Static Environment, terrain art/bake, creature spawn, Save và locomotion gameplay không đổi.
+- Asset/provenance: none. Save/data breaking change: none.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass với Godot 4.7.2; toàn bộ checks xanh. Default Godot path trong script không hợp lệ ở máy này nên command dùng explicit `-GodotConsole`.
+- Focused editor import và `validate_world_chunks.gd`: pass; phủ initial 9, positive coordinator crossing, signed runtime crossing, exact scene/navigation ownership, no-churn, stale/duplicate obstacle/sync guard, snapshot không RID và exit cleanup.
+- Full gate cuối: pass (`check_project.ps1`, 47 Markdown files, toàn bộ validator, editor load và main-scene smoke). Placeholder polygon inset 2 world units đã loại cảnh báo raster edge overlap thấy ở lần gate đầu.
+- Strict scan `build/checks` không có `SCRIPT ERROR`, `Parse Error`, missing dependency, invalid node path, `RID leaks`, `ObjectDB instances leaked` hoặc `ERROR:`; `git diff --check` sạch ngoài cảnh báo LF→CRLF của Git trên Windows.
+- Package kế tiếp: U2.5 spawn director theo biome/time/budget, không spawn trực tiếp từ navigation adapter.
+
+## U2.2b — placeholder scene admission closure
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- Thêm self-contained `chunk_placeholder.tscn`, scene adapter reference-map và admit-before-unload commit.
+- Main giữ đúng 9 unique placeholder Node; same-chunk no-op không churn, crossing âm/dương đặt Node theo chunk origin và cleanup khi exit.
+- Debug overlay mặc định ẩn, toggle F8/API, chỉ render detached snapshot center/revision/count.
+- Static Environment/content, creature spawn, navigation và Save không đổi. Asset/provenance: none.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass, 47 Markdown files và toàn bộ checks xanh.
+- Focused editor load + world chunk scene regression: pass; exact-nine, no-churn, signed crossing, transform, toggle/isolation được phủ.
+- Full gate cuối: pass (`check_project.ps1`, 47 Markdown files, toàn bộ validator, editor load và main-scene smoke). Strict scan `build/checks` không có `SCRIPT ERROR`, `Parse Error`, missing dependency, invalid node path, RID/ObjectDB leak hoặc `ERROR:`.
+- Package kế tiếp: U2.4 navigation chunk contract/region lifecycle theo `NEXT_UPDATE_PROMPT.md`.
+
+## U2.3 — persistent chunk delta foundation
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- Thêm typed chunk envelope/projector cho building placement và static resource depletion theo world position.
+- Save v1 snapshot ghi `chunk_deltas`; load ưu tiên envelope, save cũ thiếu/rỗng field fallback flat records.
+- Key/coordinate/position mismatch, duplicate identity xuyên chunk và invalid typed payload fail trước mutation; JSON round-trip giữ integer state.
+- Không persist ambient creature, không stream content, spawn hoặc navigation. Asset/provenance: none.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass, 47 Markdown files và toàn bộ checks xanh.
+- Focused world chunk, save schema và save coordinator: pass; phủ biên âm/dương, JSON, legacy fallback, building/resource compatibility và corrupt guards.
+- Full gate cuối: pass (`check_project.ps1`, 47 Markdown files, toàn bộ validator, editor load và main-scene smoke). Strict scan `build/checks` không có `SCRIPT ERROR`, `Parse Error`, missing dependency, invalid node path, leak hoặc `ERROR:`.
+- Package kế tiếp: U2.2b placeholder scene admission + toggleable debug overlay theo `NEXT_UPDATE_PROMPT.md`.
+
+## U2.2 — chunk admission foundation
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- Thêm pure 3×3 admission policy, typed request/delta/active record và coordinator revision guard.
+- Initial update admit 9; same-chunk no-op; crossing một cạnh admit 3 trước rồi unload 3; key/delta dùng thứ tự lexical deterministic.
+- Stale revision, duplicate/invalid key và non-finite position fail không mutate. Main theo dõi player bằng record-only coordinator và trả deep detached debug snapshot.
+- Không instantiate/unload scene, không đổi world content/spawn/navigation hoặc Save v1. Asset/provenance: none.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass, 47 Markdown files, 44 definitions và toàn bộ checks xanh.
+- Focused editor load + `validate_world_chunks.gd`: pass; phủ signed 3×3, initial/no-op/crossing, stable order, stale/duplicate guards và Main snapshot isolation.
+- Full gate cuối: pass (`check_project.ps1`, 47 Markdown files, toàn bộ validator, editor load và main-scene smoke). Strict scan `build/checks` không có `SCRIPT ERROR`, `Parse Error`, missing dependency, invalid node path, leak hoặc `ERROR:`.
+- Package kế tiếp: U2.3 chunk-scoped persistent delta foundation + Save v1 compatibility theo `NEXT_UPDATE_PROMPT.md`.
+
 ## U2.1 — chunk identity foundation
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.
@@ -15,7 +148,7 @@ Trạng thái: `VERIFIED` ngày 2026-10-08.
 
 - Baseline full gate: pass, 46 Markdown files và toàn bộ checks xanh.
 - Focused editor-load, content registry và world-chunk regression: pass; phủ boundary, signed-key round-trip/rejection, canary reference và Main adapter.
-- Full gate cuối và strict scan: ghi tại `build/checks`; package chỉ VERIFIED khi cả hai sạch.
+- Full gate cuối: pass (`check_project.ps1`, 47 Markdown files, 44 content definitions, toàn bộ validator, editor load và main-scene smoke). Strict scan `build/checks` không có `SCRIPT ERROR`, `Parse Error`, missing dependency, invalid node path, leak hoặc `ERROR:`.
 - Package kế tiếp: U2.2 admission foundation 3×3 + deterministic delta + debug snapshot theo `NEXT_UPDATE_PROMPT.md`.
 
 ## U1.13c — Creature FSM writer closure

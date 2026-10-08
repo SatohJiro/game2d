@@ -9,7 +9,7 @@ const BaseProgressStateModel = preload("res://systems/progression/base_progress_
 const DEFAULT_STANCE_ID := &"pet.stance.auto_work"
 
 
-static func create_player_snapshot(player: Node, save_id: StringName, saved_at_unix: int, world_clock_seconds: float = 0.0, raid_triggered_this_cycle: bool = false, boss_spawned: bool = false, boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS, spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS, world_boss_state: WorldBossState = null, night_raid_state: NightRaidState = null) -> RefCounted:
+static func create_player_snapshot(player: Node, save_id: StringName, saved_at_unix: int, world_clock_seconds: float = 0.0, raid_triggered_this_cycle: bool = false, boss_spawned: bool = false, boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS, spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS, world_boss_state: WorldBossState = null, night_raid_state: NightRaidState = null, discovery_state: ChunkDiscoveryState = null) -> RefCounted:
 	if player == null or not is_instance_valid(player) or not player.has_method("get"):
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
 	var inventory_value: Variant = player.get("inventory")
@@ -66,12 +66,20 @@ static func create_player_snapshot(player: Node, save_id: StringName, saved_at_u
 	if projected_raid_state == null or not projected_raid_state.is_coherent(raid_triggered_this_cycle, world_clock_seconds):
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE, {}, ["invalid night raid source"])
 	dto["world"]["night_raid_state"] = projected_raid_state.to_dto()
+	var projected_discovery := discovery_state if discovery_state != null else ChunkDiscoveryState.new()
+	var discovery_copy := ChunkDiscoveryState.from_dto(projected_discovery.to_dto())
+	if discovery_copy == null:
+		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE, {}, ["invalid chunk discovery source"])
+	dto["world"]["discovery_state"] = discovery_copy.to_dto()
 	if not player.has_method("create_building_placement_snapshot"):
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
 	dto["world"]["entity_deltas"] = player.call("create_building_placement_snapshot")
 	if not player.has_method("create_resource_depletion_snapshot"):
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
 	dto["world"]["resource_deltas"] = player.call("create_resource_depletion_snapshot")
+	if not player.has_method("create_chunk_resource_projection"):
+		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
+	dto["world"]["chunk_deltas"] = ChunkDeltaProjector.project(dto["world"]["entity_deltas"], player.call("create_chunk_resource_projection"))
 	var validation: RefCounted = Schema.validate(dto)
 	if not validation.is_valid():
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SNAPSHOT, {}, validation.errors)

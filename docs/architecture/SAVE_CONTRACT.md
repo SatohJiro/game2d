@@ -217,3 +217,13 @@ Shape v1 tiếp tục được cập nhật tại pre-release nên không tăng 
 ## U1.12s turret structure durability
 
 `TurretPlacementState` gồm `cooldown_remaining` trong `[0, 1.25]` và `health` nguyên `[1, 350]`; DTO cooldown-only cũ mặc định 350. Restore giữ health qua `_ready()` và chỉ commit hai scalar, không target/fire/destruction. Target Node, projectile, Callable và tween không serialize; invalid health fail trước runtime replacement.
+# U2.3 chunk-scoped delta admission
+
+`world.chunk_deltas` là optional backward-compatible field nhóm building/resource delta theo chunk key. Snapshot mới ghi field này; apply ưu tiên nó và chỉ fallback flat lists khi field trống/thiếu. Invalid coordinate attribution, duplicate identity hoặc payload lỗi bị schema/apply từ chối trước mutation. Hai flat list vẫn được giữ trong Save v1 chuyển tiếp cho compatibility; chunk envelope là authority mới khi không rỗng.
+## U2.6b — chunk discovery admission
+
+Save v1 pre-release thêm optional `world.discovery_state` với DTO `{revision, discovered_chunks}` từ `ChunkDiscoveryState`. Snapshot Main truyền typed clone vào coordinator; schema kiểm tra JSON-safe canonical unique keys và revision bằng số key. Apply plan resolve toàn bộ state trước khi commit Player/world delta, sau đó result/coordinator trả typed clone để Main import chỉ khi load đã thành công.
+
+Save cũ thiếu field dùng conservative empty discovery `{revision: 0, discovered_chunks: []}`. Explicit malformed/duplicate/noncanonical key hoặc revision mismatch fail validation; schema-valid unsupported reference gây apply failure và Main không thay discovery hiện tại. Primary/backup recovery giữ semantics repository sẵn có. Restore discovery không gọi chunk admission, navigation, ambient spawn hoặc minimap presentation; active chunks và view snapshot không serialize.
+
+Schema version vẫn là 1 vì dự án chưa phát hành và field có legacy fallback rõ ràng. Đây là shape extension pre-release, không phải migration step mới.

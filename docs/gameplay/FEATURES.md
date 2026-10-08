@@ -33,6 +33,12 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 
 U2.1 chưa đổi luật chơi: world position được project deterministic sang chunk 1024×1024 và stable signed key để làm dependency cho streaming; runtime vẫn là scene tĩnh.
 
+U2.2 duy trì record 3×3 quanh player với deterministic admission delta; crossing biên không đổi gameplay/content vì chưa instantiate hoặc unload scene. Debug snapshot read-only không mutate world.
+
+U2.3 nhóm building/resource save delta theo chunk từ world position; load lỗi attribution/identity không mutate. Ambient creature và gameplay behavior không đổi.
+
+U2.2b hiện thực admission bằng đúng 9 placeholder Node và overlay F8; placeholder không có collision/content nên không đổi gameplay hoặc world visuals khi overlay tắt.
+
 ## Luật và acceptance criteria
 
 ### G01 — locomotion
@@ -225,3 +231,16 @@ U2.1 chưa đổi luật chơi: world position được project deterministic sa
 4. Một building placement + một processing recipe.
 5. Save/load cho toàn slice.
 6. Sau khi slice ổn định mới nhân content, mở world và nâng UI/art.
+## U2.5 ambient population foundation
+
+- Ambient wild population có budget 10 actor do director registry sở hữu; boss và night raid không tính vào budget này.
+- Admission ưu tiên chunk hiện tại rồi chunk gần; species ambient chỉ gồm Flam, Slime, Mushroom và Beast. Dragon vẫn là boss/non-ambient.
+- Cùng active chunks với population đủ budget không reroll actor khi timer, time bucket hoặc seed input đổi. Crossing loại actor thuộc chunk inactive và fill slot deterministic trong active 3×3.
+- Đây là transient population: capture/defeat cooldown và exact ambient actor state chưa persist qua Save/load.
+
+## U2.6 discovery/fog foundation
+
+- Player discover đúng chunk center đã enter; neighbor chỉ active để streaming vẫn được coi là chưa khám phá.
+- Same-chunk movement và revisit không tăng discovery revision. Crossing theo tọa độ âm/dương dùng cùng canonical chunk key.
+- Snapshot minimap/fog hiện chỉ là dữ liệu read-only; chưa có art/HUD, fog renderer hoặc fast travel.
+- U2.6b đã persist exact discovered chunk set trong Save v1; save cũ thiếu field nhận state rỗng. Load không tự di chuyển player hoặc phát chunk/spawn side effect.

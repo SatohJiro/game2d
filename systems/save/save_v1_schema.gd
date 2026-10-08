@@ -32,7 +32,7 @@ static func create_empty(save_id: StringName, saved_at_unix: int) -> Dictionary:
 		"inventory": {},
 		"pets": [],
 		"base": {"base_level": 1, "active_quest_id": "quest.base.survival", "claimed_quest_ids": []},
-		"world": {"clock_seconds": 0.0, "cycle_state": {"raid_triggered_this_cycle": false}, "world_boss_state": WorldBossState.new().to_dto(), "night_raid_state": NightRaidState.new().to_dto(), "entity_deltas": [], "resource_deltas": []},
+		"world": {"clock_seconds": 0.0, "cycle_state": {"raid_triggered_this_cycle": false}, "world_boss_state": WorldBossState.new().to_dto(), "night_raid_state": NightRaidState.new().to_dto(), "discovery_state": ChunkDiscoveryState.new().to_dto(), "entity_deltas": [], "resource_deltas": [], "chunk_deltas": []},
 	}
 
 
@@ -147,6 +147,8 @@ static func _validate_world(value: Variant, errors: PackedStringArray) -> void:
 		errors.append("world must be a Dictionary")
 		return
 	var world: Dictionary = value
+	if ChunkDiscoveryState.from_dto(world.get("discovery_state")) == null:
+		errors.append("world.discovery_state must contain canonical unique chunk keys and coherent revision")
 	if not _is_finite_number(world.get("clock_seconds")) or float(world.get("clock_seconds", -1.0)) < 0.0:
 		errors.append("world.clock_seconds must be finite and non-negative")
 	else:
@@ -183,6 +185,12 @@ static func _validate_world(value: Variant, errors: PackedStringArray) -> void:
 			continue
 		if seen.has(record.instance_id): errors.append("resource instance_id must be unique")
 		seen[record.instance_id] = true
+	var chunk_values: Variant = world.get("chunk_deltas", [])
+	if typeof(chunk_values) != TYPE_ARRAY:
+		errors.append("world.chunk_deltas must be an Array")
+		return
+	var flattened := ChunkDeltaProjector.flatten(chunk_values)
+	if not chunk_values.is_empty() and flattened.is_empty(): errors.append("world.chunk_deltas must be valid and globally unique")
 
 
 static func _parse_world_boss_state(value: Variant, boss_spawned: bool) -> WorldBossState:

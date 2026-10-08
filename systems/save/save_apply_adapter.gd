@@ -85,15 +85,20 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		errors.append("base progression owner lacks apply boundary")
 		return null
 	var placements: Array[BuildingPlacementRecord] = []
-	for value: Variant in snapshot["world"]["entity_deltas"]:
-		var record := BuildingPlacementRecordModel.from_dto(value)
+	var chunk_values: Array = snapshot["world"].get("chunk_deltas", [])
+	var chunk_flat := ChunkDeltaProjector.flatten(chunk_values)
+	var has_chunk_deltas := not chunk_values.is_empty()
+	var building_source: Variant = chunk_flat.get("buildings", []) if has_chunk_deltas else snapshot["world"]["entity_deltas"]
+	for value: Variant in building_source:
+		var record := value as BuildingPlacementRecord if value is BuildingPlacementRecord else BuildingPlacementRecordModel.from_dto(value)
 		if record == null:
 			errors.append("unsupported building placement record")
 			return null
 		placements.append(record)
 	var resource_depletions: Array[ResourceDepletionRecord] = []
-	for value: Variant in snapshot["world"].get("resource_deltas", []):
-		var record := ResourceDepletionRecordModel.from_dto(value)
+	var resource_source: Variant = chunk_flat.get("resources", []) if has_chunk_deltas else snapshot["world"].get("resource_deltas", [])
+	for value: Variant in resource_source:
+		var record := value as ResourceDepletionRecord if value is ResourceDepletionRecord else ResourceDepletionRecordModel.from_dto(value)
 		if record == null:
 			errors.append("unsupported resource depletion record")
 			return null
@@ -112,6 +117,10 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 	var raid_state: NightRaidState = NightRaidState.from_dto(snapshot["world"].get("night_raid_state"))
 	if raid_state == null:
 		raid_state = NightRaidState.new(NightRaidState.CLEARED, NightRaidState.ENCOUNTER_ID, int(floor(float(snapshot["world"]["clock_seconds"]) / NightRaidState.DAY_DURATION)), []) if cycle_state.raid_triggered_this_cycle else NightRaidState.new()
+	var discovery_state := ChunkDiscoveryState.from_dto(snapshot["world"].get("discovery_state"))
+	if discovery_state == null:
+		errors.append("unsupported chunk discovery state")
+		return null
 	return ApplyPlan.new(
 		player_data,
 		legacy_inventory,
@@ -129,7 +138,8 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		cycle_state.spawn_timer,
 		boss_state,
 		raid_state,
-		progression_state
+		progression_state,
+		discovery_state
 	)
 
 
@@ -183,7 +193,7 @@ static func _commit(player: Node, plan: RefCounted) -> RefCounted:
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	if not bool(player.call("apply_resource_depletion_snapshot", plan.resource_depletions)):
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
-	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle, plan.boss_spawned, plan.boss_timer, plan.spawn_timer, plan.world_boss_state, plan.night_raid_state)
+	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle, plan.boss_spawned, plan.boss_timer, plan.spawn_timer, plan.world_boss_state, plan.night_raid_state, plan.chunk_discovery_state)
 
 
 static func _is_default_base_state(state: BaseProgressState) -> bool:

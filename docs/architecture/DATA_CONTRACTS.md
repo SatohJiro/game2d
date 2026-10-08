@@ -58,6 +58,8 @@ U1.13b admit 17 Player craft ID dưới `recipe.item.*`, `recipe.equipment.*` v�
 
 U2.1 thêm domain `biome.*` và `chunk.*`. `chunk.<name>` là content definition ID; runtime coordinate key dùng canonical `chunk.pN.nN`, không thay thế definition ID và không dùng raw dấu trừ. Chi tiết tại `WORLD_CHUNK_CONTRACT.md`.
 
+U2.5 dành namespace runtime `ambient.<signed_coordinate>_s<slot>` cho actor do spawn director sở hữu, ví dụ `ambient.n1_p0_s1`. Identity này deterministic từ canonical chunk coordinate và slot, không phải content registry ID, không dùng Node instance ID/species/display text, và chưa được admit vào Save v1.
+
 U1.12i admit `CompostBinPlacementState` cho đúng `building.compost_bin`. State chỉ chứa scalar JSON-safe với range/coherence validation; fertilizer display text không trở thành identity.
 
 U1.12j admit ranch assignment identity: owned pet giữ `pet.instance_*`; resident baseline dùng `ranch.resident_starter` trong scope của building record. Save giữ stable species ID, không giữ localized species name hoặc runtime animal Node.

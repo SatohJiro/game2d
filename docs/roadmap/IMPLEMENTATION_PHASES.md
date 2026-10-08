@@ -34,11 +34,11 @@ Gate U1: **VERIFIED 2026-10-08**. Vertical slice combat → capture → pet → 
 ## U2 — world rộng
 
 1. **Biome/ChunkDefinition và coordinate contract — VERIFIED:** typed canary, signed runtime key, catalog/context và Main read adapter; chưa stream/persist chunk.
-2. Chunk admission/unload quanh player với debug overlay.
-3. Persistent world delta cho resource/crop/building/captured spawn.
-4. Navigation theo chunk và obstacle update.
-5. Spawn director theo biome/time/budget.
-6. Discovery, minimap/fog và fast travel.
+2. **Chunk admission/unload — VERIFIED:** pure 3×3 policy, revision guard, admit-before-unload placeholder scenes, exact-nine ownership và toggleable debug overlay; static content migration chờ world-building package.
+3. **Persistent world delta foundation — VERIFIED:** building/resource records có typed chunk envelope và Save v1 fallback; crop nằm trong building record, captured/ambient spawn chờ spawn identity.
+4. **Navigation theo chunk — VERIFIED foundation:** typed request/result, exact region ownership, revision-guarded whole-region obstacle state và RID cleanup; terrain bake/path requests còn chờ content package.
+5. **Spawn director — VERIFIED foundation:** deterministic active-chunk/biome/time/budget policy, stable ambient slot identity và runtime registry tách boss/raid; persistent cooldown/authored biome table còn chờ package sau.
+6. **Discovery/fog — VERIFIED data + persistence:** center-entry state, revision guard, detached tile snapshot và Save v1 round-trip; minimap renderer/UI và fast travel còn chờ package kế tiếp.
 
 Gate U2: qua 9 chunk không mất state; soak 20 phút; không hitch vượt budget đã chốt; save/load ở chunk khác hoạt động.
 

@@ -18,6 +18,7 @@ var spawn_timer: float
 var world_boss_state: WorldBossState
 var night_raid_state: NightRaidState
 var player_progression_state: PlayerProgressionState
+var chunk_discovery_state: ChunkDiscoveryState
 
 
 func _init(
@@ -37,7 +38,8 @@ func _init(
 	p_spawn_timer: float,
 	p_world_boss_state: WorldBossState,
 	p_night_raid_state: NightRaidState,
-	p_player_progression_state: PlayerProgressionState
+	p_player_progression_state: PlayerProgressionState,
+	p_chunk_discovery_state: ChunkDiscoveryState
 ) -> void:
 	player_state = p_player_state.duplicate(true)
 	legacy_inventory = p_legacy_inventory.duplicate(true)
@@ -56,3 +58,4 @@ func _init(
 	world_boss_state = WorldBossState.new(p_world_boss_state.lifecycle_id, p_world_boss_state.instance_id, p_world_boss_state.hp, p_world_boss_state.position)
 	night_raid_state = NightRaidState.from_dto(p_night_raid_state.to_dto())
 	player_progression_state = PlayerProgressionState.from_dto(p_player_progression_state.to_dto())
+	chunk_discovery_state = ChunkDiscoveryState.from_dto(p_chunk_discovery_state.to_dto())

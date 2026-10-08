@@ -35,6 +35,9 @@ $saveCoordinatorLog = Join-Path $LogDirectory 'save-coordinator-validation.log'
 $worldBossStateLog = Join-Path $LogDirectory 'world-boss-state-validation.log'
 $nightRaidStateLog = Join-Path $LogDirectory 'night-raid-state-validation.log'
 $worldChunkLog = Join-Path $LogDirectory 'world-chunk-validation.log'
+$ambientSpawnLog = Join-Path $LogDirectory 'ambient-spawn-validation.log'
+$chunkDiscoveryLog = Join-Path $LogDirectory 'chunk-discovery-validation.log'
+$discoverySaveLog = Join-Path $LogDirectory 'discovery-save-validation.log'
 $smokeLog = Join-Path $LogDirectory 'headless-smoke.log'
 $failurePattern = 'SCRIPT ERROR|Parse Error|Failed to load script|Cannot open file|Node not found|Invalid get index|^ERROR:'
 
@@ -120,6 +123,15 @@ Invoke-GodotCheck -Name 'Night raid state validation' -LogPath $nightRaidStateLo
 )
 Invoke-GodotCheck -Name 'World chunk validation' -LogPath $worldChunkLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_world_chunks.gd')
+)
+Invoke-GodotCheck -Name 'Ambient spawn validation' -LogPath $ambientSpawnLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_ambient_spawns.gd')
+)
+Invoke-GodotCheck -Name 'Chunk discovery validation' -LogPath $chunkDiscoveryLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_chunk_discovery.gd')
+)
+Invoke-GodotCheck -Name 'Discovery save validation' -LogPath $discoverySaveLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_discovery_save.gd')
 )
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')

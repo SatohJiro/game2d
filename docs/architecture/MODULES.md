@@ -33,8 +33,8 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | FARM | Soil/crop/water/fertilizer/harvest | `CropDefinition` berry mirror; `resource_node.gd` vẫn gộp resource và plot | FarmPlot state thuần + CropDefinition | U1.3, U5.3 |
 | BUILD | Placement, cost, structure health | Workbench đã có typed durability DTO/catalog admission; Player + building scripts vẫn authoritative | PlacementRequest/Result, occupancy grid | U1.3, U1.6, U1.12t, U5.5 |
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
-| WORLD | Zone, chunks, spawn, day/night, raid | Main owns typed clock/raid/boss/ambient timers; U2.1 có typed biome/chunk và deterministic coordinate context read-only | Chunk admission/unload + actor deltas | U1.12u–ag, U2.1–U2.3 |
-| NAV | Navigation/path requests | Chưa có | Navigation adapter theo chunk | U2.3 |
+| WORLD | Zone, chunks, spawn, discovery, day/night, raid | Main owns typed clock/raid/boss timers; chunk adapters own scene/navigation/discovery, U2.5 director owns transient ambient population | Fast travel boundary, persistent spawn delta, authored biome tables | U1.12u–ag, U2.1–U2.6b |
+| NAV | Navigation/path requests | U2.4 có revision-guarded chunk region lifecycle và placeholder blocked state | Terrain bake, obstacle polygon và actor path request | U2.4 |
 | SAVE | Versioned persistence | Main→coordinator explicit clock boundary; Player/base/building/resource adapters; atomic repository | Autosave/UI scheduling, encounter delta | U1.11–U1.12 |
 | UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
 | PRESENT | Animation/VFX/camera/audio | Trộn trong actor; `AudioManager` autoload | Event-driven adapters, pooling, accessibility scale | U4 |
@@ -145,6 +145,13 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.12ag: Save snapshot/apply/coordinator mang typed night-raid DTO; Main restore exact remaining roster không RNG/banner/reward, và legacy missing field fail-safe thành PENDING/CLEARED.
 - U1.13c: `CreatureTransitionPolicy` sở hữu combat/capture FSM decision gồm charge, attack/recovery, assist/retaliation, low-health flee và capture entry; `WildCreature` chỉ commit accepted result và presentation/physics.
 - U2.1: WORLD thêm `BiomeDefinition`, `ChunkDefinition`, `ChunkCoordinate`, catalog/context; Main chỉ expose read adapter, chưa stream hoặc persist chunk.
+- U2.2: `ChunkAdmissionPolicy/Coordinator` sở hữu deterministic active 3×3, revision guard và admit-before-unload record delta; Main chỉ cập nhật record/debug snapshot, chưa stream scene.
+- U2.3: `ChunkDeltaEnvelope/Projector` gán building/resource persistence vào signed chunk key; Save ưu tiên typed envelope và fallback flat U1 records.
+- U2.2b: `ChunkSceneAdapter` sở hữu map 9 self-contained placeholder Nodes và `ChunkDebugOverlay` read-only; static Environment chưa chuyển vào chunk.
+- U2.4: `ChunkNavigationAdapter` sở hữu exact region RID theo active chunk keys, sync bằng typed request/result, cleanup khi unload/exit và expose debug snapshot không giữ RID; obstacle hiện chỉ bật/tắt whole-region bằng revision guard.
+- U2.5: `AmbientSpawnPolicy` resolve deterministic spec theo active chunk/biome/time/seed/budget; `AmbientSpawnAdapter` chỉ sở hữu ambient registry, không scan SceneTree và không trộn boss/night-raid ownership.
+- U2.6: `ChunkDiscoveryState` đánh dấu accepted center entry qua typed revision guard; adapter expose detached minimap/fog data snapshot và JSON-safe DTO nhưng chưa nối Save/HUD.
+- U2.6b: Save v1 mang optional discovery DTO qua schema/snapshot/apply/coordinator; Main restore typed clone sau load success, legacy thiếu field về rỗng và failure không mutate discovery.
 
 ### UI và PRESENTATION
 
