@@ -30,6 +30,12 @@ const STRUCTURES := [
 	{"id": "dock", "district": &"lakeside", "kind": &"dock", "position": Vector2(1450, 1400), "size": Vector2(96, 32)},
 	# farm_edge (gate marker; base camp structures already exist in main.tscn)
 	{"id": "town_gate_w", "district": &"farm_edge", "kind": &"gate", "position": Vector2(900, 200), "size": Vector2(48, 96)},
+	# decorations: sakura trees and power poles along the streets
+	{"id": "sakura_1", "district": &"market_street", "kind": &"sakura", "position": Vector2(1200, 560), "size": Vector2(64, 80)},
+	{"id": "sakura_2", "district": &"hillside", "kind": &"sakura", "position": Vector2(2600, 700), "size": Vector2(64, 80)},
+	{"id": "pole_1", "district": &"market_street", "kind": &"pole", "position": Vector2(1250, 640), "size": Vector2(32, 96)},
+	{"id": "pole_2", "district": &"market_street", "kind": &"pole", "position": Vector2(1650, 640), "size": Vector2(32, 96)},
+	{"id": "pole_3", "district": &"station_plaza", "kind": &"pole", "position": Vector2(1500, 300), "size": Vector2(32, 96)},
 ]
 
 

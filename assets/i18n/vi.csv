@@ -47,3 +47,18 @@ district.hillside,Khu dân cư dốc
 district.shrine_hill,Đền trên đồi
 district.lakeside,Bờ hồ
 district.outskirts,Vùng ven
+npc.elder_hana,Bà Hana
+npc.elder_hana.line,Hoàng hôn trên đồi đền đẹp nhất đấy, cháu nhớ lên xem nhé.
+npc.merchant_taro,Taro bán hàng
+npc.merchant_taro.line,Nông sản tươi mỗi sáng! Chợ phiên luôn chào đón cháu.
+npc.kid_sora,Bé Sora
+npc.kid_sora.line,Anh ơi, hồ có cá to lắm! Em thấy nó nhảy lên đấy!
+npc.fisher_umi,Chú Umi
+npc.fisher_umi.line,Cá cắn câu mạnh nhất lúc sáng sớm và chập tối.
+anchor.town_station.line,Ga Ánh Sao — tàu sẽ đưa cháu đi khắp Paloria. (Mở bản đồ để fast travel)
+anchor.bulletin.line,Bảng tin: ai nhặt được chuông gió của bà Hana xin mang đến đền.
+anchor.shrine.line,Đền Ánh Sao — pet hiếm thường xuất hiện quanh đây lúc hoàng hôn.
+anchor.fishing_spot.line,Bờ hồ lặng sóng — chỗ câu cá lý tưởng.
+anchor.sunset_vista.line,Đài ngắm cảnh — toàn thị trấn rực rỡ dưới nắng chiều.
+prompt.target.npc,Dân làng
+prompt.target.town_anchor,Điểm tham quan

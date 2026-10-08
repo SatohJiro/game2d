@@ -35,6 +35,7 @@ var chunk_scene_adapter: ChunkSceneAdapter
 var town_builder: TownBuilder
 var lighting_director: LightingDirector
 var weather_director: WeatherDirector
+var ecosystem: AmbientEcosystem
 var current_save_id: StringName = &"slot_1"
 var chunk_navigation_adapter: ChunkNavigationAdapter
 var ambient_spawn_adapter: AmbientSpawnAdapter
@@ -71,6 +72,9 @@ func _ready() -> void:
 	weather_director = WeatherDirector.new()
 	weather_director.name = "WeatherDirector"
 	add_child(weather_director)
+	ecosystem = AmbientEcosystem.new()
+	ecosystem.name = "AmbientEcosystem"
+	add_child(ecosystem)
 	chunk_navigation_adapter = ChunkNavigationAdapter.new(get_world_2d().navigation_map)
 	ambient_spawn_adapter = AmbientSpawnAdapter.new(creature_container, CREATURE_SCENE)
 	chunk_debug_overlay = ChunkDebugOverlay.new()
@@ -326,6 +330,7 @@ func _process(delta: float) -> void:
 	lighting_director.update_clock(progress, GameSettings.reduce_motion, delta)
 	var weather := weather_director.update_clock(day_time, String(current_save_id), GameSettings.reduce_motion, delta)
 	_tick_audio_director(progress, weather, delta)
+	_tick_town_life(progress, weather, delta)
 	
 	# Atmosphere: Wind sway on chunk static decorations (U2.9: decorations live
 	# under admitted chunk nodes and unload with them).
@@ -503,6 +508,19 @@ func update_chunk_admission(world_position: Vector2) -> bool:
 	return true
 
 var _audio_tick := 0.0
+var _town_life_tick := 0.0
+var _last_phase := &""
+
+
+func _tick_town_life(progress: float, weather: int, delta: float) -> void:
+	var phase := WorldClock.phase_name(WorldClock.phase_for_progress(progress))
+	if phase != _last_phase:
+		_last_phase = phase
+		for npc in get_tree().get_nodes_in_group("town_npc"):
+			if npc.has_method("set_phase"):
+				npc.set_phase(phase)
+	if ecosystem != null:
+		ecosystem.update_ecosystem(phase, weather == WeatherDirector.Weather.RAIN, GameSettings.reduce_motion, delta, player.global_position)
 
 
 func _tick_audio_director(progress: float, weather: int, delta: float) -> void:
@@ -523,7 +541,8 @@ func _tick_audio_director(progress: float, weather: int, delta: float) -> void:
 	(AudioDirector.instance as Node).update_context(ctx)
 
 
-func _build_town_for_delta(chunk_delta: ChunkAdmissionDelta) -> void:	if town_builder == null:
+func _build_town_for_delta(chunk_delta: ChunkAdmissionDelta) -> void:
+	if town_builder == null:
 		return
 	for key in chunk_delta.admitted_keys:
 		var chunk_node := chunk_scene_adapter.get_node_for_key(key)
@@ -532,6 +551,8 @@ func _build_town_for_delta(chunk_delta: ChunkAdmissionDelta) -> void:	if town_bu
 		var parsed: Array[Vector2i] = []
 		if ChunkCoordinate.try_parse_key(key, parsed):
 			town_builder.build_for_chunk(chunk_node, parsed[0])
+			town_builder.build_anchors_for_chunk(chunk_node, parsed[0])
+			town_builder.build_npcs_for_chunk(chunk_node, parsed[0])
 
 
 func toggle_chunk_debug_overlay() -> bool:

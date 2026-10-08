@@ -199,6 +199,72 @@ def palfox_sheet():
     return sheet
 
 
+# ------------------------------------------------------------------ npcs
+NPC_PALETTES = {
+    "elder": {"hair": (200, 200, 210), "top": (122, 95, 160), "topd": (90, 70, 125),
+              "skin": (235, 190, 150), "acc": (150, 110, 70)},
+    "merchant": {"hair": (90, 60, 40), "top": (70, 130, 90), "topd": (50, 95, 65),
+                 "skin": (242, 200, 155), "acc": (240, 230, 210)},
+    "kid": {"hair": (60, 50, 70), "top": (230, 120, 90), "topd": (185, 90, 60),
+            "skin": (245, 210, 170), "acc": (242, 194, 48)},
+}
+
+
+def draw_npc(variant, facing, step):
+    P = NPC_PALETTES[variant]
+    img = new_frame()
+    d = ImageDraw.Draw(img)
+    hop = 0 if step % 2 == 0 else -1
+    scale = 0.85 if variant == "kid" else 1.0
+    # body
+    bw = int(8 * scale)
+    x0 = 8 - bw // 2
+    d.ellipse([x0, 6 + hop, x0 + bw, 13 + hop], fill=(29, 36, 51, 255))
+    d.ellipse([x0 + 1, 7 + hop, x0 + bw - 1, 12 + hop], fill=P["top"] + (255,))
+    rect(d, x0 + 1, 7 + hop, x0 + 2, 12 + hop, "K") if False else None
+    # head
+    hw = int(8 * scale)
+    hx0 = 8 - hw // 2
+    rect(d, hx0, 1 + hop, hx0 + hw - 1, 6 + hop, "K")
+    rect(d, hx0 + 1, 2 + hop, hx0 + hw - 2, 5 + hop, "skin")
+    # hair
+    for x in range(hx0, hx0 + hw):
+        px(d, x, 1 + hop, "hair")
+    rect(d, hx0, 2 + hop, hx0 + hw - 1, 2 + hop, "hair")
+    if variant == "elder":
+        px(d, hx0 + hw // 2, 0 + hop, "hair")  # bun
+    # face
+    if facing == "down":
+        px(d, hx0 + 2, 4 + hop, "K")
+        px(d, hx0 + hw - 3, 4 + hop, "K")
+    elif facing in ("left", "right"):
+        ex = hx0 + 2 if facing == "left" else hx0 + hw - 3
+        px(d, ex, 4 + hop, "K")
+    # merchant apron / elder cane / kid star
+    acc = P["acc"] + (255,)
+    if variant == "merchant":
+        d.rectangle([x0 + 2, 8 + hop, x0 + bw - 3, 12 + hop], fill=acc)
+    elif variant == "elder":
+        d.line([(x0 + bw + 1, 6 + hop), (x0 + bw + 1, 13 + hop)], fill=acc, width=1)
+    else:
+        d.point((8, 9 + hop), fill=acc)
+    if variant == "kid":
+        d.rectangle([hx0 - 1, 0 + hop, hx0 + hw, 1 + hop], fill=acc)  # cap
+    # legs
+    lo = [0, -1, 0, 1][step]
+    for lx in (6, 9):
+        rect(d, lx, 12 + hop, lx + 1, 14 + hop + (lo if lx == 6 else -lo), "K")
+    return img
+
+
+def npc_sheet(variant):
+    sheet = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    for r, facing in enumerate(["down", "up", "left", "right"]):
+        for c in range(4):
+            sheet.paste(draw_npc(variant, facing, c), (c * 16, r * 16))
+    return sheet
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
@@ -206,8 +272,11 @@ def main():
     os.makedirs(args.out, exist_ok=True)
     hero_sheet().save(os.path.join(args.out, "hero_sheet.png"))
     palfox_sheet().save(os.path.join(args.out, "palfox_sheet.png"))
-    print("generated hero + palfox sheets ->", args.out)
+    for variant in ("elder", "merchant", "kid"):
+        npc_sheet(variant).save(os.path.join(args.out, "npc_%s.png" % variant))
+    print("generated hero + palfox + npc sheets ->", args.out)
 
 
 if __name__ == "__main__":
     main()
+

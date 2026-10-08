@@ -18,6 +18,8 @@ const KIND_ART := {
 	&"bridge": "res://assets/town/bridge.png",
 	&"dock": "res://assets/town/dock.png",
 	&"gate": "res://assets/town/town_gate.png",
+	&"sakura": "res://assets/town/sakura_tree.png",
+	&"pole": "res://assets/town/power_pole.png",
 }
 
 ## Alternate art for repeated kinds (cycled by structure index).
@@ -69,3 +71,51 @@ func _art_for_kind(kind: StringName, kind_counts: Dictionary) -> String:
 
 func structure_node(chunk_node: Node, structure_id: String) -> Node:
 	return chunk_node.get_node_or_null("TownStructure_%s" % structure_id)
+
+
+## Anchor interactables spawned per chunk (id -> dialogue key).
+const ANCHOR_DIALOGUE := {
+	&"town_station": "anchor.town_station.line",
+	&"bulletin": "anchor.bulletin.line",
+	&"shrine": "anchor.shrine.line",
+	&"fishing_spot": "anchor.fishing_spot.line",
+	&"sunset_vista": "anchor.sunset_vista.line",
+}
+
+
+func build_anchors_for_chunk(chunk_node: Node, coordinate: Vector2i) -> int:
+	var built := 0
+	for district in TownDistrictDB.for_chunk(coordinate):
+		for anchor in (district as Dictionary)["anchors"]:
+			var a := anchor as Dictionary
+			var anchor_id := a["id"] as StringName
+			if not ANCHOR_DIALOGUE.has(anchor_id):
+				continue
+			var node_name := "TownAnchor_%s" % String(anchor_id)
+			if chunk_node.get_node_or_null(node_name) != null:
+				continue
+			var node := TownAnchor.new()
+			node.name = node_name
+			node.position = a["position"] as Vector2
+			chunk_node.add_child(node)
+			node.setup(anchor_id, ANCHOR_DIALOGUE[anchor_id])
+			built += 1
+	return built
+
+
+func build_npcs_for_chunk(chunk_node: Node, coordinate: Vector2i) -> int:
+	var built := 0
+	for entry in NpcDB.all():
+		var npc := entry as Dictionary
+		if ChunkCoordinate.from_world_position(npc["home"] as Vector2) != coordinate:
+			continue
+		var node_name := "TownNPC_%s" % String(npc["id"])
+		if chunk_node.get_node_or_null(node_name) != null:
+			continue
+		var node := TownNPC.new()
+		node.name = node_name
+		node.add_to_group("town_npc")
+		chunk_node.add_child(node)
+		node.setup(npc["id"])
+		built += 1
+	return built

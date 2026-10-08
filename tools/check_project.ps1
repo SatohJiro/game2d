@@ -161,6 +161,7 @@ $townArtLog = Join-Path $LogDirectory 'town-art-validation.log'
 $townAtmosphereLog = Join-Path $LogDirectory 'town-atmosphere-validation.log'
 $heroArtLog = Join-Path $LogDirectory 'hero-art-validation.log'
 $townAudioLog = Join-Path $LogDirectory 'town-audio-validation.log'
+$townEcosystemLog = Join-Path $LogDirectory 'town-ecosystem-validation.log'
 Invoke-GodotCheck -Name 'Static content validation' -LogPath $staticContentLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_static_content.gd')
 )
@@ -196,6 +197,9 @@ Invoke-GodotCheck -Name 'Hero art validation' -LogPath $heroArtLog -Arguments @(
 )
 Invoke-GodotCheck -Name 'Town audio validation' -LogPath $townAudioLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_town_audio.gd')
+)
+Invoke-GodotCheck -Name 'Town ecosystem validation' -LogPath $townEcosystemLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_town_ecosystem.gd')
 )
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')

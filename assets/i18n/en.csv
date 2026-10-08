@@ -47,3 +47,18 @@ district.hillside,Hillside homes
 district.shrine_hill,Shrine hill
 district.lakeside,Lakeside
 district.outskirts,Outskirts
+npc.elder_hana,Elder Hana
+npc.elder_hana.line,The sunset from the shrine hill is the finest, dear. Go see it.
+npc.merchant_taro,Taro the merchant
+npc.merchant_taro.line,Fresh produce every morning! The market welcomes you.
+npc.kid_sora,Sora
+npc.kid_sora.line,Big fish in the lake! I saw one jump!
+npc.fisher_umi,Umi the fisher
+npc.fisher_umi.line,Fish bite best at dawn and dusk.
+anchor.town_station.line,Starlight Station — trains carry you across Paloria. (Open the map to fast travel)
+anchor.bulletin.line,Notice board: whoever found Elder Hana's wind chime, please bring it to the shrine.
+anchor.shrine.line,Starlight Shrine — rare pets appear around here at dusk.
+anchor.fishing_spot.line,Quiet lakeshore — a perfect fishing spot.
+anchor.sunset_vista.line,Lookout — the whole town glows in the evening sun.
+prompt.target.npc,Villager
+prompt.target.town_anchor,Landmark
