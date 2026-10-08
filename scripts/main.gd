@@ -8,6 +8,7 @@ extends Node2D
 
 const CREATURE_SCENE = preload("res://scenes/creature.tscn")
 const MINIMAP_SCENE = preload("res://scenes/minimap.tscn")
+const SAVE_SLOTS_SCENE = preload("res://scenes/save_slots.tscn")
 const SPARK_TEX = preload("res://assets/fx/spark.png")
 const DEFAULT_SAVE_PATH := "user://saves/slot_1.json"
 const WORLD_BOSS_CAPTURED_REASON := &"creature.removal.captured"
@@ -37,6 +38,12 @@ var chunk_discovery_adapter := ChunkDiscoveryAdapter.new()
 var chunk_debug_overlay: ChunkDebugOverlay
 var fast_travel_cooldown_until_msec: int = 0
 var minimap_panel: MinimapPanel
+var save_slot_manager := SaveSlotManager.new()
+var save_slot_panel: SaveSlotPanel
+var current_save_slot: StringName = &"slot_1"
+var autosave_enabled := false
+var autosave_interval := 300.0
+var _autosave_elapsed := 0.0
 
 func _ready() -> void:
 	save_coordinator = SaveCoordinator.new(DEFAULT_SAVE_PATH)
@@ -62,6 +69,13 @@ func _ready() -> void:
 	hud.add_child(minimap_panel)
 	minimap_panel.travel_requested.connect(_on_minimap_travel_requested)
 	minimap_panel.render_snapshot(get_chunk_discovery_view_snapshot())
+	save_slot_panel = SAVE_SLOTS_SCENE.instantiate() as SaveSlotPanel
+	hud.add_child(save_slot_panel)
+	save_slot_panel.load_requested.connect(_on_save_slot_load_requested)
+	save_slot_panel.save_requested.connect(_on_save_slot_save_requested)
+	save_slot_panel.delete_requested.connect(_on_save_slot_delete_requested)
+	save_slot_panel.autosave_toggled.connect(_on_save_slot_autosave_toggled)
+	save_slot_panel.render_slots(list_save_slots(), autosave_enabled, current_save_slot)
 	
 	maintain_creatures()
 	hud.show_banner("PALORIA 2.0: CÀY CUỐC, NÔNG TRẠI, CHĂN NUÔI & SĂN PET!\n[E] Nông Trại/Chuồng Thú | Chuột Phải Ném Cầu (Quỹ đạo vòng cung) | [G] Kỹ Năng Pet | [C] Chế Tạo", 6.5)
@@ -93,6 +107,88 @@ func load_game() -> RefCounted:
 		chunk_discovery_adapter.import_dto(result.chunk_discovery_state.to_dto())
 		ambient_spawn_adapter.import_cooldown_dto(result.ambient_cooldown_state.to_dto(), result.world_clock_seconds)
 	return result
+
+func list_save_slots() -> Array[Dictionary]:
+	return save_slot_manager.list_slots()
+
+func save_game_to_slot(slot_id: StringName, saved_at_unix: int, make_current: bool = true) -> RefCounted:
+	if not SaveSlotManager.is_valid_slot_id(slot_id):
+		return SaveCoordinatorResult.new(SaveCoordinatorResult.Status.SNAPSHOT_FAILED)
+	save_coordinator = save_slot_manager.coordinator_for(slot_id)
+	if make_current:
+		current_save_slot = slot_id
+	return save_game(saved_at_unix, SaveSlotManager.save_id_for_slot(slot_id))
+
+func load_game_from_slot(slot_id: StringName) -> RefCounted:
+	if not SaveSlotManager.is_valid_slot_id(slot_id):
+		return SaveCoordinatorResult.new(SaveCoordinatorResult.Status.REPOSITORY_FAILED)
+	save_coordinator = save_slot_manager.coordinator_for(slot_id)
+	current_save_slot = slot_id
+	return load_game()
+
+func delete_save_slot(slot_id: StringName) -> bool:
+	var removed := save_slot_manager.delete_slot(slot_id)
+	_refresh_save_slot_panel()
+	return removed
+
+func toggle_save_slots() -> bool:
+	if save_slot_panel == null or not is_instance_valid(save_slot_panel):
+		return false
+	if not save_slot_panel.is_open():
+		_refresh_save_slot_panel()
+	return save_slot_panel.toggle()
+
+func set_autosave_enabled(enabled: bool) -> void:
+	autosave_enabled = enabled
+	_autosave_elapsed = 0.0
+	_refresh_save_slot_panel()
+
+func is_autosave_safe() -> bool:
+	if is_fast_travel_encounter_blocked():
+		return false
+	if hud.is_crafting_visible() or hud.is_cooking_modal_visible() or hud.is_stat_modal_visible():
+		return false
+	if minimap_panel != null and is_instance_valid(minimap_panel) and minimap_panel.is_open():
+		return false
+	if save_slot_panel != null and is_instance_valid(save_slot_panel) and save_slot_panel.is_open():
+		return false
+	return true
+
+func try_autosave_tick(delta: float) -> bool:
+	if not autosave_enabled:
+		return false
+	_autosave_elapsed += delta
+	if _autosave_elapsed < autosave_interval:
+		return false
+	if not is_autosave_safe():
+		return false
+	_autosave_elapsed = 0.0
+	var result := save_game_to_slot(SaveSlotManager.AUTOSAVE_SLOT, int(Time.get_unix_time_from_system()), false)
+	if result.is_success():
+		hud.show_banner("Đã tự động lưu game.", 2.0)
+	return result.is_success()
+
+func _refresh_save_slot_panel() -> void:
+	if save_slot_panel != null and is_instance_valid(save_slot_panel):
+		save_slot_panel.render_slots(list_save_slots(), autosave_enabled, current_save_slot)
+
+func _on_save_slot_load_requested(slot_id: StringName) -> void:
+	var result := load_game_from_slot(slot_id)
+	_refresh_save_slot_panel()
+	hud.show_banner("Đã tải %s." % String(slot_id) if result.is_loaded() else "Tải save thất bại.", 2.5)
+
+func _on_save_slot_save_requested(slot_id: StringName) -> void:
+	var result := save_game_to_slot(slot_id, int(Time.get_unix_time_from_system()))
+	_refresh_save_slot_panel()
+	hud.show_banner("Đã lưu vào %s." % String(slot_id) if result.is_success() else "Lưu save thất bại.", 2.5)
+
+func _on_save_slot_delete_requested(slot_id: StringName) -> void:
+	if delete_save_slot(slot_id):
+		hud.show_banner("Đã xóa %s." % String(slot_id), 2.0)
+
+func _on_save_slot_autosave_toggled(enabled: bool) -> void:
+	set_autosave_enabled(enabled)
+	hud.show_banner("Tự động lưu: BẬT" if enabled else "Tự động lưu: TẮT", 2.0)
 
 func apply_world_clock(clock_seconds: float) -> bool:
 	if not is_finite(clock_seconds) or clock_seconds < 0.0: return false
@@ -145,6 +241,9 @@ func _process(delta: float) -> void:
 	if spawn_timer <= 0.0:
 		spawn_timer = 4.0
 		maintain_creatures()
+
+	if autosave_enabled:
+		try_autosave_tick(delta)
 	
 	if not boss_spawned:
 		boss_timer -= delta
@@ -388,6 +487,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			toggle_chunk_debug_overlay()
 		elif event.keycode == KEY_M:
 			toggle_minimap()
+		elif event.keycode == KEY_F5:
+			var quicksave := save_game_to_slot(current_save_slot, int(Time.get_unix_time_from_system()))
+			hud.show_banner("Đã lưu nhanh." if quicksave.is_success() else "Lưu nhanh thất bại.", 2.0)
+		elif event.keycode == KEY_F9:
+			toggle_save_slots()
 
 func _exit_tree() -> void:
 	if ambient_spawn_adapter != null: ambient_spawn_adapter.cleanup()

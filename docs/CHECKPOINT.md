@@ -1,5 +1,26 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U3.3 — save/load slot UI + autosave controls
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- `SaveSlotManager` (`systems/save/`): slot IDs ổn định (`slot_1..slot_3`, `autosave`); mỗi slot có coordinator/repository riêng giữ atomicity primary/backup; `list_slots()` trả metadata (saved_at_unix, clock_seconds, player/base level); `delete_slot()` xóa primary+bak+tmp; unknown ID fail-closed.
+- Slot panel (`scripts/save_slots.gd`, `scenes/save_slots.tscn`, F9): liệt kê slot + metadata, nút Tải/Lưu/Lưu mới/Xóa (xóa xác nhận 2 lần nhấn), CheckButton autosave. UI chỉ phát intent, Main execute và re-render.
+- Autosave: opt-in qua explicit `set_autosave_enabled` (mặc định TẮT), interval 300s, ghi vào slot autosave riêng; safety gate: không chạy khi modal mở (crafting/cooking/stat/minimap/slot panel) hoặc encounter active (tái dùng `is_fast_travel_encounter_blocked`); autosave không chiếm `current_save_slot`. F5 quicksave vào ô đang dùng.
+- Không đụng pet roster screen, settings, localization.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass bằng Godot 4.7.2 headless trước thay đổi.
+- `tools/validate_save_slots.gd` pass: slot manager pure (ID/path/metadata/delete), roundtrip qua scene thật (save slot_2 → metadata → load restore → delete), invalid slot fail-closed, autosave (mặc định tắt, interval trigger, không chiếm current slot, bị chặn khi modal mở / night raid active / disabled), panel intents (load/save/delete 2-press/autosave toggle).
+- Trong lúc verify sửa 3 lỗi test/code: `:=` inference từ hàm main.gd không type, array literal phải typed `Array[Dictionary]`, và tìm node code-built phải theo class/text thay vì tên auto-generated.
+- Full gate cuối: pass (headless editor load, 31 validator gồm save slot mới, main-scene smoke). Strict scan `build/checks` sạch `SCRIPT ERROR`/`Parse Error`/`ERROR:`; `git diff --check` sạch.
+- File mới: `systems/save/save_slot_manager.gd`, `scripts/save_slots.gd`, `scenes/save_slots.tscn`, `tools/validate_save_slots.gd` (+ `.uid`); sửa `scripts/main.gd` (slot API, autosave, F5/F9), `tools/check_project.ps1`, MODULES/roadmap/CHECKPOINT/NEXT_UPDATE_PROMPT.
+- Rollback: xóa 4 file mới, revert main/validator/docs (git revert commit này).
+- Package kế tiếp: U3.4 settings + localization + context prompt theo `NEXT_UPDATE_PROMPT.md`.
+
 ## U3.2 — modal intent/ViewModel cleanup (crafting + cooking)
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.

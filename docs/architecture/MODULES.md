@@ -35,8 +35,8 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
 | WORLD | Zone, chunks, spawn, discovery, day/night, raid | Main owns typed clock/raid/boss timers; chunk adapters own scene/navigation/discovery, U2.5 director owns transient ambient population; Main owns atomic fast-travel command | Persistent spawn delta, authored biome tables | U1.12u–ag, U2.1–U2.6c |
 | NAV | Navigation/path requests | U2.4 có revision-guarded chunk region lifecycle và placeholder blocked state | Terrain bake, obstacle polygon và actor path request | U2.4 |
-| SAVE | Versioned persistence | Main→coordinator explicit clock boundary; Player/base/building/resource adapters; atomic repository | Autosave/UI scheduling, encounter delta | U1.11–U1.12 |
-| UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
+| SAVE | Versioned persistence | Main→coordinator explicit clock boundary; Player/base/building/resource adapters; atomic repository; `SaveSlotManager` maps slot IDs (slot_1..3, autosave) to per-slot coordinators with metadata list/delete; Main owns autosave policy (opt-in, interval, safety gate: no modal/encounter) | Encounter delta | U1.11–U1.12, U3.3 |
+| UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn`, `save_slots.gd/tscn` | Intent signals + immutable snapshots; slot panel (F9) emits load/save/delete/autosave intents, F5 quicksave | Settings, localization | U3 |
 | PRESENT | Animation/VFX/camera/audio | Trộn trong actor; `AudioManager` autoload | Event-driven adapters, pooling, accessibility scale | U4 |
 | ASSET | Vendoring/provenance/import | File rời, nguồn chưa biết | Manifest, package receipt, immutable vendor source | U0.2, U4.1 |
 | QA | Validation/smoke/performance | `tools/check_project.ps1` | Layered gates và reproducible scenario | Mọi package |

@@ -152,6 +152,7 @@ Invoke-GodotCheck -Name 'Biome table validation' -LogPath $biomeTableLog -Argume
 $staticContentLog = Join-Path $LogDirectory 'static-content-validation.log'
 $hudViewModelLog = Join-Path $LogDirectory 'hud-viewmodel-validation.log'
 $modalViewModelLog = Join-Path $LogDirectory 'modal-viewmodel-validation.log'
+$saveSlotLog = Join-Path $LogDirectory 'save-slot-validation.log'
 Invoke-GodotCheck -Name 'Static content validation' -LogPath $staticContentLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_static_content.gd')
 )
@@ -160,6 +161,9 @@ Invoke-GodotCheck -Name 'HUD ViewModel validation' -LogPath $hudViewModelLog -Ar
 )
 Invoke-GodotCheck -Name 'Modal ViewModel validation' -LogPath $modalViewModelLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_modal_viewmodel.gd')
+)
+Invoke-GodotCheck -Name 'Save slot validation' -LogPath $saveSlotLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_save_slots.gd')
 )
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')
