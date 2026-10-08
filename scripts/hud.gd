@@ -69,6 +69,19 @@ var active_cooking_pot: Node2D = null
 var active_player_ref: CharacterBody2D = null
 var cached_cooking_recipes: Array = []
 
+
+## U3.1: single render entry point. The HUD renders this ViewModel and emits
+## intents; it never reads player nodes itself. Granular update_* methods stay
+## as the render layer for gameplay event push sites.
+func render_view_model(vm: HUDViewModel) -> void:
+	if vm == null:
+		return
+	update_player_stats(vm.hp, vm.max_hp, vm.stamina, vm.max_stamina, vm.hunger, vm.max_hunger, vm.thirst, vm.max_thirst, vm.body_temperature, vm.level, vm.exp_val, vm.max_exp, vm.buff_text)
+	update_character_sheet(vm.stat_points, vm.stats, vm.weapon_text)
+	update_inventory(vm.inventory)
+	if vm.pet_visible:
+		update_pet_stats(vm.pet_name, vm.pet_level, vm.pet_hp, vm.pet_max_hp, vm.pet_stance_text)
+
 func _ready() -> void:
 	banner.modulate.a = 0.0
 	if crafting_modal:
@@ -217,28 +230,17 @@ func build_recipe_cards() -> void:
 func create_recipe_card(rec: Dictionary) -> Control:
 	var card = PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var card_sb = StyleBoxFlat.new()
-	card_sb.bg_color = Color(0.1, 0.14, 0.22, 0.95)
-	card_sb.border_width_left = 1
-	card_sb.border_width_top = 1
-	card_sb.border_width_right = 1
-	card_sb.border_width_bottom = 1
-	card_sb.border_color = Color(0.2, 0.5, 0.8, 0.6)
-	card_sb.corner_radius_top_left = 6
-	card_sb.corner_radius_top_right = 6
-	card_sb.corner_radius_bottom_right = 6
-	card_sb.corner_radius_bottom_left = 6
-	card.add_theme_stylebox_override("panel", card_sb)
+	card.add_theme_stylebox_override("panel", PaloriaTheme.card_stylebox())
 	
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_top", 6)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_bottom", 6)
+	margin.add_theme_constant_override("margin_left", PaloriaTheme.MARGIN_NORMAL)
+	margin.add_theme_constant_override("margin_top", PaloriaTheme.MARGIN_TIGHT)
+	margin.add_theme_constant_override("margin_right", PaloriaTheme.MARGIN_NORMAL)
+	margin.add_theme_constant_override("margin_bottom", PaloriaTheme.MARGIN_TIGHT)
 	card.add_child(margin)
 	
 	var hbox = HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 10)
+	hbox.add_theme_constant_override("separation", PaloriaTheme.SEPARATION_WIDE)
 	margin.add_child(hbox)
 	
 	var icon = TextureRect.new()
@@ -252,19 +254,19 @@ func create_recipe_card(rec: Dictionary) -> Control:
 	
 	var vbox = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 2)
+	vbox.add_theme_constant_override("separation", PaloriaTheme.SEPARATION_TIGHT)
 	hbox.add_child(vbox)
 	
 	var title = Label.new()
 	title.text = rec.get("name", "Vật phẩm")
-	title.add_theme_font_size_override("font_size", 12)
-	title.add_theme_color_override("font_color", Color(1, 0.9, 0.4))
+	title.add_theme_font_size_override("font_size", PaloriaTheme.FONT_NORMAL)
+	title.add_theme_color_override("font_color", PaloriaTheme.ACCENT_GOLD)
 	vbox.add_child(title)
 	
 	var desc = Label.new()
 	desc.text = rec.get("desc", "")
-	desc.add_theme_font_size_override("font_size", 9)
-	desc.add_theme_color_override("font_color", Color(0.7, 0.8, 0.9))
+	desc.add_theme_font_size_override("font_size", PaloriaTheme.FONT_SMALL)
+	desc.add_theme_color_override("font_color", PaloriaTheme.TEXT_MUTED)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(desc)
 	
@@ -285,8 +287,8 @@ func create_recipe_card(rec: Dictionary) -> Control:
 	
 	var cost_lbl = Label.new()
 	cost_lbl.text = " • ".join(cost_parts)
-	cost_lbl.add_theme_font_size_override("font_size", 9)
-	cost_lbl.add_theme_color_override("font_color", Color(0.5, 0.9, 1.0) if can_afford else Color(1.0, 0.5, 0.5))
+	cost_lbl.add_theme_font_size_override("font_size", PaloriaTheme.FONT_SMALL)
+	cost_lbl.add_theme_color_override("font_color", PaloriaTheme.AFFORDABLE if can_afford else PaloriaTheme.UNAFFORDABLE)
 	vbox.add_child(cost_lbl)
 	
 	var btn = Button.new()
@@ -331,28 +333,17 @@ func build_cooking_cards() -> void:
 func create_cooking_recipe_card(rec: Dictionary) -> Control:
 	var card = PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var card_sb = StyleBoxFlat.new()
-	card_sb.bg_color = Color(0.12, 0.15, 0.22, 0.95)
-	card_sb.border_width_left = 1
-	card_sb.border_width_top = 1
-	card_sb.border_width_right = 1
-	card_sb.border_width_bottom = 1
-	card_sb.border_color = Color(1.0, 0.65, 0.2, 0.8)
-	card_sb.corner_radius_top_left = 8
-	card_sb.corner_radius_top_right = 8
-	card_sb.corner_radius_bottom_right = 8
-	card_sb.corner_radius_bottom_left = 8
-	card.add_theme_stylebox_override("panel", card_sb)
+	card.add_theme_stylebox_override("panel", PaloriaTheme.cooking_card_stylebox())
 	
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 10)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_left", PaloriaTheme.MARGIN_WIDE)
+	margin.add_theme_constant_override("margin_top", PaloriaTheme.MARGIN_NORMAL)
+	margin.add_theme_constant_override("margin_right", PaloriaTheme.MARGIN_WIDE)
+	margin.add_theme_constant_override("margin_bottom", PaloriaTheme.MARGIN_NORMAL)
 	card.add_child(margin)
 	
 	var hbox = HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 12)
+	hbox.add_theme_constant_override("separation", PaloriaTheme.SEPARATION_XWIDE)
 	margin.add_child(hbox)
 	
 	var icon = TextureRect.new()
@@ -366,19 +357,19 @@ func create_cooking_recipe_card(rec: Dictionary) -> Control:
 	
 	var vbox = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 2)
+	vbox.add_theme_constant_override("separation", PaloriaTheme.SEPARATION_TIGHT)
 	hbox.add_child(vbox)
 	
 	var title = Label.new()
 	title.text = rec.get("name", "")
-	title.add_theme_font_size_override("font_size", 12)
-	title.add_theme_color_override("font_color", Color(1, 0.85, 0.4))
+	title.add_theme_font_size_override("font_size", PaloriaTheme.FONT_NORMAL)
+	title.add_theme_color_override("font_color", PaloriaTheme.TEXT_WARM)
 	vbox.add_child(title)
 	
 	var desc = Label.new()
 	desc.text = rec.get("desc", "")
-	desc.add_theme_font_size_override("font_size", 9)
-	desc.add_theme_color_override("font_color", Color(0.8, 0.85, 0.9))
+	desc.add_theme_font_size_override("font_size", PaloriaTheme.FONT_SMALL)
+	desc.add_theme_color_override("font_color", PaloriaTheme.TEXT_FRESH)
 	vbox.add_child(desc)
 	
 	var cost = rec.get("cost", {})
@@ -393,8 +384,8 @@ func create_cooking_recipe_card(rec: Dictionary) -> Control:
 	
 	var cost_lbl = Label.new()
 	cost_lbl.text = "Nguyên liệu: " + " • ".join(cost_parts)
-	cost_lbl.add_theme_font_size_override("font_size", 9)
-	cost_lbl.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5) if can_afford else Color(1.0, 0.5, 0.5))
+	cost_lbl.add_theme_font_size_override("font_size", PaloriaTheme.FONT_SMALL)
+	cost_lbl.add_theme_color_override("font_color", PaloriaTheme.SUCCESS_GREEN if can_afford else PaloriaTheme.UNAFFORDABLE)
 	vbox.add_child(cost_lbl)
 	
 	var btn = Button.new()

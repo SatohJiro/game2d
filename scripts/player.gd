@@ -1076,11 +1076,7 @@ func update_hud() -> void:
 			hud_ref = huds[0]
 	
 	if hud_ref:
-		var needs_snapshot := needs_state.create_snapshot()
-		var buff_text := needs_snapshot.buff_display_name if not needs_snapshot.buff_display_name.is_empty() else "Khỏe mạnh"
-		hud_ref.update_player_stats(hp, max_hp, stamina, max_stamina, needs_snapshot.hunger, needs_snapshot.max_hunger, needs_snapshot.thirst, needs_snapshot.max_thirst, needs_snapshot.body_temperature, level, exp_val, max_exp, buff_text)
-		hud_ref.update_character_sheet(stat_points, stats, "%s (Sát thương %d)" % [weapon_name, weapon_damage + stats["str"] * 3])
-		hud_ref.update_inventory(inventory)
+		hud_ref.render_view_model(HUDViewModel.from_player(self))
 
 func spawn_floating_text(txt: String, color: Color) -> void:
 	var float_node = FLOATING_TEXT_SCENE.instantiate()

@@ -1,5 +1,26 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U3.1 — theme/tokens + HUD ViewModel
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- `PaloriaTheme` (`ui/theme/paloria_theme.gd`): palette, type scale, radii, spacing + stylebox factories; code-built UI (recipe/cooking cards trong hud.gd, minimap panel) dùng tokens, giá trị visual không đổi (layout giữ nguyên).
+- `HUDViewModel` (`ui/hud_view_model.gd`): snapshot read-only từ player (vitals, needs, progression, stats, weapon, inventory, pet card); `from_player()` là nơi duy nhất đọc player state; `hud.render_view_model()` là entry render duy nhất cho path `update_hud()`; quest panel giữ push path hiện tại tới U3.2.
+- HUD vẫn chỉ phát intent (`recipe_crafted`, `stat_upgrade_requested`); không đổi modal focus/pause.
+- Không rebuild panel hud.tscn sang tokens (giữ nguyên layout, tránh rủi ro edit .tscn).
+
+### Validation và bàn giao
+
+- Baseline full gate: pass bằng Godot 4.7.2 headless, 49 Markdown files và toàn bộ checks xanh.
+- `tools/validate_hud_viewmodel.gd` pass: theme tokens resolve đúng, ViewModel mapping khớp player (detached copy), render empty/null không crash, Main integration (take_damage → update_hud → HP bar giảm đúng 10).
+- Trong lúc verify phát hiện và sửa 4 lỗi: `:=` suy luận từ Variant (2 chỗ), `is_same` là hàm global không phải method, `PlayerNeedsSnapshot.get()` chỉ nhận 1 arg (dùng property access), và leak headless do floating-text tween chưa xong khi free scene (chờ 90 frames trong test).
+- Full gate cuối: pass (headless editor load, 29 validator gồm HUD ViewModel mới, main-scene smoke). Strict scan `build/checks` sạch `SCRIPT ERROR`/`Parse Error`/`ERROR:`; `git diff --check` sạch.
+- File mới: `ui/theme/paloria_theme.gd`, `ui/hud_view_model.gd`, `tools/validate_hud_viewmodel.gd` (+ `.uid`); sửa `scripts/hud.gd` (render_view_model + theme migration), `scripts/minimap.gd` (theme), `scripts/player.gd` (update_hud qua ViewModel), `tools/check_project.ps1`, MODULES/roadmap/CHECKPOINT/NEXT_UPDATE_PROMPT.
+- Rollback: xóa 3 file mới, revert hud/minimap/player/validator/docs (git revert commit này).
+- Package kế tiếp: U3.2 inventory/crafting/build/pet screens + save/load UI theo `NEXT_UPDATE_PROMPT.md`.
+
 ## U2.9 — static content migration (world-building)
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.

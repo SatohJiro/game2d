@@ -146,12 +146,7 @@ func _build_ui() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var panel := PanelContainer.new()
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.06, 0.08, 0.12, 0.96)
-	panel_style.border_color = Color(0.30, 0.50, 0.75, 0.9)
-	panel_style.set_border_width_all(2)
-	panel_style.set_corner_radius_all(10)
-	panel.add_theme_stylebox_override("panel", panel_style)
+	panel.add_theme_stylebox_override("panel", PaloriaTheme.minimap_panel_stylebox())
 	center.add_child(panel)
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 18)
@@ -160,12 +155,12 @@ func _build_ui() -> void:
 	margin.add_theme_constant_override("margin_bottom", 14)
 	panel.add_child(margin)
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
+	vbox.add_theme_constant_override("separation", PaloriaTheme.SEPARATION_WIDE)
 	margin.add_child(vbox)
 
 	var title := Label.new()
 	title.text = "BẢN ĐỒ & DỊCH CHUYỂN NHANH"
-	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_font_size_override("font_size", PaloriaTheme.FONT_TITLE)
 	vbox.add_child(title)
 
 	var hbox := HBoxContainer.new()
@@ -176,7 +171,7 @@ func _build_ui() -> void:
 	hbox.add_child(_map_view)
 
 	var right := VBoxContainer.new()
-	right.add_theme_constant_override("separation", 8)
+	right.add_theme_constant_override("separation", PaloriaTheme.SEPARATION_NORMAL)
 	hbox.add_child(right)
 	var list_label := Label.new()
 	list_label.text = "Điểm đến đã khám phá:"
@@ -195,7 +190,7 @@ func _build_ui() -> void:
 
 	var legend := Label.new()
 	legend.text = "■ đã khám phá (vạch góc)  |  ▨ trong sương mù  |  ● vị trí hiện tại (viền vàng)"
-	legend.add_theme_font_size_override("font_size", 13)
+	legend.add_theme_font_size_override("font_size", PaloriaTheme.FONT_TINY)
 	vbox.add_child(legend)
 
 	_status_label = Label.new()
@@ -204,7 +199,7 @@ func _build_ui() -> void:
 
 	var hint := Label.new()
 	hint.text = "M: đóng/mở  •  ↑↓: chọn  •  Enter: dịch chuyển"
-	hint.add_theme_font_size_override("font_size", 13)
+	hint.add_theme_font_size_override("font_size", PaloriaTheme.FONT_TINY)
 	vbox.add_child(hint)
 
 	_destination_list.item_activated.connect(_on_item_activated)

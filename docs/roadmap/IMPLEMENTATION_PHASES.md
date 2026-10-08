@@ -44,8 +44,8 @@ Gate U2: qua 9 chunk không mất state; soak 20 phút; không hitch vượt bud
 
 ## U3 — UI/UX
 
-1. UI tokens + Theme + font/icon policy.
-2. HUD ViewModel và intent bridge.
+1. **UI tokens + Theme — VERIFIED foundation:** `PaloriaTheme` design tokens (palette, type scale, radii, spacing) + stylebox factories; code-built UI (recipe/cooking cards, minimap panel) dùng tokens; inline sub-resources trong hud.tscn là legacy, migrate khi rebuild panel.
+2. **HUD ViewModel — VERIFIED:** `HUDViewModel.from_player()` là nơi duy nhất đọc player state; `hud.render_view_model()` render snapshot; quest panel giữ push path tới U3.2.
 3. Inventory/crafting/build/pet roster screens; save/load slot UI và autosave controls trên explicit coordinator.
 4. Context prompt + device detection + command wheel.
 5. Settings: remap, scale, audio, reduced motion/flash/shake.
