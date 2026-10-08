@@ -20,7 +20,7 @@ func _run() -> void:
 
 func _test_pure_policy() -> void:
 	var keys := ChunkAdmissionPolicy.desired_keys(Vector2i.ZERO)
-	var request := AmbientSpawnRequest.new(Vector2i.ZERO, keys, {}, WorldChunkCatalog.DEFAULT_BIOME_ID, 2, 10, 730201, 1)
+	var request := AmbientSpawnRequest.new(Vector2i.ZERO, keys, {}, [], WorldChunkCatalog.DEFAULT_BIOME_ID, 2, 10, 730201, 1)
 	var first := AmbientSpawnPolicy.resolve(request, 0)
 	var replay := AmbientSpawnPolicy.resolve(request, 0)
 	_expect(first.status == AmbientSpawnResult.Status.APPLIED and first.admitted.size() == 10, "initial pure policy must fill exact budget")
@@ -33,11 +33,11 @@ func _test_pure_policy() -> void:
 	_expect(unique.size() == 10, "ambient instance identity must be unique")
 	var existing: Dictionary = {}
 	for spec in first.admitted: existing[spec.instance_id] = spec.chunk_key
-	var no_change := AmbientSpawnPolicy.resolve(AmbientSpawnRequest.new(Vector2i.ZERO, keys, existing, WorldChunkCatalog.DEFAULT_BIOME_ID, 3, 10, 99, 1), 1)
+	var no_change := AmbientSpawnPolicy.resolve(AmbientSpawnRequest.new(Vector2i.ZERO, keys, existing, [], WorldChunkCatalog.DEFAULT_BIOME_ID, 3, 10, 99, 1), 1)
 	_expect(no_change.status == AmbientSpawnResult.Status.NO_CHANGE and no_change.next_ids.size() == 10, "full same-chunk population must not reroll on time/seed change")
 	var duplicate_keys := keys.duplicate()
 	duplicate_keys.append(keys[0])
-	var duplicate := AmbientSpawnPolicy.resolve(AmbientSpawnRequest.new(Vector2i.ZERO, duplicate_keys, {}, WorldChunkCatalog.DEFAULT_BIOME_ID, 0, 10, 1, 1), 0)
+	var duplicate := AmbientSpawnPolicy.resolve(AmbientSpawnRequest.new(Vector2i.ZERO, duplicate_keys, {}, [], WorldChunkCatalog.DEFAULT_BIOME_ID, 0, 10, 1, 1), 0)
 	_expect(duplicate.status == AmbientSpawnResult.Status.INVALID, "duplicate active chunk keys must fail closed")
 
 

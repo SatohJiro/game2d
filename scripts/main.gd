@@ -81,7 +81,7 @@ func save_game(saved_at_unix: int, save_id: StringName = &"save.slot_1") -> RefC
 	var raid_state := create_night_raid_persistence_state()
 	if raid_state == null:
 		return SaveCoordinatorResult.new(SaveCoordinatorResult.Status.SNAPSHOT_FAILED)
-	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time, raid_triggered_this_cycle, boss_spawned, boss_timer, spawn_timer, boss_state, raid_state, chunk_discovery_adapter.create_persistence_state())
+	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time, raid_triggered_this_cycle, boss_spawned, boss_timer, spawn_timer, boss_state, raid_state, chunk_discovery_adapter.create_persistence_state(), ambient_spawn_adapter.create_cooldown_persistence_state())
 
 func load_game() -> RefCounted:
 	if save_coordinator == null:
@@ -92,6 +92,7 @@ func load_game() -> RefCounted:
 		apply_world_boss_state(result.world_boss_state)
 		apply_night_raid_state(result.night_raid_state)
 		chunk_discovery_adapter.import_dto(result.chunk_discovery_state.to_dto())
+		ambient_spawn_adapter.import_cooldown_dto(result.ambient_cooldown_state.to_dto(), result.world_clock_seconds)
 	return result
 
 func apply_world_clock(clock_seconds: float) -> bool:
@@ -530,6 +531,7 @@ func _remove_world_boss_actor() -> void:
 
 func maintain_creatures() -> bool:
 	if ambient_spawn_adapter == null: return false
+	ambient_spawn_adapter.world_clock_seconds = day_time
 	var time_bucket := clampi(floori(fmod(day_time / day_duration, 1.0) * 4.0), 0, 3)
 	var request := ambient_spawn_adapter.create_request(
 		chunk_admission.center,

@@ -32,7 +32,7 @@ static func create_empty(save_id: StringName, saved_at_unix: int) -> Dictionary:
 		"inventory": {},
 		"pets": [],
 		"base": {"base_level": 1, "active_quest_id": "quest.base.survival", "claimed_quest_ids": []},
-		"world": {"clock_seconds": 0.0, "cycle_state": {"raid_triggered_this_cycle": false}, "world_boss_state": WorldBossState.new().to_dto(), "night_raid_state": NightRaidState.new().to_dto(), "discovery_state": ChunkDiscoveryState.new().to_dto(), "entity_deltas": [], "resource_deltas": [], "chunk_deltas": []},
+		"world": {"clock_seconds": 0.0, "cycle_state": {"raid_triggered_this_cycle": false}, "world_boss_state": WorldBossState.new().to_dto(), "night_raid_state": NightRaidState.new().to_dto(), "discovery_state": ChunkDiscoveryState.new().to_dto(), "ambient_cooldowns": AmbientCooldownState.new().to_dto(), "entity_deltas": [], "resource_deltas": [], "chunk_deltas": []},
 	}
 
 
@@ -149,6 +149,8 @@ static func _validate_world(value: Variant, errors: PackedStringArray) -> void:
 	var world: Dictionary = value
 	if ChunkDiscoveryState.from_dto(world.get("discovery_state")) == null:
 		errors.append("world.discovery_state must contain canonical unique chunk keys and coherent revision")
+	if AmbientCooldownState.from_dto(world.get("ambient_cooldowns")) == null:
+		errors.append("world.ambient_cooldowns must contain valid ambient slot cooldowns")
 	if not _is_finite_number(world.get("clock_seconds")) or float(world.get("clock_seconds", -1.0)) < 0.0:
 		errors.append("world.clock_seconds must be finite and non-negative")
 	else:

@@ -33,11 +33,14 @@ static func resolve(request: AmbientSpawnRequest, applied_revision: int) -> Ambi
 	unloaded.sort()
 	var admitted: Array[AmbientSpawnSpec] = []
 	var next_ids := survivors.duplicate()
+	var blocked_lookup: Dictionary = {}
+	for blocked_id in request.blocked_instance_ids: blocked_lookup[blocked_id] = true
 	for key in _priority_keys(request.active_keys, request.center):
 		for slot in range(SLOTS_PER_CHUNK):
 			if next_ids.size() >= request.budget: break
 			var instance_id := _instance_id(key, slot)
 			if request.existing_chunks.has(instance_id): continue
+			if blocked_lookup.has(instance_id): continue
 			var spec := _create_spec(key, slot, request)
 			if spec == null or not spec.is_valid():
 				return AmbientSpawnResult.new(AmbientSpawnResult.Status.INVALID, [], [], [], applied_revision)
@@ -61,6 +64,10 @@ static func _is_valid_request(request: AmbientSpawnRequest) -> bool:
 		var instance_id := raw_id as StringName
 		var existing_coordinate: Array[Vector2i] = []
 		if not ContentId.is_valid(instance_id) or not ChunkCoordinate.try_parse_key(request.existing_chunks[instance_id] as StringName, existing_coordinate): return false
+	var seen_blocked := {}
+	for blocked_id in request.blocked_instance_ids:
+		if seen_blocked.has(blocked_id) or not AmbientCooldownState.is_valid_slot_id(blocked_id): return false
+		seen_blocked[blocked_id] = true
 	return true
 
 

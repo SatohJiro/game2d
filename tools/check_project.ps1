@@ -141,6 +141,10 @@ Invoke-GodotCheck -Name 'Fast travel validation' -LogPath $fastTravelLog -Argume
 Invoke-GodotCheck -Name 'Minimap validation' -LogPath $minimapLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_minimap.gd')
 )
+$ambientCooldownLog = Join-Path $LogDirectory 'ambient-cooldown-validation.log'
+Invoke-GodotCheck -Name 'Ambient cooldown validation' -LogPath $ambientCooldownLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_ambient_cooldown.gd')
+)
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')
 )

@@ -1,5 +1,26 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U2.7 — ambient spawn persistent cooldown/delta
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- `AmbientCooldownState` typed registry: slot ID stable `ambient.<chunk>_s<slot>` → expires_at theo world clock; cooldown 120s; prune lazy + trước snapshot + khi import.
+- Adapter nối signal `defeated`/`removed` của actor ambient khi spawn; defeat/capture đăng ký cooldown bằng world clock đã sync trong `maintain_creatures()`; slot cooling-down đưa vào `AmbientSpawnRequest.blocked_instance_ids`, policy skip slot đó (không đổi seed/budget/deterministic fill).
+- Save v1: `world.ambient_cooldowns` optional; `from_dto(null)` → empty (legacy hợp lệ); DTO hỏng → null → schema fail closed; snapshot/apply/coordinator/result carry typed state; Main save/load import có prune theo clock đã load.
+- Không đổi deterministic spawn policy/budget/seed; không persist actor Node/RID; chưa autosave.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass bằng Godot 4.7.2 headless, 49 Markdown files và toàn bộ checks xanh.
+- `tools/validate_ambient_cooldown.gd` pass: pure state (register/expiry/prune/DTO round-trip/malformed), policy blocked-slot (skip đúng slot, invalid/duplicate blocked → INVALID), Main integration qua scene thật (defeat bằng take_damage → cooldown → save JSON chứa DTO → reconcile không respawn slot → load restore → capture qua signal → hết cooldown respawn), legacy (thiếu field → empty) và corrupt (fail closed, runtime preserved).
+- Full gate cuối: pass (headless editor load, 26 validator gồm ambient cooldown mới, main-scene smoke). Strict scan `build/checks` sạch `SCRIPT ERROR`/`Parse Error`/`ERROR:`; `git diff --check` sạch.
+- Trong lúc verify phát hiện và sửa 1 lỗi test: set `day_time` sau `maintain_creatures()` làm clock sync sai — đảo thứ tự, cooldown assertion đúng.
+- File mới: `systems/world/ambient_cooldown_state.gd`, `tools/validate_ambient_cooldown.gd` (+ `.uid`); sửa request/policy/adapter ambient, toàn bộ save pipeline (schema/snapshot/apply plan+adapter+result/coordinator+result), `scripts/main.gd`, `tools/check_project.ps1`, `tools/validate_ambient_spawns.gd` (constructor mới), FEATURES/roadmap/CHECKPOINT/NEXT_UPDATE_PROMPT.
+- Rollback: xóa 2 file mới, revert request/policy/adapter/save pipeline/main/validators/docs về trước U2.7 (git revert commit này).
+- Package kế tiếp: U2.8 authored biome tables theo `NEXT_UPDATE_PROMPT.md`.
+
 ## U2.6d — minimap/fog presentation + destination picker
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.

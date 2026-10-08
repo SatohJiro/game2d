@@ -121,6 +121,10 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 	if discovery_state == null:
 		errors.append("unsupported chunk discovery state")
 		return null
+	var cooldown_state := AmbientCooldownState.from_dto(snapshot["world"].get("ambient_cooldowns"))
+	if cooldown_state == null:
+		errors.append("unsupported ambient cooldown state")
+		return null
 	return ApplyPlan.new(
 		player_data,
 		legacy_inventory,
@@ -139,7 +143,8 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		boss_state,
 		raid_state,
 		progression_state,
-		discovery_state
+		discovery_state,
+		cooldown_state
 	)
 
 
@@ -193,7 +198,7 @@ static func _commit(player: Node, plan: RefCounted) -> RefCounted:
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	if not bool(player.call("apply_resource_depletion_snapshot", plan.resource_depletions)):
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
-	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle, plan.boss_spawned, plan.boss_timer, plan.spawn_timer, plan.world_boss_state, plan.night_raid_state, plan.chunk_discovery_state)
+	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle, plan.boss_spawned, plan.boss_timer, plan.spawn_timer, plan.world_boss_state, plan.night_raid_state, plan.chunk_discovery_state, plan.ambient_cooldown_state)
 
 
 static func _is_default_base_state(state: BaseProgressState) -> bool:

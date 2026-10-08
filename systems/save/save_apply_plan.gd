@@ -19,6 +19,7 @@ var world_boss_state: WorldBossState
 var night_raid_state: NightRaidState
 var player_progression_state: PlayerProgressionState
 var chunk_discovery_state: ChunkDiscoveryState
+var ambient_cooldown_state: AmbientCooldownState
 
 
 func _init(
@@ -39,7 +40,8 @@ func _init(
 	p_world_boss_state: WorldBossState,
 	p_night_raid_state: NightRaidState,
 	p_player_progression_state: PlayerProgressionState,
-	p_chunk_discovery_state: ChunkDiscoveryState
+	p_chunk_discovery_state: ChunkDiscoveryState,
+	p_ambient_cooldown_state: AmbientCooldownState
 ) -> void:
 	player_state = p_player_state.duplicate(true)
 	legacy_inventory = p_legacy_inventory.duplicate(true)
@@ -59,3 +61,4 @@ func _init(
 	night_raid_state = NightRaidState.from_dto(p_night_raid_state.to_dto())
 	player_progression_state = PlayerProgressionState.from_dto(p_player_progression_state.to_dto())
 	chunk_discovery_state = ChunkDiscoveryState.from_dto(p_chunk_discovery_state.to_dto())
+	ambient_cooldown_state = AmbientCooldownState.from_dto(p_ambient_cooldown_state.to_dto())

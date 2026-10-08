@@ -4,6 +4,8 @@ extends RefCounted
 var container: Node2D
 var actor_scene: PackedScene
 var applied_revision: int = 0
+var cooldown_state := AmbientCooldownState.new()
+var world_clock_seconds: float = 0.0
 var _actors: Dictionary = {}
 var _actor_chunks: Dictionary = {}
 var _actor_species: Dictionary = {}
@@ -37,6 +39,8 @@ func reconcile(request: AmbientSpawnRequest) -> AmbientSpawnResult:
 	for instance_id in staged:
 		var actor := staged[instance_id] as Node2D
 		container.add_child(actor)
+		actor.defeated.connect(_on_ambient_actor_defeated)
+		actor.removed.connect(_on_ambient_actor_removed)
 		_actors[instance_id] = actor
 		_actor_chunks[instance_id] = actor.get_meta("ambient_chunk_key") as StringName
 		_actor_species[instance_id] = actor.get_meta("ambient_species_id") as StringName
@@ -46,7 +50,21 @@ func reconcile(request: AmbientSpawnRequest) -> AmbientSpawnResult:
 
 func create_request(center: Vector2i, active_keys: Array[StringName], biome_id: StringName, time_bucket: int, budget: int, seed: int, chunk_revision: int) -> AmbientSpawnRequest:
 	_prune_freed()
-	return AmbientSpawnRequest.new(center, active_keys, _actor_chunks, biome_id, time_bucket, budget, seed, chunk_revision)
+	return AmbientSpawnRequest.new(center, active_keys, _actor_chunks, cooldown_state.active_ids(world_clock_seconds), biome_id, time_bucket, budget, seed, chunk_revision)
+
+
+func create_cooldown_persistence_state() -> AmbientCooldownState:
+	cooldown_state.prune_expired(world_clock_seconds)
+	return AmbientCooldownState.from_dto(cooldown_state.to_dto())
+
+
+func import_cooldown_dto(dto: Variant, clock_seconds: float) -> bool:
+	var imported := AmbientCooldownState.from_dto(dto)
+	if imported == null:
+		return false
+	cooldown_state = imported
+	cooldown_state.prune_expired(clock_seconds)
+	return true
 
 
 func get_active_ids() -> Array[StringName]:
@@ -83,3 +101,25 @@ func _free_actor(instance_id: StringName) -> void:
 	_actor_chunks.erase(instance_id)
 	_actor_species.erase(instance_id)
 	if is_instance_valid(actor): (actor as Node).queue_free()
+
+
+func _on_ambient_actor_defeated(actor: Node2D, _encounter_instance_id: StringName) -> void:
+	_register_ambient_removal(actor)
+
+
+func _on_ambient_actor_removed(actor: Node2D, _encounter_instance_id: StringName, _reason_id: StringName) -> void:
+	_register_ambient_removal(actor)
+
+
+func _register_ambient_removal(actor: Node2D) -> void:
+	if actor == null or not is_instance_valid(actor):
+		return
+	if not actor.has_meta("ambient_spawn_id"):
+		return
+	var instance_id := actor.get_meta("ambient_spawn_id") as StringName
+	if not AmbientCooldownState.is_valid_slot_id(instance_id):
+		return
+	cooldown_state.register(instance_id, world_clock_seconds + AmbientCooldownState.COOLDOWN_SECONDS)
+	_actors.erase(instance_id)
+	_actor_chunks.erase(instance_id)
+	_actor_species.erase(instance_id)

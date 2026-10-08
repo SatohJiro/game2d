@@ -238,6 +238,12 @@ U2.2b hiện thực admission bằng đúng 9 placeholder Node và overlay F8; p
 - Cùng active chunks với population đủ budget không reroll actor khi timer, time bucket hoặc seed input đổi. Crossing loại actor thuộc chunk inactive và fill slot deterministic trong active 3×3.
 - Đây là transient population: capture/defeat cooldown và exact ambient actor state chưa persist qua Save/load.
 
+## U2.7 ambient persistent cooldown
+
+- Quái ambient bị đánh bại/bắt đăng ký cooldown 120 giây theo world clock trên stable slot ID (`ambient.<chunk>_s<slot>`); slot đang cooldown không được refill khi reconcile.
+- Cooldown persist qua Save v1 (`world.ambient_cooldowns`): load khôi phục đúng thời gian còn lại, hết cooldown thì spawn lại; save cũ thiếu field vẫn hợp lệ và restore rỗng; DTO hỏng fail closed.
+- Không đổi deterministic spawn policy/budget/seed; không persist actor Node/RID; chưa autosave.
+
 ## U2.6 discovery/fog foundation
 
 - Player discover đúng chunk center đã enter; neighbor chỉ active để streaming vẫn được coi là chưa khám phá.
