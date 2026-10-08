@@ -1,5 +1,18 @@
 # Checkpoint triển khai Paloria 3.0
 
+## AT — thị trấn anime (đang thực hiện)
+
+Trạng thái: `IMPLEMENTING` ngày 2026-10-08. User feedback sau phase AT.
+
+### AT-A — art direction + greybox (xong)
+
+- `docs/assets/AT_ART_DIRECTION.md`: Paloria Luminous Town — shape language, palette mở rộng, ánh sáng, 7 quận + gameplay anchor.
+- `systems/town/town_district_db.gd`: 10 districts trên 3×3 chunk (0..2, -1..1), rect + anchors (fast travel, shop, vista, fishing...).
+- `systems/town/town_layout.gd`: 19 structure authored (station, clock tower, stalls, houses, torii, shrine, lake, bridge...).
+- `scripts/town_builder.gd`: dựng greybox (footprint + label) dưới chunk node, unload theo chunk.
+- Main hook chunk admission; tên quận localized vi/en.
+- `tools/validate_town_greybox.gd` pass.
+
 ## U4 — art/animation/audio
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.

@@ -33,6 +33,7 @@ var fireflies: Array[Sprite2D] = []
 var save_coordinator: RefCounted
 var chunk_admission := ChunkAdmissionCoordinator.new()
 var chunk_scene_adapter: ChunkSceneAdapter
+var town_builder: TownBuilder
 var chunk_navigation_adapter: ChunkNavigationAdapter
 var ambient_spawn_adapter: AmbientSpawnAdapter
 var chunk_discovery_adapter := ChunkDiscoveryAdapter.new()
@@ -61,6 +62,9 @@ func _ready() -> void:
 	chunk_container.name = "ChunkPlaceholders"
 	add_child(chunk_container)
 	chunk_scene_adapter = ChunkSceneAdapter.new(chunk_container)
+	town_builder = TownBuilder.new()
+	town_builder.name = "TownBuilder"
+	add_child(town_builder)
 	chunk_navigation_adapter = ChunkNavigationAdapter.new(get_world_2d().navigation_map)
 	ambient_spawn_adapter = AmbientSpawnAdapter.new(creature_container, CREATURE_SCENE)
 	chunk_debug_overlay = ChunkDebugOverlay.new()
@@ -68,6 +72,7 @@ func _ready() -> void:
 	add_child(chunk_debug_overlay)
 	var initial_chunk_delta := chunk_admission.update_world_position(player.global_position)
 	chunk_scene_adapter.apply_delta(initial_chunk_delta)
+	_build_town_for_delta(initial_chunk_delta)
 	chunk_navigation_adapter.apply(ChunkNavigationRequest.from_delta(initial_chunk_delta))
 	chunk_discovery_adapter.observe_center(initial_chunk_delta.center)
 	chunk_debug_overlay.render_snapshot(chunk_admission.create_debug_snapshot())
@@ -495,6 +500,7 @@ func update_chunk_admission(world_position: Vector2) -> bool:
 		return true
 	if not chunk_delta.is_changed() or not chunk_scene_adapter.apply_delta(chunk_delta):
 		return false
+	_build_town_for_delta(chunk_delta)
 	var navigation_result := chunk_navigation_adapter.apply(ChunkNavigationRequest.from_delta(chunk_delta))
 	if not navigation_result.is_success():
 		return false
@@ -504,6 +510,18 @@ func update_chunk_admission(world_position: Vector2) -> bool:
 		return false
 	chunk_debug_overlay.render_snapshot(chunk_admission.create_debug_snapshot())
 	return true
+
+func _build_town_for_delta(chunk_delta: ChunkAdmissionDelta) -> void:
+	if town_builder == null:
+		return
+	for key in chunk_delta.admitted_keys:
+		var chunk_node := chunk_scene_adapter.get_node_for_key(key)
+		if chunk_node == null:
+			continue
+		var parsed: Array[Vector2i] = []
+		if ChunkCoordinate.try_parse_key(key, parsed):
+			town_builder.build_for_chunk(chunk_node, parsed[0])
+
 
 func toggle_chunk_debug_overlay() -> bool:
 	return chunk_debug_overlay.toggle() if is_instance_valid(chunk_debug_overlay) else false

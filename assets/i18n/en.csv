@@ -40,3 +40,10 @@ prompt.target.farm_plot,Farm plot
 prompt.target.cooking_pot,Cooking pot
 prompt.target.water_pond,Water pond
 prompt.target.generic,Object
+district.farm_edge,Farm edge
+district.station_plaza,Station plaza
+district.market_street,Market street
+district.hillside,Hillside homes
+district.shrine_hill,Shrine hill
+district.lakeside,Lakeside
+district.outskirts,Outskirts
