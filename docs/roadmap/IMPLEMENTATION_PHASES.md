@@ -55,14 +55,14 @@ Gate U3: thao tác core loop bằng keyboard/gamepad; focus/pause đúng; 720p�
 
 ## U4 — art, animation và feedback
 
-1. Asset license gate + art bible + import presets.
-2. Player locomotion/combat AnimationTree và marker.
-3. Một pet hoàn chỉnh idle/move/work/attack/hurt/down.
-4. Creature telegraph + elemental VFX + hit feedback.
-5. Tile/prop normalization và biome pass.
-6. Audio event map, mix buses và accessibility multipliers.
+1. **Asset license gate + art bible + import presets — VERIFIED (U4.2):** `docs/assets/ART_BIBLE.md` (Paloria-16 palette, grid 16px/particle 8px, frame layout, FPS, audio spec); `tools/generate_placeholders.py` + `tools/synthesize_audio.py` tạo asset gốc CC0-1.0; 61/69 asset runtime P0 đã thay bằng asset gốc VERIFIED (items 21, buildings 10, tilesets 12, fx 9, sfx 8, music 1) với receipt `docs/assets/receipts/u4.2-original-assets.md`; manifest regen qua `tools/regen_asset_manifest.py`. Còn backlog thủ công: hunter/monsters character sheets, tileset_house, peaceful.ogg.
+2. **Player locomotion/combat AnimationTree và marker — PARTIAL (U4.3):** animation code-driven giữ nguyên (không AnimationTree — actor dùng frame rows); combat đã có 3 pha theo art bible: player windup 0.15s (row 4, telegraph) → strike (slash spawn đúng contact + SFX) → recovery (cooldown 0.28s); creature giữ charge telegraph; hit flash + hitstop + knockback đã có cho cả player và creature.
+3. Một pet hoàn chỉnh idle/move/work/attack/hurt/down. (chưa — pet dùng frame rows hiện tại)
+4. **Creature telegraph + elemental VFX + hit feedback — VERIFIED hiện có:** telegraph states, VFX gốc mới (energy/fireball, slash), hit sparks.
+5. **Tile/prop normalization và biome pass — VERIFIED (U4.2):** tiles gốc theo palette, floor/water/props/crystal/field atlas mới.
+6. **Audio event map, mix buses và accessibility multipliers — VERIFIED (U4.3):** `docs/assets/AUDIO_MAP.md`; SFX WAV 16-bit mono 22050 Hz, music OGG loop; volume qua Master bus + GameSettings.
 
-Gate U4: asset runtime đều VERIFIED hoặc original; animation không điều khiển kết quả domain; frame pacing và visual review đạt checklist.
+Gate U4: 61 asset runtime VERIFIED gốc; 7 character sheets + 1 tileset + 1 track nhạc còn QUARANTINE (backlog thủ công, không ship); animation không điều khiển kết quả domain.
 
 ## Featured initiative AT — town/art/audio renewal
 

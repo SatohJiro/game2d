@@ -1,5 +1,39 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U4 — art/animation/audio
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### U4.1 — art bible + pipeline (xong)
+
+- `docs/assets/ART_BIBLE.md`: Paloria-16 palette, grid 16px (particle 8px), character sheet 16×16 4 cột, FPS 8/10–12, 3 pha combat (anticipation ≥0.15s / contact / recovery ≥0.2s), audio spec.
+- `tools/generate_placeholders.py`: vẽ pixel-art gốc từ palette (ASCII art cho items, PIL cho buildings/tiles/FX), deterministic seed.
+- `tools/synthesize_audio.py`: numpy tổng hợp 8 SFX (WAV 16-bit mono 22050 Hz) + 1 track nhạc chiptune loop 29s (OGG).
+- `tools/regen_asset_manifest.py`: bản Linux của generate_asset_inventory + triage (đọc provenance/action overrides, recompute referenced/duplicates, xuất CSV/JSON/INVENTORY/ACTIONS/REPLACEMENT_PLAN).
+
+### U4.2 — admit replacement set (xong, chờ gate cuối)
+
+- Thay tại chỗ 61 asset: items 21, buildings 10, tilesets 12, fx 9, sfx 8, music 1. Filename/kích thước/frame layout giữ nguyên nên không đổi scene/script.
+- `docs/assets/provenance_overrides.csv`: 61 dòng VERIFIED/CC0-1.0/author "Paloria project"; receipt `docs/assets/receipts/u4.2-original-assets.md` (SHA-256 từng file).
+- Manifest sau regen: 166 assets, 68 referenced (tileset_house rớt khỏi referenced vì thực tế không dùng), 61 verified.
+- `tools/validate_original_assets.gd`: kiểm tra palette Paloria-16 từng pixel, grid 8px, WAV header gốc (PCM/mono/22050/16-bit — Godot import thành QOA nên không check stream), receipt bao phủ, audio map resolve, character art còn QUARANTINE.
+- Trong lúc verify sửa: nature_boulder 36×32 → 32×32, fx/shadow 24×12 → 24×16 (đúng grid); validator đọc WAV header thay vì stream format.
+- Backlog thủ công (vẫn QUARANTINE, không ship): `assets/hunter/*`, `assets/monsters/*`, `assets/tilesets/tileset_house.png`, `assets/music/peaceful.ogg`.
+
+### U4.3 — animation + audio (xong, chờ gate cuối)
+
+- Player attack tách 2 pha: windup 0.15s (row 4, telegraph, chưa damage) → strike (spawn slash đúng contact + SFX `slash`, row 5) → recovery (cooldown 0.28s). Trước đây slash spawn ngay khi bấm.
+- `docs/assets/AUDIO_MAP.md`: 8 SFX + 1 music track, trigger từng event; volume qua Master bus + GameSettings.
+- `tools/validate_attack_timing.gd`: assert không slash trong windup, slash xuất hiện đúng strike, hết attack sau recovery.
+- Không đụng: AnimationTree (actor vẫn code-driven frame rows — đủ cho scope), pet animation slice mới, accessibility multipliers.
+
+### Validation
+
+- Full gate cuối: **36/36 pass** (static + headless editor load + 34 validator gồm original-asset và attack-timing mới + main-scene smoke). Strict scan `build/checks` sạch; `git diff --check` sạch (đã chuẩn hóa CSV về BOM/quoted/LF khớp file gốc).
+- File mới: `docs/assets/ART_BIBLE.md`, `docs/assets/AUDIO_MAP.md`, `docs/assets/receipts/u4.2-original-assets.md`, `tools/generate_placeholders.py`, `tools/synthesize_audio.py`, `tools/regen_asset_manifest.py`, `tools/validate_original_assets.gd`, `tools/validate_attack_timing.gd`; sửa `scripts/player.gd` (attack windup→strike), `tools/check_project.ps1`, MODULES/roadmap/CHECKPOINT.
+- Rollback: revert commit này (asset gốc cũ còn trong git history).
+- U4 hoàn tất; package tiếp theo: gate cuối + bàn giao (patch mới, không push).
+
 ## U3.4 — settings + localization + context prompt
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.

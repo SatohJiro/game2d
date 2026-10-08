@@ -154,6 +154,8 @@ $hudViewModelLog = Join-Path $LogDirectory 'hud-viewmodel-validation.log'
 $modalViewModelLog = Join-Path $LogDirectory 'modal-viewmodel-validation.log'
 $saveSlotLog = Join-Path $LogDirectory 'save-slot-validation.log'
 $settingsI18nLog = Join-Path $LogDirectory 'settings-i18n-validation.log'
+$originalAssetLog = Join-Path $LogDirectory 'original-asset-validation.log'
+$attackTimingLog = Join-Path $LogDirectory 'attack-timing-validation.log'
 Invoke-GodotCheck -Name 'Static content validation' -LogPath $staticContentLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_static_content.gd')
 )
@@ -168,6 +170,12 @@ Invoke-GodotCheck -Name 'Save slot validation' -LogPath $saveSlotLog -Arguments 
 )
 Invoke-GodotCheck -Name 'Settings/i18n validation' -LogPath $settingsI18nLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_settings_i18n.gd')
+)
+Invoke-GodotCheck -Name 'Original asset validation' -LogPath $originalAssetLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_original_assets.gd')
+)
+Invoke-GodotCheck -Name 'Attack timing validation' -LogPath $attackTimingLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_attack_timing.gd')
 )
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')

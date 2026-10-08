@@ -104,6 +104,11 @@ var ghost_trail_timer: float = 0.0
 # Attack Animation
 var is_attacking: bool = false
 var attack_anim_timer: float = 0.0
+## Art-bible attack phases: windup (telegraph) -> strike (contact).
+const ATTACK_WINDUP := 0.15
+const ATTACK_STRIKE := 0.13
+var _slash_armed: bool = false
+var _pending_slash_dir: Vector2 = Vector2.ZERO
 
 # Build Mode
 var is_building: bool = false
@@ -346,6 +351,10 @@ func _physics_process(delta: float) -> void:
 	if attack_anim_timer > 0:
 		attack_anim_timer -= delta
 		is_attacking = attack_anim_timer > 0
+		# Windup ends -> contact: spawn the slash exactly at strike start.
+		if _slash_armed and attack_anim_timer <= ATTACK_STRIKE:
+			_slash_armed = false
+			_spawn_slash(_pending_slash_dir)
 	
 	# Determine facing column (0=Down, 1=Up, 2=Left, 3=Right)
 	var facing_col = 0
@@ -360,7 +369,7 @@ func _physics_process(delta: float) -> void:
 			sprite.frame = 6 * 4 + facing_col
 	elif is_attacking:
 		# Row 4 (windup) and Row 5 (strike thrust)
-		var atk_row = 4 if attack_anim_timer > 0.11 else 5
+		var atk_row = 4 if attack_anim_timer > ATTACK_STRIKE else 5
 		if sprite:
 			sprite.frame = atk_row * 4 + facing_col
 	elif move_input != Vector2.ZERO:
@@ -401,13 +410,31 @@ func spawn_footstep_dust() -> void:
 	tween.chain().tween_callback(dust.queue_free)
 
 func perform_attack(aim_dir: Vector2) -> void:
-	attack_cooldown = 0.28
+	attack_cooldown = ATTACK_WINDUP + ATTACK_STRIKE
 	is_attacking = true
-	attack_anim_timer = 0.22
-	
+	attack_anim_timer = ATTACK_WINDUP + ATTACK_STRIKE
+	# Arm the slash: it spawns exactly when the windup ends (contact).
+	_slash_armed = true
+	_pending_slash_dir = aim_dir
+
+	# Dynamic sword thrust animation (windup telegraph)
+	var weapon_spr = weapon_pivot.get_node_or_null("SwordSprite")
+	if weapon_spr:
+		weapon_spr.visible = true
+		weapon_spr.position.x = 14.0
+		var stween = create_tween()
+		stween.tween_property(weapon_spr, "position:x", 28.0, ATTACK_WINDUP)
+		stween.tween_property(weapon_spr, "position:x", 14.0, ATTACK_STRIKE)
+		stween.tween_callback(func(): weapon_spr.visible = false)
+
+	velocity += aim_dir * 70.0
+
+
+## Contact marker: slash VFX + SFX + damage area spawn at strike start.
+func _spawn_slash(aim_dir: Vector2) -> void:
 	if AudioManager:
 		AudioManager.play_sound("slash")
-	
+
 	# Spawn sword slash arc
 	var slash = SLASH_SCENE.instantiate()
 	slash.global_position = global_position + aim_dir * 28.0
@@ -416,18 +443,6 @@ func perform_attack(aim_dir: Vector2) -> void:
 	var total_dmg = weapon_damage + (level - 1) * 3 + stats["str"] * 3
 	slash.damage = total_dmg
 	get_parent().add_child(slash)
-	
-	# Dynamic sword thrust animation
-	var weapon_spr = weapon_pivot.get_node_or_null("SwordSprite")
-	if weapon_spr:
-		weapon_spr.visible = true
-		weapon_spr.position.x = 14.0
-		var stween = create_tween()
-		stween.tween_property(weapon_spr, "position:x", 28.0, 0.08)
-		stween.tween_property(weapon_spr, "position:x", 14.0, 0.12)
-		stween.tween_callback(func(): weapon_spr.visible = false)
-	
-	velocity += aim_dir * 70.0
 
 func shake_camera(amount: float) -> void:
 	if GameSettings.reduce_motion:
