@@ -1,3 +1,9 @@
-# Prompt cho model tiếp theo — U2.9 static content migration (world-building)
+# Prompt cho model tiếp theo — U3.1 theme/tokens + HUD ViewModel
 
-Làm một package cỡ vừa cho U2.9: di dời static Environment content (trang trí, vật cản, điểm spawn cố định) vào chunk system — mỗi chunk có authored static content manifest typed (stable content ID, vị trí local trong chunk, loại), chunk admission load/unload manifest theo vòng đời 3×3 hiện có, unload dọn sạch node đã spawn (không leak). Manifest là data thuần; logic load/unload nằm trong chunk scene adapter; static content không tính vào ambient budget và không bị ambient policy reroll. Regression headless phủ manifest lookup, admission load đúng 9 chunk, crossing unload chunk cũ (node count về 0), save/load không duplicate static node. Chạy focused checks rồi một full gate cuối + strict scan; cập nhật world/module/gameplay/roadmap/checkpoint.
+U2 đã xong (world rộng: chunk identity, admission, persistent delta, spawn director, discovery/fast-travel/minimap, static content). Bắt đầu U3 UI/UX với package U3.1: theme/tokens tập trung + HUD ViewModel.
+
+1. Tạo `ui/theme/paloria_theme.tres` (hoặc theme resource tương đương): palette, font size scale, corner radius, padding tokens dùng chung; thay style inline rải rác trong `hud.tscn`/`minimap.tscn` bằng theme overrides trỏ về tokens (không đổi layout).
+2. Tạo `HUDViewModel` (RefCounted): snapshot read-only từ player state (HP/SP/hunger/thirst, level/exp, spheres count, pet card, quest panel) — `hud.gd` chỉ render ViewModel và phát intent, không đọc trực tiếp player node trong `_process`.
+3. Giữ nguyên tắc UI: intent → coordinator → ViewModel/snapshot; modal focus/pause policy không đổi; hỗ trợ UI scale và reduced motion đã có.
+4. Regression headless: ViewModel mapping đúng giá trị player, theme tokens resolve đủ, HUD render không crash khi ViewModel rỗng, Main integration (damage player → ViewModel update → HUD refresh).
+5. Chạy focused checks rồi một full gate cuối + strict scan; cập nhật ui/module/gameplay/roadmap/checkpoint.

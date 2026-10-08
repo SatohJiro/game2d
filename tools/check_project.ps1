@@ -149,6 +149,10 @@ Invoke-GodotCheck -Name 'Ambient cooldown validation' -LogPath $ambientCooldownL
 Invoke-GodotCheck -Name 'Biome table validation' -LogPath $biomeTableLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_biome_spawn_table.gd')
 )
+$staticContentLog = Join-Path $LogDirectory 'static-content-validation.log'
+Invoke-GodotCheck -Name 'Static content validation' -LogPath $staticContentLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_static_content.gd')
+)
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')
 )

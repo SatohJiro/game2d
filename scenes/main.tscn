@@ -77,52 +77,6 @@ position = Vector2(85, 45)
 position = Vector2(-60, 45)
 node_type = 2
 
-[node name="Decorations" type="Node2D" parent="Environment"]
-
-[node name="Flowers1" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(-150, -40)
-texture = ExtResource("10_flowers")
-
-[node name="Flowers2" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(160, -30)
-texture = ExtResource("10_flowers")
-
-[node name="Flowers3" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(80, -160)
-texture = ExtResource("10_flowers")
-
-[node name="Flowers4" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(-80, 180)
-texture = ExtResource("10_flowers")
-
-[node name="Bush1" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(-120, -180)
-texture = ExtResource("11_bush")
-
-[node name="Bush2" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(180, 120)
-texture = ExtResource("11_bush")
-
-[node name="Bush3" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(240, -180)
-texture = ExtResource("11_bush")
-
-[node name="Mushrooms1" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(-220, -140)
-texture = ExtResource("12_mushrooms")
-
-[node name="Mushrooms2" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(140, 210)
-texture = ExtResource("12_mushrooms")
-
-[node name="Stump1" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(-70, -150)
-texture = ExtResource("13_stump")
-
-[node name="Stump2" type="Sprite2D" parent="Environment/Decorations"]
-position = Vector2(160, -120)
-texture = ExtResource("13_stump")
-
 [node name="Resources" type="Node2D" parent="Environment"]
 
 [node name="Tree1" parent="Environment/Resources" instance=ExtResource("3_res")]

@@ -3,7 +3,6 @@ extends Node2D
 @onready var creature_container: Node2D = $Creatures
 @onready var hud: CanvasLayer = $HUD
 @onready var campfire_light: PointLight2D = $Environment/BaseCamp/Campfire/FlameLight
-@onready var decorations: Node2D = $Environment/Decorations
 @onready var water_pond: Node2D = $Environment/WaterPond
 @onready var player: CharacterBody2D = $Player
 
@@ -120,12 +119,12 @@ func _process(delta: float) -> void:
 	var progress = fmod(day_time / day_duration, 1.0)
 	update_ambient_light(progress)
 	
-	# Atmosphere: Wind sway on flowers & bushes
-	if decorations:
-		var w_time = Time.get_ticks_msec() * 0.0025
-		for child in decorations.get_children():
-			if child is Sprite2D:
-				child.rotation = sin(w_time + child.position.x * 0.05) * 0.04
+	# Atmosphere: Wind sway on chunk static decorations (U2.9: decorations live
+	# under admitted chunk nodes and unload with them).
+	var w_time = Time.get_ticks_msec() * 0.0025
+	for sway_node in get_tree().get_nodes_in_group("chunk_static_decor"):
+		if sway_node is Sprite2D:
+			sway_node.rotation = sin(w_time + sway_node.position.x * 0.05) * 0.04
 	
 	# Atmosphere: Water pond shimmer
 	if water_pond and water_pond.has_node("WaterTile"):

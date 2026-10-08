@@ -244,6 +244,13 @@ U2.2b hiện thực admission bằng đúng 9 placeholder Node và overlay F8; p
 - Cooldown persist qua Save v1 (`world.ambient_cooldowns`): load khôi phục đúng thời gian còn lại, hết cooldown thì spawn lại; save cũ thiếu field vẫn hợp lệ và restore rỗng; DTO hỏng fail closed.
 - Không đổi deterministic spawn policy/budget/seed; không persist actor Node/RID; chưa autosave.
 
+## U2.9 static content migration
+
+- Trang trí thuần túy (hoa, bụi cây, nấm, gốc cây) di dời khỏi `main.tscn` vào chunk system: mỗi chunk có manifest deterministic (`StaticContentManifest`, 11 placement/chunk) từ `StaticContentCatalog` authored (texture + density).
+- `ChunkPlaceholder.load_static_content()` spawn decoration làm con của chunk node — unload chunk là `queue_free` cả cây, không leak theo cấu trúc; wind sway chuyển sang group `chunk_static_decor`.
+- Content ID stable `static.<chunk>_<kind>_<index>`; placement luôn trong chunk bounds; không tính vào ambient budget; save/load không duplicate (transient theo admission).
+- Resources có thể thu hoạch, BaseCamp, GroundGrass, WaterPond giữ nguyên ở origin (gameplay/persistence riêng).
+
 ## U2.6 discovery/fog foundation
 
 - Player discover đúng chunk center đã enter; neighbor chỉ active để streaming vẫn được coi là chưa khám phá.

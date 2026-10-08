@@ -34,7 +34,7 @@ Gate U1: **VERIFIED 2026-10-08**. Vertical slice combat → capture → pet → 
 ## U2 — world rộng
 
 1. **Biome/ChunkDefinition và coordinate contract — VERIFIED:** typed canary, signed runtime key, catalog/context và Main read adapter; chưa stream/persist chunk.
-2. **Chunk admission/unload — VERIFIED:** pure 3×3 policy, revision guard, admit-before-unload placeholder scenes, exact-nine ownership và toggleable debug overlay; static content migration chờ world-building package.
+2. **Chunk admission/unload — VERIFIED:** pure 3×3 policy, revision guard, admit-before-unload placeholder scenes, exact-nine ownership và toggleable debug overlay; U2.9 đã migrate static decorations vào chunk lifecycle (manifest deterministic, unload free cả cây, không leak).
 3. **Persistent world delta foundation — VERIFIED:** building/resource records có typed chunk envelope và Save v1 fallback; crop nằm trong building record, captured/ambient spawn chờ spawn identity.
 4. **Navigation theo chunk — VERIFIED foundation:** typed request/result, exact region ownership, revision-guarded whole-region obstacle state và RID cleanup; terrain bake/path requests còn chờ content package.
 5. **Spawn director — VERIFIED foundation + persistent cooldown + authored biome tables:** deterministic active-chunk/biome/time/budget policy, stable ambient slot identity và runtime registry tách boss/raid; defeat/capture đăng ký cooldown 120s theo world clock qua `AmbientCooldownState`, slot cooling-down không refill, persist Save v1 (`world.ambient_cooldowns`) với legacy fallback; species/level/slot budget do `BiomeSpawnTable` data-driven (biome lạ fallback meadow + warning), tái tạo bit-for-bit công thức legacy.

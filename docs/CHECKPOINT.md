@@ -1,5 +1,27 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U2.9 — static content migration (world-building)
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- `StaticContentManifest` data thuần: per-chunk placements `{content_id, kind, local_position, scale}`; ID stable `static.<chunk>_<kind>_<index>`; position trong chunk bounds.
+- `StaticContentCatalog` authored kinds (texture + density) + deterministic manifest theo chunk coordinate (FNV-1a); 11 decorations/chunk.
+- `ChunkPlaceholder.load_static_content()` spawn Sprite2D làm con của chunk node trong `configure()` — unload `queue_free` cả cây nên không leak theo cấu trúc; decoration vào group `chunk_static_decor` cho wind sway.
+- Resources thu hoạch được, BaseCamp, GroundGrass, WaterPond giữ nguyên ở origin (gameplay/persistence riêng, không migrate).
+- Không tính vào ambient budget; transient theo admission nên save/load không duplicate.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass bằng Godot 4.7.2 headless, 49 Markdown files và toàn bộ checks xanh.
+- `tools/validate_static_content.gd` pass: manifest deterministic/bounds/ID unique, chunk lifecycle (9 chunk × 11 decor, crossing unload đúng cột cũ, group count ổn định, mọi decor thuộc active chunk), save/load không duplicate, ambient budget không bị ảnh hưởng.
+- Full gate cuối: pass (headless editor load, 28 validator gồm static content mới, main-scene smoke). Strict scan `build/checks` sạch `SCRIPT ERROR`/`Parse Error`/`ERROR:`; `git diff --check` sạch.
+- Trong lúc làm docs phát hiện và sửa 1 lỗi edit: suýt ghi đè header U2.6 trong FEATURES.md — đã khôi phục.
+- File mới: `systems/world/static_content_manifest.gd`, `systems/world/static_content_catalog.gd`, `tools/validate_static_content.gd` (+ `.uid`); sửa `systems/world/chunk_placeholder.gd`, `scenes/main.tscn` (xóa Decorations), `scripts/main.gd` (sway qua group), `tools/check_project.ps1`, FEATURES/roadmap/CHECKPOINT/NEXT_UPDATE_PROMPT.
+- Rollback: xóa 3 file mới, revert placeholder/tscn/main.gd/validator/docs (git revert commit này).
+- U2 world coi như hoàn tất các package đã định; package kế tiếp: U3.1 theme/tokens + HUD ViewModel theo `NEXT_UPDATE_PROMPT.md`.
+
 ## U2.8 — authored biome tables
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.
