@@ -19,7 +19,8 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 12. `docs/architecture/CREATURE_PERCEPTION_CONTRACT.md`: cadence, candidate policy, state guard và scan audit.
 13. `docs/architecture/CREATURE_TRANSITION_CONTRACT.md`: stable transition reason, pure policy và apply boundary.
 14. `docs/architecture/PLAYER_NEEDS_CONTRACT.md`: state, snapshot, buff ID và Player adapter của survival needs.
-15. `docs/architecture/CREATURE_DEFINITION_CONTRACT.md`: typed Flam canary, legacy adapter và species field audit.
+15. `docs/architecture/PLAYER_PROGRESSION_PERSISTENCE_CONTRACT.md`: stat budget, equipment ID, derived maxima và buff metadata trước Save admission.
+16. `docs/architecture/CREATURE_DEFINITION_CONTRACT.md`: typed Flam canary, legacy adapter và species field audit.
 16. `docs/architecture/CREATURE_SKILL_CONTRACT.md`: stable skill ID, typed Flam fireball canary và remaining attack writer audit.
 17. `docs/architecture/CREATURE_DROP_CONTRACT.md`: deterministic defeat drop, capture guard và atomic Flam commit.
 18. `docs/architecture/CREATURE_ECOLOGY_CONTRACT.md`: pure damage-panic policy, stable ecology event và transition ownership.
@@ -32,11 +33,14 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 23. `docs/architecture/BUILDING_PLACEMENT_CONTRACT.md`: stable building instance/subtype identity và placement delta.
 23. `docs/architecture/PLAYER_LOCOMOTION_CONTRACT.md`: input snapshot, stamina/sprint/roll state và velocity precedence.
 24. `docs/architecture/PLAYER_ACTION_CONTRACT.md`: stable action intent, physical mapping, guard và dispatch adapter.
-25. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
-26. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
-27. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
-28. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
-29. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
+25. `docs/architecture/BOUNDARY_METRICS.md`: baseline line/function/field và writer surface của Player/Creature cho gate U1.
+26. `docs/architecture/PLAYER_CRAFT_CONTRACT.md`: stable recipe result và atomic Player craft transaction.
+27. `docs/gameplay/FEATURES.md`: luật chơi, invariant và acceptance criteria.
+28. `docs/architecture/WORLD_CHUNK_CONTRACT.md`: typed biome/chunk, signed coordinate key và read-only world adapter.
+28. `docs/ASSET_PLAN.md` cùng `docs/assets/INVENTORY.md`: asset, license và quarantine.
+29. `docs/roadmap/ANIME_TOWN_RENEWAL.md`: featured initiative town/world/art/audio xuyên U2–U4.
+30. `docs/process/DOCUMENTATION_STANDARD.md`: tài liệu phải cập nhật khi sửa code/data/content.
+31. `docs/process/VERSION_CONTROL.md`: branch, commit và phục hồi snapshot an toàn.
 
 ## Nguồn sự thật
 
@@ -124,7 +128,7 @@ Tài liệu này là điểm vào bắt buộc cho người và AI agent. Trạn
 | U1.12r altar durability | Hoàn tất | Structure health tách boss HP; restore đúng một boss, không phát lifecycle giả |
 | U1.12s turret durability | Hoàn tất | Cooldown + health round-trip; không fire, destruction hoặc stale target khi load |
 | Kiến trúc data-driven | Chưa làm | Dictionary và logic còn tập trung trong god scripts |
-| Save/load | Hạ tầng | Save v1 explicit Player round-trip xanh; chưa autosave/UI và chưa phủ world/base delta |
+| Save/load | Vertical slice verified | Save v1 explicit round-trip phủ Player/base/building/static-world/encounter; ambient population chờ U2, autosave/slot UI chờ U3 |
 | World streaming | Chưa có | `main.tscn` vẫn là world tĩnh |
 | UI system | Prototype | HUD lớn, style inline, chưa có Theme/accessibility settings |
 | Asset admission mới | Bị chặn | `game-dev` CLI chưa có trong PATH |

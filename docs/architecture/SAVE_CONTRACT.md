@@ -132,6 +132,14 @@ U1.12ad không đổi schema: accepted capture chuyển runtime state sang DEFEA
 
 U1.12af đã đóng prerequisite runtime ownership/removal: Main giữ đúng ba slot và terminal CLEARED idempotent. Save v1 vẫn chưa đổi; package kế tiếp phải snapshot/apply resolved actor state, không serialize Node và không replay presentation/reward/RNG.
 
+## U1.12ag night-raid Save v1
+
+`world.night_raid_state` nay round-trip lifecycle/cycle và resolved remaining actor roster. ACTIVE restore exact slot/species/level/HP/position không reroll hay replay presentation/reward; CLEARED/PENDING không spawn. Field thiếu từ save v1 pre-release được suy ra PENDING khi guard false và CLEARED khi guard true. Explicit field incoherent với clock/guard bị reject trước runtime commit.
+
+## U1.12aj Player progression metadata
+
+`player.progression_state` round-trip deterministic EXP threshold, stat budget/allocation, stable equipment IDs, derived maxima và stable needs buff metadata. Snapshot fail closed với legacy gear không map hoặc runtime incoherent. Apply resolve trước mutation và derive name/damage/armor presentation từ catalog; field thiếu dùng conservative legacy default theo level/EXP. Localized text, derived damage và HUD không thuộc DTO authority.
+
 U1.11 foundation kết thúc ở explicit API có kiểm thử. Chưa có autosave, slot UI, pause/transaction scheduling, world entity delta, base/building/crop/quest DTO hoặc checksum. Pet rarity/trait/inactive stance được bổ sung ở U1.12c.
 
 ## U1.12b runtime inventory identity closure

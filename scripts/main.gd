@@ -61,7 +61,10 @@ func save_game(saved_at_unix: int, save_id: StringName = &"save.slot_1") -> RefC
 	var boss_state := create_world_boss_persistence_state()
 	if boss_state == null:
 		boss_state = WorldBossState.new(WorldBossState.ACTIVE, WorldBossState.INSTANCE_ID, 0, Vector2.ZERO)
-	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time, raid_triggered_this_cycle, boss_spawned, boss_timer, spawn_timer, boss_state)
+	var raid_state := create_night_raid_persistence_state()
+	if raid_state == null:
+		return SaveCoordinatorResult.new(SaveCoordinatorResult.Status.SNAPSHOT_FAILED)
+	return save_coordinator.save_player(player, save_id, saved_at_unix, day_time, raid_triggered_this_cycle, boss_spawned, boss_timer, spawn_timer, boss_state, raid_state)
 
 func load_game() -> RefCounted:
 	if save_coordinator == null:
@@ -70,6 +73,7 @@ func load_game() -> RefCounted:
 	if result.is_loaded():
 		apply_world_cycle(result.world_clock_seconds, result.raid_triggered_this_cycle, result.boss_spawned, result.boss_timer, result.spawn_timer)
 		apply_world_boss_state(result.world_boss_state)
+		apply_night_raid_state(result.night_raid_state)
 	return result
 
 func apply_world_clock(clock_seconds: float) -> bool:
@@ -242,6 +246,56 @@ func commit_night_raid_actor_removal(actor: Node2D, encounter_instance_id: Strin
 	var lifecycle_id := NightRaidState.ACTIVE if not remaining.is_empty() else NightRaidState.CLEARED
 	night_raid_state = NightRaidState.new(lifecycle_id, NightRaidState.ENCOUNTER_ID, night_raid_state.cycle_index, remaining)
 	return true
+
+
+func get_world_chunk_context(world_position: Vector2) -> WorldChunkContext:
+	return WorldChunkCatalog.resolve_world_position(world_position)
+
+func create_night_raid_persistence_state() -> NightRaidState:
+	if night_raid_state.lifecycle_id != NightRaidState.ACTIVE:
+		return NightRaidState.from_dto(night_raid_state.to_dto())
+	var actors: Array[NightRaidActorState] = []
+	for actor_state in night_raid_state.actors:
+		var actor: Node2D = night_raid_actors.get(actor_state.instance_id)
+		if not is_instance_valid(actor): return null
+		var projected := NightRaidActorState.new(actor_state.instance_id, actor_state.species_id, int(actor.get("level")), int(actor.get("hp")), actor.global_position)
+		if not projected.is_valid(): return null
+		actors.append(projected)
+	return NightRaidState.new(NightRaidState.ACTIVE, NightRaidState.ENCOUNTER_ID, night_raid_state.cycle_index, actors)
+
+func apply_night_raid_state(state: NightRaidState) -> bool:
+	if state == null or not state.is_coherent(raid_triggered_this_cycle, day_time): return false
+	_remove_night_raid_actors()
+	if state.lifecycle_id == NightRaidState.ACTIVE:
+		var restored: Dictionary = {}
+		for actor_state in state.actors:
+			var creature = CREATURE_SCENE.instantiate()
+			creature.global_position = actor_state.position
+			creature.species_index = LegacySpeciesAdapter.to_legacy_index(actor_state.species_id)
+			creature.level = actor_state.level
+			creature.is_night_raider = true
+			creature.set_meta("encounter_id", NightRaidState.ENCOUNTER_ID)
+			creature.set_meta("encounter_instance_id", actor_state.instance_id)
+			creature.add_to_group(NIGHT_RAID_ACTOR_GROUP)
+			creature_container.add_child(creature)
+			creature.scale = Vector2(1.2, 1.2)
+			creature.attack_power = int(creature.attack_power * 1.25)
+			creature.target = player
+			creature.hp = actor_state.hp
+			creature.update_overhead()
+			creature.defeated.connect(_on_night_raid_actor_defeated)
+			creature.removed.connect(_on_night_raid_actor_removed)
+			restored[actor_state.instance_id] = creature
+		night_raid_actors = restored
+	night_raid_state = NightRaidState.from_dto(state.to_dto())
+	return true
+
+func _remove_night_raid_actors() -> void:
+	for actor: Node in get_tree().get_nodes_in_group(NIGHT_RAID_ACTOR_GROUP):
+		if is_instance_valid(actor):
+			if actor.get_parent() != null: actor.get_parent().remove_child(actor)
+			actor.free()
+	night_raid_actors.clear()
 
 func spawn_boss(show_presentation: bool = true) -> bool:
 	if world_boss_state.lifecycle_id != WorldBossState.PENDING or is_instance_valid(world_boss_actor):

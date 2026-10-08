@@ -22,18 +22,18 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 |---|---|---|---|---|
 | CORE | Clock, RNG, command/result, IDs | `ContentId` đã có; clock/RNG/result chưa tách | Kiểu dữ liệu thuần, deterministic, không phụ thuộc scene | U1.1, package sau |
 | DATA | Definition registry | Item/Recipe/Building/Crop typed canary; registry validate duplicate, field và missing reference | Typed Resource, ID ổn định, validator | U1.1–U1.3 |
-| PLAYER | Input, locomotion, needs, progression coordinator | Needs/locomotion pure; action input dùng stable intent/mapper/policy; progression/craft/build handler còn trong `player.gd` | Gọi component con; phát snapshot/event | U1.4–U1.6 |
+| PLAYER | Input, locomotion, needs, progression coordinator | Needs/locomotion/action pure; progression persistence có typed contract, runtime craft/build handler còn trong `player.gd` | Gọi component con; phát snapshot/event | U1.4–U1.6, U1.12ai |
 | COMBAT | Damage, status, targeting, hit result | Pure DamageRequest/Result migrated vào Player + WildCreature; caller khác qua adapter | Command → deterministic result; presentation riêng | U1.5 |
 | CAPTURE | Throw, chance, result, ownership | Pure chance + sphere transaction + ownership resolver; stable species adapter; atomic roster commit | Seeded/injected RNG; ownership update một lần | U1.7 |
 | CREATURE | Wild AI, ecology, locomotion | Năm species typed stats/skills/drop; ecology lifecycle dùng policy owner | Burn/status writer và progression reward | U1.9 |
 | PET | Party, command, combat assist | `pet.gd`, `player.gd` | PetInstance state + PetCommand; không giữ Node trong save | U1.10 |
 | JOBS | Pet work/reservation | Scan group trong `pet.gd`, từng building | Job board, reservation, capability, result | U5.2 |
 | INVENTORY | Stack, transfer, equipment, loot | Stable transactions; chest finite stack slots và atomic mapped batch; other direct writers còn legacy | ID-based transaction atomic | U1.2, U1.4 |
-| CRAFT | Recipe/cooking/smelting/compost | `RecipeDefinition` canary tồn tại; Player + 3 building scripts vẫn authoritative | RecipeDefinition + CraftOrder state machine | U1.3, U5.4 |
+| CRAFT | Recipe/cooking/smelting/compost | Player craft có typed catalog/pure resolver/atomic transaction; processing building còn authoritative | RecipeDefinition + CraftOrder state machine | U1.3, U1.13b, U5.4 |
 | FARM | Soil/crop/water/fertilizer/harvest | `CropDefinition` berry mirror; `resource_node.gd` vẫn gộp resource và plot | FarmPlot state thuần + CropDefinition | U1.3, U5.3 |
 | BUILD | Placement, cost, structure health | Workbench đã có typed durability DTO/catalog admission; Player + building scripts vẫn authoritative | PlacementRequest/Result, occupancy grid | U1.3, U1.6, U1.12t, U5.5 |
 | BASE | Base level, quest/progression | `base_manager.gd` | Progression state đọc event domain | U5.6 |
-| WORLD | Zone, chunks, spawn, day/night, raid | Main owns typed clock/raid/boss/ambient timers; tree/rock depletion typed; world-boss save; night-raid actor ownership | Night-raid Save admission, chunk admission + actor deltas | U1.12u–af, U2 |
+| WORLD | Zone, chunks, spawn, day/night, raid | Main owns typed clock/raid/boss/ambient timers; U2.1 có typed biome/chunk và deterministic coordinate context read-only | Chunk admission/unload + actor deltas | U1.12u–ag, U2.1–U2.3 |
 | NAV | Navigation/path requests | Chưa có | Navigation adapter theo chunk | U2.3 |
 | SAVE | Versioned persistence | Main→coordinator explicit clock boundary; Player/base/building/resource adapters; atomic repository | Autosave/UI scheduling, encounter delta | U1.11–U1.12 |
 | UI | HUD, menus, ViewModel, settings | `hud.gd`, `hud.tscn` | Intent signals + immutable snapshots | U3 |
@@ -60,8 +60,9 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.6a thực thi Needs bằng `PlayerNeedsState`; `tick(delta, is_sprinting, near_heat)` trả result/snapshot, stable buff ID dùng namespace `needs.buff.*`. Contract chi tiết ở `PLAYER_NEEDS_CONTRACT.md`.
 - U1.6b thực thi locomotion bằng `PlayerLocomotionState`; typed movement input + result quyết định stamina/sprint/roll/desired velocity. Contract chi tiết ở `PLAYER_LOCOMOTION_CONTRACT.md`.
 - U1.6c map physical event thành `PlayerActionIntent`, áp pure guard rồi coordinator mới gọi handler. Contract chi tiết ở `PLAYER_ACTION_CONTRACT.md`.
+- U1.12ai–aj thêm pure `PlayerProgressionState`/`PlayerEquipmentCatalog` rồi admit vào Save v1. Snapshot map exact legacy gear; apply derive presentation/tuning và commit stat/maxima/buff metadata sau validation. Contract ở `PLAYER_PROGRESSION_PERSISTENCE_CONTRACT.md`.
 - Player còn đọc thiết bị, dispatch handler domain, dò heat source, áp collision/visual và proxy field legacy; HUD chỉ nhận projection.
-- Player coordinator không chứa catalog recipe/building/species.
+- U1.13b chuyển 17 runtime recipe sang typed `PlayerCraftDefinition`/catalog, pure resolver và atomic shadow transaction. Player chỉ còn equipment/build-mode/presentation adapter; contract ở `PLAYER_CRAFT_CONTRACT.md`.
 - Mỗi frame chỉ có một state locomotion có quyền ghi velocity; invulnerability có thời điểm bắt đầu/kết thúc rõ.
 
 ### COMBAT và CAPTURE
@@ -134,13 +135,16 @@ Domain không truy cập HUD. UI không sửa inventory, HP, pet hoặc Node wor
 - U1.12b đóng blocker inventory đã audit: snapshot regression theo core/crafting/farming/ranch/cooking; unknown key vẫn fail closed. Pet metadata và world/base coverage chưa đổi.
 - U1.12c thêm `PetMetadataCatalog`, stable rarity/trait/stance trong roster và Save v1; Player persist stance trước node replacement và restore khi summon. Presentation text/behavior giữ nguyên.
 - U1.12d thêm PROGRESSION boundary `BaseQuestCatalog`/`BaseProgressState`; BaseManager sở hữu claimed ledger, Save v1 snapshot/apply stable base state mà không phát reward. World/building DTO chưa đổi.
-- U1.12e thêm BUILDING placement catalog/record; U1.12f–s thêm typed subtype state tới chest/furnace/cooking-pot/ranch/altar/turret durability, processing, farm và altar lifecycle. Workbench health chưa persist.
+- U1.12e thêm BUILDING placement catalog/record; U1.12f–t thêm typed subtype state tới chest/furnace/cooking-pot/ranch/altar/turret/workbench durability, processing, farm và altar lifecycle.
 - U1.12aa thêm `WorldBossState` với pending/active/defeated lifecycle, fixed instance ID và HP/position DTO. Chưa nối Save v1 vì Main chưa sở hữu actor reference và Creature chưa phát defeat event.
 - U1.12ab Main sở hữu duy nhất world boss qua actor reference, stable group/meta và Creature defeat signal. Identity mismatch, actor thường/altar và callback lặp không được commit; Save v1 chưa đổi.
 - U1.12ac admit `WorldBossState` vào Save v1; Main projects live HP/position và restore active/defeated/pending không presentation hoặc reward. Legacy spawned guard suy ra defeated để không respawn.
 - U1.12ad Creature phát stable captured-removal event sau ownership accepted; Main chỉ terminal-commit owned world boss, không can thiệp roster/reward.
 - U1.12ae thêm `NightRaidState`/`NightRaidActorState`: cycle-scoped encounter, ba stable actor slot và resolved species/level/HP/position.
 - U1.12af: Main sở hữu đúng actor của từng raid slot qua stable metadata/group; defeat/capture aggregate idempotently thành ACTIVE còn lại hoặc CLEARED. Save v1 chưa admit raid DTO.
+- U1.12ag: Save snapshot/apply/coordinator mang typed night-raid DTO; Main restore exact remaining roster không RNG/banner/reward, và legacy missing field fail-safe thành PENDING/CLEARED.
+- U1.13c: `CreatureTransitionPolicy` sở hữu combat/capture FSM decision gồm charge, attack/recovery, assist/retaliation, low-health flee và capture entry; `WildCreature` chỉ commit accepted result và presentation/physics.
+- U2.1: WORLD thêm `BiomeDefinition`, `ChunkDefinition`, `ChunkCoordinate`, catalog/context; Main chỉ expose read adapter, chưa stream hoặc persist chunk.
 
 ### UI và PRESENTATION
 

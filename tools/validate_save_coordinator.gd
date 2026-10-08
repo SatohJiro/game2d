@@ -58,6 +58,7 @@ func _run() -> void:
 
 	await _test_world_clock_owner()
 	await _test_world_boss_round_trip()
+	await _test_night_raid_round_trip()
 
 	root.remove_child(fixture)
 	fixture.free()
@@ -87,6 +88,7 @@ func _test_world_clock_owner() -> void:
 	_expect(world.call("configure_save_path", primary), "world owner must accept an explicit repository path")
 	world.set("day_time", 140.0)
 	world.set("raid_triggered_this_cycle", true)
+	world.set("night_raid_state", NightRaidState.new(NightRaidState.CLEARED, NightRaidState.ENCOUNTER_ID, 0, []))
 	world.set("boss_spawned", false)
 	world.set("boss_timer", 23.5)
 	world.set("spawn_timer", 2.25)
@@ -165,9 +167,61 @@ func _test_world_boss_round_trip() -> void:
 	_cleanup(directory, primary)
 
 
+func _test_night_raid_round_trip() -> void:
+	var packed_main := load("res://scenes/main.tscn") as PackedScene
+	var directory := "user://night_raid_owner_test_%d" % Time.get_ticks_usec()
+	var primary := "%s/slot_1.json" % directory
+	var world: Node = packed_main.instantiate()
+	root.add_child(world)
+	await process_frame
+	world.set_process(false)
+	world.call("configure_save_path", primary)
+	world.set("day_time", 140.0)
+	_expect(world.call("trigger_night_raid", false), "night raid fixture must spawn")
+	var saved_state := world.call("create_night_raid_persistence_state") as NightRaidState
+	var first_actor: Node2D = world.get("night_raid_actors")[saved_state.actors[0].instance_id]
+	first_actor.global_position = Vector2(211.5, -74.25)
+	first_actor.set("hp", 7)
+	var player_exp_before := int(world.get("player").get("exp_val"))
+	var drops_before := get_nodes_in_group("dropped_items").size()
+	_expect(world.call("save_game", 501, &"save.slot_1").is_success(), "active night raid save must succeed")
+	world.call("apply_night_raid_state", NightRaidState.new(NightRaidState.CLEARED, NightRaidState.ENCOUNTER_ID, 0, []))
+	var active_load: RefCounted = world.call("load_game")
+	var restored_state := world.get("night_raid_state") as NightRaidState
+	var restored_actor: Node2D = world.get("night_raid_actors")[restored_state.actors[0].instance_id]
+	_expect(active_load.is_loaded() and restored_state.lifecycle_id == NightRaidState.ACTIVE and restored_state.actors.size() == 3, "active night raid roster must round-trip")
+	_expect(int(restored_actor.get("hp")) == 7 and restored_actor.global_position.is_equal_approx(Vector2(211.5, -74.25)), "active raid load must restore resolved HP and position")
+	_expect(get_nodes_in_group("persistent_night_raid_actors").size() == 3 and int(world.get("player").get("exp_val")) == player_exp_before and get_nodes_in_group("dropped_items").size() == drops_before, "active raid load must restore exactly three actors without rewards")
+	for actor: Node in (world.get("night_raid_actors") as Dictionary).values():
+		world.call("commit_night_raid_actor_removal", actor, actor.get_meta("encounter_instance_id"))
+	_expect(world.call("save_game", 502, &"save.slot_1").is_success(), "cleared night raid save must succeed")
+	world.call("apply_night_raid_state", saved_state)
+	var cleared_load: RefCounted = world.call("load_game")
+	_expect(cleared_load.is_loaded() and (world.get("night_raid_state") as NightRaidState).lifecycle_id == NightRaidState.CLEARED and get_nodes_in_group("persistent_night_raid_actors").is_empty(), "cleared raid load must not spawn actors")
+	world.call("apply_night_raid_state", saved_state)
+	var preserved: Dictionary = (world.get("night_raid_actors") as Dictionary).duplicate()
+	_write_corrupt(primary)
+	_write_corrupt("%s.bak" % primary)
+	var rejected: RefCounted = world.call("load_game")
+	_expect(not rejected.is_loaded() and world.get("night_raid_actors") == preserved, "failed load must preserve current night raid ownership")
+	root.remove_child(world)
+	world.free()
+	await process_frame
+	await process_frame
+	_cleanup(directory, primary)
+
+
 func _set_runtime(player: Node, position: Vector2, level: int, hp: int, wood: int) -> void:
 	player.global_position = position
 	player.set("level", level)
+	player.set("max_exp", PlayerProgressionState.expected_max_exp(level))
+	player.set("stat_points", level * PlayerProgressionState.POINTS_PER_LEVEL)
+	var stats: Dictionary = player.get("stats")
+	stats.merge({"str": 0, "vit": 0, "sta": 0, "agi": 0}, true)
+	player.set("weapon_name", PlayerEquipmentCatalog.weapon_display_name(PlayerEquipmentCatalog.WOOD_SWORD))
+	player.set("weapon_damage", PlayerEquipmentCatalog.weapon_damage(PlayerEquipmentCatalog.WOOD_SWORD))
+	player.set("has_armor", false)
+	player.call("recalculate_stats")
 	player.set("hp", hp)
 	var inventory: Dictionary = player.get("inventory")
 	inventory["Gỗ"] = wood

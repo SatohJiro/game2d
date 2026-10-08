@@ -137,164 +137,11 @@ var hud_ref: CanvasLayer = null
 var base_manager_ref: BaseManager = null
 
 # Recipe database
-var recipes: Array[Dictionary] = [
-	{
-		"id": "building_cooking_pot",
-		"name": "Bếp Nấu Ăn Dã Ngoại",
-		"type": "building",
-		"icon": "res://assets/buildings/cooking_pot.png",
-		"req": {"Đá": 4, "Gỗ": 4},
-		"base_lvl": 1,
-		"desc": "Nấu các món ăn sinh tồn: Thịt nướng, Súp hầm, Nước tinh khiết, Bánh mì."
-	},
-	{
-		"id": "building_compost_bin",
-		"name": "Thùng Ủ Phân Hữu Cơ",
-		"type": "building",
-		"icon": "res://assets/buildings/compost_bin.png",
-		"req": {"Gỗ": 6, "Đá": 2},
-		"base_lvl": 1,
-		"desc": "Ủ rơm rác, cỏ dại và chất thải thành Phân Bón Hữu Cơ x2 sản lượng mùa màng."
-	},
-	{
-		"id": "building_ranch",
-		"name": "Chuồng Thú Cưng (Ranch)",
-		"type": "building",
-		"icon": "res://assets/buildings/ranch_fence.png",
-		"req": {"Gỗ": 8, "Đá": 4},
-		"base_lvl": 1,
-		"desc": "Nuôi Pet thả rông, tiêu thụ thức ăn và định kỳ sản sinh tài nguyên hiếm!"
-	},
-	{
-		"id": "fertilizer",
-		"name": "Phân Bón Hữu Cơ Pal",
-		"type": "item",
-		"icon": "res://assets/items/fertilizer.png",
-		"req": {"Gỗ": 2, "Quả Mọng Hồi Máu": 2},
-		"base_lvl": 1,
-		"desc": "Bón vào luống đất tăng gấp đôi (x2) sản lượng cây trồng khi thu hoạch."
-	},
-	{
-		"id": "pal_elixir",
-		"name": "Bình Thuốc Tăng Thể Lực (Elixir)",
-		"type": "item",
-		"icon": "res://assets/items/pal_elixir.png",
-		"req": {"Thảo Dược Pal": 2, "Tinh Chất Thạch Lam": 1},
-		"base_lvl": 2,
-		"desc": "Tăng tối đa Thể Lực và hồi 40 HP ngay lập tức!"
-	},
-	{
-		"id": "regular_sphere",
-		"name": "Cầu Pal Thường (x2)",
-		"type": "item",
-		"icon": "res://assets/fx/energy_ball.png",
-		"req": {"Quặng Pal": 1, "Gỗ": 1},
-		"base_lvl": 1,
-		"desc": "Cầu thu phục cơ bản, dùng để bắt quái dã ngoại."
-	},
-	{
-		"id": "mega_sphere",
-		"name": "Cầu Siêu Cấp (Mega)",
-		"type": "item",
-		"icon": "res://assets/items/mega_sphere.png",
-		"req": {"Quặng Pal": 2, "Thỏi Sắt": 1},
-		"base_lvl": 2,
-		"desc": "Tỉ lệ bắt gấp đôi (x2), dễ bắt quái cấp trung."
-	},
-	{
-		"id": "giga_sphere",
-		"name": "Cầu Huyền Thoại (Giga)",
-		"type": "item",
-		"icon": "res://assets/items/giga_sphere.png",
-		"req": {"Thỏi Pal": 3, "Thỏi Sắt": 2},
-		"base_lvl": 4,
-		"desc": "Cầu tối thượng (x4), bắt được cả quái cấp cao và Boss!"
-	},
-	{
-		"id": "sword_iron",
-		"name": "Kiếm Sắt Rèn Kỹ",
-		"type": "equipment",
-		"icon": "res://assets/items/sword.png",
-		"req": {"Thỏi Sắt": 4, "Gỗ": 3},
-		"base_lvl": 2,
-		"desc": "Vũ khí sắc bén, tăng sát thương vung chém lên 48!"
-	},
-	{
-		"id": "sword_pal",
-		"name": "Đao Thần Long Pal",
-		"type": "equipment",
-		"icon": "res://assets/items/sword.png",
-		"req": {"Thỏi Pal": 6, "Thỏi Sắt": 4},
-		"base_lvl": 4,
-		"desc": "Đao truyền thuyết, tăng sát thương lên 85 và tầm chém xa!"
-	},
-	{
-		"id": "armor_warrior",
-		"name": "Giáp Chiến Binh Pal",
-		"type": "equipment",
-		"icon": "res://assets/hunter/hunter_faceset.png",
-		"req": {"Thỏi Sắt": 5, "Gỗ": 6},
-		"base_lvl": 3,
-		"desc": "Tăng +60 Máu tối đa và giảm 25% sát thương nhận vào."
-	},
-	{
-		"id": "building_furnace",
-		"name": "Lò Luyện Kim",
-		"type": "building",
-		"icon": "res://assets/buildings/furnace_stove.png",
-		"req": {"Đá": 6, "Gỗ": 4},
-		"base_lvl": 1,
-		"desc": "Đúc Quặng thành Thỏi Sắt (Pet Flam tăng 2.8x tốc độ nung)."
-	},
-	{
-		"id": "building_chest",
-		"name": "Rương Kho Chứa Đồ",
-		"type": "building",
-		"icon": "res://assets/buildings/chest_wood.png",
-		"req": {"Gỗ": 6, "Thỏi Sắt": 1},
-		"base_lvl": 2,
-		"desc": "Kho chứa đồ rộng, Pet tự động cất nông sản & đá vào đây."
-	},
-	{
-		"id": "building_turret",
-		"name": "Tháp Canh Phòng Thủ",
-		"type": "building",
-		"icon": "res://assets/buildings/anvil.png",
-		"req": {"Đá": 8, "Thỏi Sắt": 4},
-		"base_lvl": 3,
-		"desc": "Tự động phát hiện và bắn đạn bảo vệ căn cứ trong đêm xâm lăng!"
-	},
-	{
-		"id": "building_altar",
-		"name": "Bệ Triệu Hồi Boss",
-		"type": "building",
-		"icon": "res://assets/buildings/altar_stone.png",
-		"req": {"Đá": 10, "Thỏi Pal": 2},
-		"base_lvl": 4,
-		"desc": "Tế lễ để khiêu chiến Boss cổ đại nhận trang bị thần thoại."
-	},
-	{
-		"id": "farm_plot",
-		"name": "Luống Đất Cày Xới",
-		"type": "building",
-		"icon": "res://assets/items/seed.png",
-		"req": {"Gỗ": 3, "Đá": 2},
-		"base_lvl": 1,
-		"desc": "Gieo hạt trồng quả mọng (Pet Slime tưới, Mushroom gặt)."
-	},
-	{
-		"id": "wood_fence",
-		"name": "Hàng Rào Gỗ",
-		"type": "building",
-		"icon": "res://assets/items/wood.png",
-		"req": {"Gỗ": 2},
-		"base_lvl": 1,
-		"desc": "Rào chắn kiên cố ngăn chặn quái vật áp sát."
-	}
-]
+var recipes: Array[Dictionary] = []
 
 func _ready() -> void:
 	add_to_group("player")
+	recipes = PlayerCraftCatalog.presentation_recipes()
 	
 	# Connect to HUD
 	var huds = get_tree().get_nodes_in_group("hud")
@@ -645,61 +492,33 @@ func spend_capture_sphere(selection: CaptureSphereSelectionResult) -> bool:
 	return true
 
 func craft_recipe(recipe_id: String) -> void:
-	var rec: Dictionary = {}
-	for r in recipes:
-		if r["id"] == recipe_id:
-			rec = r
-			break
-	if rec.is_empty(): return
-	
-	# Check materials
-	var reqs = rec.get("req", {})
-	for mat in reqs.keys():
-		if inventory.get(mat, 0) < reqs[mat]:
-			spawn_floating_text("Không đủ nguyên liệu: %s!" % mat, Color(1.0, 0.4, 0.4))
-			return
-	
-	# Deduct
-	for mat in reqs.keys():
-		inventory[mat] -= reqs[mat]
-	
-	# Handle result
-	if rec["type"] == "item":
-		if recipe_id == "regular_sphere":
-			inventory["Cầu Thu Phục"] = inventory.get("Cầu Thu Phục", 0) + 2
-		elif recipe_id == "mega_sphere":
-			inventory["Mega Sphere"] = inventory.get("Mega Sphere", 0) + 1
-		elif recipe_id == "giga_sphere":
-			inventory["Giga Sphere"] = inventory.get("Giga Sphere", 0) + 1
-		elif recipe_id == "fertilizer":
-			inventory["Phân Bón Hữu Cơ Pal"] = inventory.get("Phân Bón Hữu Cơ Pal", 0) + 2
-		elif recipe_id == "pal_elixir":
-			inventory["Bình Thuốc Tăng Thể Lực"] = inventory.get("Bình Thuốc Tăng Thể Lực", 0) + 1
-		spawn_floating_text("Chế tạo thành công: %s!" % rec["name"], Color(0.2, 1.0, 0.5))
+	var result := PlayerCraftResolver.resolve(StringName(recipe_id), level, PlayerCraftResolver.snapshot_inventory(inventory))
+	if result.status == PlayerCraftResult.Status.INSUFFICIENT_ITEMS:
+		spawn_floating_text("Không đủ nguyên liệu: %s!" % LegacyItemAdapter.to_legacy_key(result.missing_item_id), Color(1.0, 0.4, 0.4))
+		return
+	if not result.is_accepted() or not PlayerCraftTransaction.commit(inventory, result): return
+	var definition := result.definition
+	if definition.result_kind == PlayerCraftDefinition.RESULT_ITEM:
+		spawn_floating_text("Chế tạo thành công: %s!" % definition.display_name, Color(0.2, 1.0, 0.5))
 		if AudioManager:
 			AudioManager.play_sound("pickup")
-	
-	elif rec["type"] == "equipment":
-		if recipe_id == "sword_iron":
-			weapon_name = "Kiếm Sắt Rèn Kỹ"
-			weapon_damage = 48
-			spawn_floating_text("Trang bị Kiếm Sắt (Sát thương 48)!", Color(1.0, 0.85, 0.2))
-		elif recipe_id == "sword_pal":
-			weapon_name = "Đao Thần Long Pal"
-			weapon_damage = 85
-			spawn_floating_text("Trang bị Đao Thần Long Pal (Sát thương 85)!", Color(0.3, 0.9, 1.0))
-		elif recipe_id == "armor_warrior":
+	elif definition.result_kind == PlayerCraftDefinition.RESULT_EQUIPMENT:
+		var equipment_color := Color(0.4, 1.0, 0.5)
+		if PlayerEquipmentCatalog.is_valid_weapon(definition.result_id):
+			weapon_name = PlayerEquipmentCatalog.weapon_display_name(definition.result_id)
+			weapon_damage = PlayerEquipmentCatalog.weapon_damage(definition.result_id)
+			equipment_color = Color(1.0, 0.85, 0.2) if definition.result_id == PlayerEquipmentCatalog.IRON_SWORD else Color(0.3, 0.9, 1.0)
+		elif definition.result_id == PlayerEquipmentCatalog.PAL_WARRIOR_ARMOR:
 			has_armor = true
 			recalculate_stats()
 			hp = max_hp
-			spawn_floating_text("Trang bị Giáp Chiến Binh (+60 Máu, -25% Dmg)!", Color(0.4, 1.0, 0.5))
+		spawn_floating_text(definition.success_text, equipment_color)
 		if AudioManager:
 			AudioManager.play_sound("powerup")
-	
-	elif rec["type"] == "building":
+	elif definition.result_kind == PlayerCraftDefinition.RESULT_BUILDING:
 		if hud_ref:
 			hud_ref.toggle_crafting(false)
-		start_build_mode(recipe_id)
+		start_build_mode(String(definition.result_id))
 		return
 	
 	update_hud()

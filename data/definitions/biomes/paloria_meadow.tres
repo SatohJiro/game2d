@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="BiomeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/biome_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+content_id = &"biome.paloria_meadow"
+display_name_key = &"biome.paloria_meadow.name"
+developer_notes = "Canary biome for the current static Paloria world."
+biome_tags = Array[StringName]([&"temperate", &"meadow"])

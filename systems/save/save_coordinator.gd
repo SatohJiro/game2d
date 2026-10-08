@@ -17,8 +17,8 @@ func _init(primary_path: String, p_migration_registry: RefCounted = null) -> voi
 	migration_registry = p_migration_registry if p_migration_registry != null else MigrationRegistry.new()
 
 
-func save_player(player: Node, save_id: StringName, saved_at_unix: int, world_clock_seconds: float, raid_triggered_this_cycle: bool = false, boss_spawned: bool = false, boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS, spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS, world_boss_state: WorldBossState = null) -> RefCounted:
-	var snapshot_result: RefCounted = SnapshotAdapter.create_player_snapshot(player, save_id, saved_at_unix, world_clock_seconds, raid_triggered_this_cycle, boss_spawned, boss_timer, spawn_timer, world_boss_state)
+func save_player(player: Node, save_id: StringName, saved_at_unix: int, world_clock_seconds: float, raid_triggered_this_cycle: bool = false, boss_spawned: bool = false, boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS, spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS, world_boss_state: WorldBossState = null, night_raid_state: NightRaidState = null) -> RefCounted:
+	var snapshot_result: RefCounted = SnapshotAdapter.create_player_snapshot(player, save_id, saved_at_unix, world_clock_seconds, raid_triggered_this_cycle, boss_spawned, boss_timer, spawn_timer, world_boss_state, night_raid_state)
 	if not snapshot_result.is_accepted():
 		return CoordinatorResult.new(CoordinatorResult.Status.SNAPSHOT_FAILED, 0.0, snapshot_result.status, snapshot_result.errors)
 	var repository_result: RefCounted = repository.save(snapshot_result.snapshot)
@@ -38,4 +38,4 @@ func load_player(player: Node) -> RefCounted:
 	if not apply_result.is_applied():
 		return CoordinatorResult.new(CoordinatorResult.Status.APPLY_FAILED, 0.0, apply_result.status, apply_result.errors)
 	var success_status := CoordinatorResult.Status.LOADED_BACKUP if repository_result.status == RepositoryResult.Status.RECOVERED_BACKUP else CoordinatorResult.Status.LOADED_PRIMARY
-	return CoordinatorResult.new(success_status, apply_result.world_clock_seconds, repository_result.status, PackedStringArray(), apply_result.raid_triggered_this_cycle, apply_result.boss_spawned, apply_result.boss_timer, apply_result.spawn_timer, apply_result.world_boss_state)
+	return CoordinatorResult.new(success_status, apply_result.world_clock_seconds, repository_result.status, PackedStringArray(), apply_result.raid_triggered_this_cycle, apply_result.boss_spawned, apply_result.boss_timer, apply_result.spawn_timer, apply_result.world_boss_state, apply_result.night_raid_state)

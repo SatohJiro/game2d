@@ -100,3 +100,9 @@ Trong scope U1.8c có 10 direct writer block trước migration: 2 perception en
 `tools/validate_creature_perception.gd` kiểm tra deterministic result, condition false, timer injection, suspicion boundary 139/140, perception entry/duplicate guard, natural timeout, FLEE target loss, ALERT mất target, capture rejection, target action, chase lost/leash/night raid, protected/unknown event, actor apply, stale result apply-once và legacy attack recovery guard.
 
 Full gate tiếp tục chạy perception, transition, capture regression và main smoke. Manual test còn cần cho alert VFX/howl sau suspicion, wander timing, leash và attack bị capture/stun giữa animation.
+
+## U1.13c — combat/capture transition closure
+
+Cùng policy/apply owner nay phủ thêm stable states ATTACK, TELEGRAPH_CHARGE, CHARGING, STUNNED và event pack assist, low-health flee, charge telegraph/begin/stun/complete, attack begin/recovery, damage retaliation, capture begin. STUNNED chỉ cho explicit stun-complete thoát; CAPTURING chỉ cho capture-rejected thoát. Target retaliation/pack assist dùng `SET` và actor phải cung cấp Node hợp lệ khi commit.
+
+Sau audit, mọi FSM state/timer/target decision đều commit tại `apply_creature_transition()`. Các writer ngoài owner còn lại chỉ là actor clock, locomotion direction hoặc `prey_target` compatibility adapter sau accepted ecology result. Regression kiểm tra chuỗi charge, attack, flee, retaliation/assist, capture và stale recovery. Gameplay timing/balance, Save v1 và asset không đổi.

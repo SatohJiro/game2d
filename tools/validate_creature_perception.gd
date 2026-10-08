@@ -259,6 +259,34 @@ func _test_transition_policy() -> void:
 	_expect(capture_rejected.to_state_id == CreatureTransitionPolicy.STATE_CHASE, "capture rejection with target must restore CHASE")
 	_expect(capture_rejected.target_action == CreatureTransitionResult.TargetAction.SET, "capture rejection must set valid player target")
 
+	var combat_cases := [
+		[CreatureTransitionPolicy.STATE_CHASE, CreatureTransitionPolicy.EVENT_CHARGE_TELEGRAPH, 0.45, CreatureTransitionPolicy.STATE_TELEGRAPH_CHARGE],
+		[CreatureTransitionPolicy.STATE_TELEGRAPH_CHARGE, CreatureTransitionPolicy.EVENT_CHARGE_BEGIN, 0.0, CreatureTransitionPolicy.STATE_CHARGING],
+		[CreatureTransitionPolicy.STATE_CHARGING, CreatureTransitionPolicy.EVENT_CHARGE_STUN, 1.4, CreatureTransitionPolicy.STATE_STUNNED],
+		[CreatureTransitionPolicy.STATE_STUNNED, CreatureTransitionPolicy.EVENT_STUN_COMPLETE, 0.0, CreatureTransitionPolicy.STATE_CHASE],
+		[CreatureTransitionPolicy.STATE_CHASE, CreatureTransitionPolicy.EVENT_ATTACK_BEGIN, 0.0, CreatureTransitionPolicy.STATE_ATTACK],
+		[CreatureTransitionPolicy.STATE_ATTACK, CreatureTransitionPolicy.EVENT_ATTACK_RECOVERY, 0.0, CreatureTransitionPolicy.STATE_CHASE],
+		[CreatureTransitionPolicy.STATE_CHASE, CreatureTransitionPolicy.EVENT_LOW_HEALTH_FLEE, 3.5, CreatureTransitionPolicy.STATE_FLEE],
+		[CreatureTransitionPolicy.STATE_IDLE, CreatureTransitionPolicy.EVENT_CAPTURE_BEGIN, 0.0, CreatureTransitionPolicy.STATE_CAPTURING],
+	]
+	for combat_case in combat_cases:
+		var combat_result := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+			combat_case[0], combat_case[1], true, false, -1.0, false, combat_case[2]
+		))
+		_expect(combat_result.to_state_id == combat_case[3], "combat/capture transition target mismatch for %s" % combat_case[1])
+
+	for target_event in [CreatureTransitionPolicy.EVENT_PACK_ASSIST, CreatureTransitionPolicy.EVENT_DAMAGE_RETALIATE]:
+		var target_result := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+			CreatureTransitionPolicy.STATE_IDLE, target_event, true, true, 20.0
+		))
+		_expect(target_result.to_state_id == CreatureTransitionPolicy.STATE_CHASE, "targeted transition must enter CHASE")
+		_expect(target_result.target_action == CreatureTransitionResult.TargetAction.SET, "targeted transition must set target")
+
+	var stale_recovery := CreatureTransitionPolicy.resolve(CreatureTransitionRequest.new(
+		CreatureTransitionPolicy.STATE_CHASE, CreatureTransitionPolicy.EVENT_ATTACK_RECOVERY, true
+	))
+	_expect(stale_recovery.status == CreatureTransitionResult.Status.NO_CHANGE, "stale attack recovery must not change state")
+
 
 func _test_creature_adapter() -> void:
 	var packed := load(CREATURE_SCENE_PATH) as PackedScene

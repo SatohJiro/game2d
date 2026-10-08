@@ -14,12 +14,13 @@ func _run() -> void:
 	_test_legacy_adapter()
 	_test_inventory_transactions()
 	_test_finite_capacity_and_batch()
+	_test_player_craft_contract()
 	_test_dropped_item_resolution()
 	await _test_live_player_inventory_boundary()
 	await _clean_tree()
 
 	if _failures.is_empty():
-		print("Item migration validation passed: U1.4b capacity, batch transfer and chest compatibility are valid.")
+		print("Item migration validation passed: inventory capacity plus stable atomic Player crafting are valid.")
 		_finish.call_deferred(0)
 	else:
 		for failure in _failures:
@@ -123,6 +124,42 @@ func _test_finite_capacity_and_batch() -> void:
 	_expect(target_store["Gỗ"] == 6 and target_store["Quặng Pal"] == 2, "successful batch target mismatch")
 
 
+func _test_player_craft_contract() -> void:
+	var definitions := PlayerCraftCatalog.all_definitions()
+	_expect(definitions.size() == 17, "all 17 runtime recipes must be typed and admitted")
+	var ids := {}
+	for definition in definitions:
+		_expect(definition.is_valid(), "craft definition must be coherent: %s" % definition.recipe_id)
+		_expect(not ids.has(definition.recipe_id), "recipe IDs must be unique")
+		ids[definition.recipe_id] = true
+	for presentation in PlayerCraftCatalog.presentation_recipes():
+		_expect(String(presentation["id"]).begins_with("recipe."), "HUD recipe identity must be stable")
+
+	var insufficient_store := {"Gỗ": 0, "Quặng Pal": 1, "Cầu Thu Phục": 4}
+	var insufficient_before := insufficient_store.duplicate(true)
+	var insufficient := PlayerCraftResolver.resolve(&"recipe.item.pal_sphere_basic", 1, PlayerCraftResolver.snapshot_inventory(insufficient_store))
+	_expect(insufficient.status == PlayerCraftResult.Status.INSUFFICIENT_ITEMS and insufficient.missing_item_id == &"item.wood", "insufficient craft must identify a stable missing item")
+	_expect(not PlayerCraftTransaction.commit(insufficient_store, insufficient) and insufficient_store == insufficient_before, "rejected craft must not mutate inventory")
+
+	var item_store := {"Gỗ": 3, "Quặng Pal": 2, "Cầu Thu Phục": 4}
+	var item_result := PlayerCraftResolver.resolve(&"recipe.item.pal_sphere_basic", 1, PlayerCraftResolver.snapshot_inventory(item_store))
+	_expect(item_result.is_accepted() and PlayerCraftTransaction.commit(item_store, item_result), "valid item craft must commit")
+	_expect(item_store["Gỗ"] == 2 and item_store["Quặng Pal"] == 1 and item_store["Cầu Thu Phục"] == 6, "item craft must atomically conserve inputs and output")
+
+	var stale_store := {"Gỗ": 1, "Quặng Pal": 1, "Cầu Thu Phục": 0}
+	var stale_result := PlayerCraftResolver.resolve(&"recipe.item.pal_sphere_basic", 1, PlayerCraftResolver.snapshot_inventory(stale_store))
+	stale_store["Gỗ"] = 0
+	var stale_before := stale_store.duplicate(true)
+	_expect(not PlayerCraftTransaction.commit(stale_store, stale_result) and stale_store == stale_before, "source changed after resolve must fail atomically")
+
+	var locked := PlayerCraftResolver.resolve(&"recipe.equipment.pal_blade", 3, PlayerCraftResolver.snapshot_inventory({}))
+	_expect(locked.status == PlayerCraftResult.Status.LOCKED, "unlock level must be resolved before materials")
+	_expect(PlayerCraftResolver.resolve(&"recipe.unknown", 99, {}).status == PlayerCraftResult.Status.UNKNOWN_RECIPE, "unknown stable recipe must fail closed")
+	var building := PlayerCraftResolver.resolve(&"recipe.building.wood_fence", 1, {&"item.wood": 2})
+	_expect(building.is_accepted() and building.definition.result_id == &"building.wood_fence", "building craft must return stable building result")
+	_expect(PlayerCraftCatalog.get_definition(&"regular_sphere").recipe_id == &"recipe.item.pal_sphere_basic", "legacy recipe ID must resolve only at compatibility boundary")
+
+
 func _test_dropped_item_resolution() -> void:
 	var packed_drop: PackedScene = load(DROPPED_ITEM_SCENE_PATH) as PackedScene
 	if packed_drop == null:
@@ -155,6 +192,7 @@ func _test_live_player_inventory_boundary() -> void:
 	if player == null:
 		_failures.append("main scene did not register a player")
 		return
+	_test_live_player_craft_adapter(player)
 	_test_chest_transfer_boundary()
 	await _test_rejected_drop_stays_in_world(main_scene, player)
 	var player_parent := player.get_parent()
@@ -178,6 +216,16 @@ func _test_live_player_inventory_boundary() -> void:
 	player = null
 	main_scene = null
 	packed_main = null
+
+
+func _test_live_player_craft_adapter(player: Node) -> void:
+	player.set("level", 2)
+	var inventory: Dictionary = player.get("inventory")
+	inventory["Gỗ"] = 3
+	inventory["Thỏi Sắt"] = 4
+	player.call("craft_recipe", "recipe.equipment.iron_sword")
+	_expect(player.get("weapon_name") == "Kiếm Sắt Rèn Kỹ" and player.get("weapon_damage") == 48, "Player adapter must derive legacy weapon presentation from equipment ID")
+	_expect(inventory["Gỗ"] == 0 and inventory["Thỏi Sắt"] == 0, "Player adapter equipment craft must commit material transaction once")
 
 
 func _test_chest_transfer_boundary() -> void:

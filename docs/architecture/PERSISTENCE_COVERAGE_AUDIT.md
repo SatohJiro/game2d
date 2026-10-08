@@ -1,6 +1,6 @@
 # U1.12a — Audit coverage persistence của vertical slice
 
-Ngày audit: 2026-10-06. Đây là bằng chứng tĩnh từ owner/runtime hiện tại; package này không đổi schema hoặc gameplay.
+Ngày audit ban đầu: 2026-10-06. Re-audit U1.12ah và closure audit U1.12ak: 2026-10-08. Đây là bằng chứng tĩnh từ owner/runtime hiện tại; package audit không đổi schema hoặc gameplay.
 
 ## Cách phân loại
 
@@ -16,26 +16,27 @@ Transient animation, cooldown ngắn, target Node, tween và VFX không được
 | Owner/runtime source | State bền vững quan sát được | Stable identity hiện tại | Snapshot/apply | Rủi ro reload | Mức |
 |---|---|---|---|---|---|
 | `Player` | position, level/EXP, HP/max HP, stamina, hunger/thirst/temperature | `save.*`; scalar DTO | Có regression end-to-end | Giữ được các field đã liệt kê | FULL |
-| `Player` | `max_exp`, `stat_points`, `stats`, weapon/armor, needs maxima và food buff/duration | Chưa có contract save | Không | Build nhân vật/progression phụ trở về mặc định | HIGH/PARTIAL |
+| `Player` | `max_exp`, `stat_points`, `stats`, weapon/armor, needs maxima và stable food buff/duration | `PlayerProgressionState`, `equipment.*`, `needs.buff.*` | Typed snapshot/apply regression U1.12ai–aj | Threshold, allocation, gear, maxima và buff giữ coherent | FULL |
 | `Player.inventory` | 25 key reachable trong manifest core/crafting/farming/ranch/cooking | `item.*`; localized key chỉ là compatibility storage | Có round-trip và snapshot regression theo nhóm | Các output đã audit giữ được; unknown key vẫn fail closed | FULL trong manifest (U1.12b) |
 | `Player.pet_party` / `CompanionPet` | instance/species/level/exp, rarity, trait, stance từng pet và active instance | `pet.*`, `creature.*`; badge/name chỉ presentation | Có snapshot/apply regression active + inactive | Core roster và command state giữ được | FULL trong contract U1.12c |
-| `BuildingRanch` | assigned pets, food, production timer, health | Không có building instance ID; assignment dùng dictionary/name | Không | Assignment/output progress mất; starter pet tự sinh lại | CRITICAL/NONE |
+| `BuildingRanch` | assigned pets, food, production timer, health | `building.instance_*`, stable assignment/species IDs | Typed subtype round-trip U1.12j/q | Assignment, timer, presentation count và durability giữ được | FULL |
 | `BaseManager` | base level, active quest, claimed reward ledger | `quest.base.*` + typed `BaseProgressState` | Snapshot/apply regression | Progress giữ được; claimed quest không phát reward lại | FULL trong contract U1.12d |
-| Building placement | subtype + transform | `building.*` subtype và `building.instance_*` | Snapshot/apply placement regression | Player-created placement giữ được; subtype state chưa giữ | PARTIAL (U1.12e) |
-| `BuildingChest` | stored items, health | Không có building instance ID | Không | Kho đồ mất toàn bộ | CRITICAL/NONE |
-| Furnace/compost/cooking | input/output queue, timer, ready count, health | Không có order/instance ID | Không | Mất nguyên liệu hoặc tiến độ đang xử lý | CRITICAL/NONE |
-| `ResourceNode` farm plot | crop type/stage, growth timer, moisture, watered/fertilized | `crop.berry` chỉ là typed canary; plot không có instance ID | Không | Cây trồng và đầu tư nước/phân trở về mặc định | CRITICAL/NONE |
-| Resource/tree/rock | health/depleted existence | Scene node name/path tạm thời | Không | Resource bị phá hồi sinh sau reload | HIGH/NONE |
+| Building placement | subtype + transform + admitted subtype state | `building.*` và `building.instance_*` | Chín subtype có parser/apply; durability có ở subtype destructible đã admit | Player-created building và committed state giữ được | FULL trong Save v1 |
+| `BuildingChest` | stored items, health | Building instance + `item.*` | Typed round-trip U1.12f/n | Kho và durability giữ được | FULL |
+| Furnace/compost/cooking | input/output queue, timer, ready count; durability nơi gameplay có health | Building instance + stable recipe/item IDs | Typed round-trip U1.12g–i/o–p | Transaction đang xử lý giữ được | FULL trong contract hiện tại |
+| `ResourceNode` farm plot | crop type/stage, growth timer, moisture, watered/fertilized | Building instance + stable crop/stage IDs | Typed round-trip U1.12k | Tiến độ và đầu tư giữ được | FULL |
+| Static tree/rock | health, depleted state, respawn remaining | `resource.tree_1..6`, `resource.rock_1..4` | Typed resource delta U1.12u/v | Static resource giữ được; chunk-spawned resource chưa tồn tại | FULL trong world tĩnh hiện tại |
 | `main.gd` clock | `day_time` | Scalar `world.clock_seconds` | Main explicit save/load boundary commit sau success | Clock round-trip; raid/boss/spawn timers vẫn riêng | FULL (clock) |
-| `main.gd` encounter | raid-cycle flag, boss spawned/timer/defeat, wild population | Không | Không | Raid/boss có thể spawn lại hoặc reset timer | HIGH/NONE |
-| `world.entity_deltas` | placeholder Array | Chưa có entity/chunk instance identity | Schema shape có, payload chưa admit | Không thể giữ building/crop/resource changes | CRITICAL/NONE |
+| `main.gd` encounter | raid-cycle, world boss và night raid lifecycle/remaining roster | Stable boss/raid encounter + actor slot IDs | Typed Save v1 round-trip U1.12x–ag | Boss/raid không duplicate hoặc reroll khi load | FULL cho boss/raid |
+| `main.gd` ambient wild population | transient creature roster/species/position/HP | Không có instance identity | Không | Wild population được tái tạo từ scene/spawn director sau reload | MEDIUM/NONE; cần quyết định U2 chunk policy |
+| `world.entity_deltas` | player-created buildings và static resource deltas | Building/resource instance IDs | Typed payload đã admit | Current static-world delta giữ được; chưa có chunk identity | FULL hiện tại / dependency U2 cho world rộng |
 
 ## Bằng chứng file/API
 
 - Save coverage hiện hữu: `systems/save/save_v1_schema.gd`, `save_snapshot_adapter.gd`, `save_apply_adapter.gd`, `save_coordinator.gd` và `tools/validate_save_coordinator.gd`.
 - Player/inventory/pet source: `scripts/player.gd`; active stance: `scripts/pet.gd`.
-- Base/quest: `scripts/base_manager.gd` giữ `base_level`, `current_quest_idx`, `quest_completed` và dùng localized quest dictionaries.
-- Placement: `scripts/player.gd::place_current_building()` instantiate Node trực tiếp, chỉ gắn transform; không cấp instance ID.
+- Base/quest: `scripts/base_manager.gd` project/apply `BaseProgressState`; Save dùng stable `quest.base.*`, còn localized quest dictionary là presentation/compatibility.
+- Placement: `scripts/player.gd` cấp `building.instance_*`, snapshot `BuildingPlacementRecord` và apply chín subtype qua catalog.
 - Building mutable state: `scripts/building_chest.gd`, `building_furnace.gd`, `building_compost_bin.gd`, `building_cooking_pot.gd`, `building_ranch.gd`, `building_altar.gd`.
 - Crop/resource state: `scripts/resource_node.gd`; clock/raid/boss: `scripts/main.gd`.
 
@@ -106,3 +107,33 @@ Ba raid actor hiện không có stable identity/reference và owner không nhậ
 ## U1.12af night-raid runtime ownership
 
 Main nay sở hữu map ba stable raid slot, metadata/group encounter và aggregate đúng owned defeat/captured removal thành remaining roster hoặc CLEARED. Foreign/duplicate callback và duplicate trigger fail closed. Coverage vẫn PARTIAL vì Save v1 chưa snapshot/apply raid DTO và chưa restore actor.
+
+## U1.12ag night-raid Save v1
+
+Typed raid lifecycle và remaining roster đã đi qua schema/snapshot/apply/coordinator. Main restore ACTIVE từ resolved state không RNG/presentation/reward; CLEARED/PENDING không spawn; legacy missing field suy ra bảo thủ. Coverage raid hiện FULL về defeat/capture/save; cần chạy Godot gate trước khi đánh dấu VERIFIED và re-audit các gap persistence còn lại.
+
+## U1.12ah coverage re-audit
+
+Full gate U1.12ag và strict log scan đã xanh ngày 2026-10-08. Re-audit source xác nhận các hàng building/farm/static resource/boss/raid cũ trong ma trận đã bị lịch sử triển khai U1.12e–ag làm lỗi thời; chúng được nâng lên FULL trong phạm vi world tĩnh hiện tại.
+
+Gap HIGH có bằng chứng trực tiếp còn lại là Player progression/gear/needs metadata: `player.gd` giữ `max_exp`, `stat_points`, bốn stat, `weapon_name`/`weapon_damage`, `has_armor`; `PlayerNeedsState` giữ maxima cùng stable `buff_id`/remaining duration, nhưng Save v1 chỉ mang level/EXP, scalar needs hiện tại và stamina. Reload vì vậy có thể tạo trạng thái không nhất quán (ví dụ level/EXP đã restore nhưng threshold/stat/gear về mặc định). U1.12ai phải audit invariants và tạo typed contract trước admission; không serialize localized `weapon_name`, không tin `weapon_damage` derived và không mở rộng sang wild population/chunk identity.
+
+## U1.12ai Player progression contract
+
+Pure `PlayerProgressionState` nay khóa level/EXP threshold, stat budget, stable equipment/buff identity và coherent derived maxima. `PlayerEquipmentCatalog` thay localized name/damage làm boundary identity/authority. Coverage vẫn PARTIAL vì Save v1 và Player adapter chưa mang typed state; U1.12aj là admission gate kế tiếp.
+
+## U1.12aj Player progression Save v1
+
+Snapshot/apply nay round-trip typed progression state, stable gear, derived maxima và needs buff metadata; invalid state fail trước mutation, legacy missing field nhận conservative defaults. Hàng Player progression/gear/needs trong ma trận được nâng lên FULL trong contract hiện tại. Gap persistence còn lại cần re-audit riêng trước khi tuyên bố đạt gate U1; ambient wild population vẫn thuộc U2 chunk policy.
+
+## U1.12ak persistence closure audit
+
+Đối chiếu lại owner runtime với schema, snapshot, apply và regression sau U1.12aj xác nhận không còn gap `HIGH`, `CRITICAL` hoặc `BLOCKER` trong phạm vi vertical slice/world tĩnh. Player core/progression/inventory/pet, base quest, chín building subtype, farm plot, static resource, clock, world boss và night raid đều có stable identity cùng round-trip regression.
+
+Các phần cố ý không thuộc closure:
+
+- Ambient wild population là `MEDIUM/NONE`: actor thường là population tái tạo, chưa có chunk/spawn instance identity. Quyết định persist/despawn delta thuộc U2 sau khi chốt chunk coordinate và spawn director; không được thêm identity tạm trong Save v1.
+- Input/build preview, attack/sphere cooldown, roll/animation/VFX, target Node, tween và capture token đang bay là transient chưa commit, không phải persistence gap.
+- Autosave scheduling và slot UI không thay đổi explicit-save data coverage; route sang U3 UI/UX. Multi-slot corruption/recovery hardening cuối cùng vẫn thuộc U6.
+
+Kết luận: U1.12 persistence coverage đủ điều kiện `VERIFIED`. Gate U1 tổng thể chưa đóng vì tiêu chí giảm trách nhiệm Player/Creature chưa có baseline/threshold đạt gate: tại audit, `scripts/player.gd` có 1.262 dòng, `scripts/creature.gd` có 1.523 dòng, và craft/build handler vẫn authoritative trong Player. U1.13 phải đo ownership/writer surface và chốt extraction nhỏ cần thiết trước khi quyết định chuyển U2; đây là gap kiến trúc, không phải gap Save.

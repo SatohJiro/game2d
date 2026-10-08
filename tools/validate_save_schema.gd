@@ -71,6 +71,15 @@ func _test_identity_and_shape_guards() -> void:
 	legacy_spawned_boss["world"].erase("world_boss_state")
 	legacy_spawned_boss["world"]["cycle_state"] = {"raid_triggered_this_cycle": false, "boss_spawned": true, "boss_timer": 0.0, "spawn_timer": 3.0}
 	_expect(Schema.validate(legacy_spawned_boss).is_valid(), "legacy spawned guard must conservatively infer defeated world boss")
+	var legacy_triggered_raid := Schema.create_empty(&"save.slot_1", 1)
+	legacy_triggered_raid["world"].erase("night_raid_state")
+	legacy_triggered_raid["world"]["clock_seconds"] = 140.0
+	legacy_triggered_raid["world"]["cycle_state"] = {"raid_triggered_this_cycle": true, "boss_spawned": false, "boss_timer": 50.0, "spawn_timer": 3.0}
+	_expect(Schema.validate(legacy_triggered_raid).is_valid(), "legacy triggered raid must conservatively infer cleared without spawning")
+	var incoherent_raid := Schema.create_empty(&"save.slot_1", 1)
+	incoherent_raid["world"]["clock_seconds"] = 140.0
+	incoherent_raid["world"]["cycle_state"] = {"raid_triggered_this_cycle": true, "boss_spawned": false, "boss_timer": 50.0, "spawn_timer": 3.0}
+	_expect(not Schema.validate(incoherent_raid).is_valid(), "triggered guard must reject an explicit pending raid state")
 	var wrong_version := Schema.create_empty(&"save.slot_1", 1)
 	wrong_version["schema_version"] = 2
 	_expect(not Schema.validate(wrong_version).is_valid(), "unknown schema version must fail closed")
@@ -217,6 +226,20 @@ func _test_runtime_snapshot_adapter() -> void:
 	var snapshot_placements: Array[Dictionary] = player.get("placed_buildings")
 	snapshot_placements.append({"instance_id": "building.instance_snapshot", "building_id": "building.chest", "position": {"x": 25.5, "y": -4.0}, "rotation": 0.25, "scale": {"x": 1.0, "y": 1.0}})
 	player.global_position = Vector2(12.5, -7.25)
+	player.set("level", 3)
+	player.set("exp_val", 20)
+	player.set("max_exp", PlayerProgressionState.expected_max_exp(3))
+	player.set("stat_points", 2)
+	var snapshot_stats: Dictionary = player.get("stats")
+	snapshot_stats.merge({"str": 1, "vit": 1, "sta": 0, "agi": 2}, true)
+	player.set("weapon_name", PlayerEquipmentCatalog.weapon_display_name(PlayerEquipmentCatalog.PAL_BLADE))
+	player.set("weapon_damage", PlayerEquipmentCatalog.weapon_damage(PlayerEquipmentCatalog.PAL_BLADE))
+	player.set("has_armor", true)
+	player.call("recalculate_stats")
+	player.set("hp", player.get("max_hp"))
+	player.set("max_hunger", 125.0)
+	player.set("max_thirst", 115.0)
+	(player.get("needs_state") as PlayerNeedsState).set_buff(PlayerNeedsState.BUFF_SPEED, 45.0)
 	var party: Array[Dictionary] = player.get("pet_party")
 	var species := LegacySpeciesAdapter.create_stable_snapshot(0, {"name": "Flam", "element": "Lửa", "power": 20, "max_hp": 100, "speed": 100.0})
 	party.append({"instance_id": &"pet.snapshot_1", "species_id": LegacySpeciesAdapter.FLAM_ID, "species_data": species, "level": 3, "exp": 9, "rarity_id": PetMetadata.RARITY_LEGENDARY, "trait_id": PetMetadata.TRAIT_DRAGON_BLESSING, "stance_id": &"pet.stance.auto_work", "rarity_badge": "★★★★ Thần Thoại", "trait": "Thần Long Hộ Mệnh"})
@@ -240,6 +263,9 @@ func _test_runtime_snapshot_adapter() -> void:
 		var resource_deltas: Array = snapshot["world"]["resource_deltas"]
 		_expect(resource_deltas.size() == 2 and resource_deltas[0] == {"instance_id": "resource.rock_snapshot", "resource_id": "resource.rock", "state": {"health": 53, "respawn_remaining": 0.0}} and resource_deltas[1] == {"instance_id": "resource.tree_snapshot", "resource_id": "resource.tree", "state": {"health": 37, "respawn_remaining": 0.0}}, "tree/rock depletion snapshot must use stable identity and subtype health")
 		_expect(snapshot["player"]["position"] == {"x": 12.5, "y": -7.25} and snapshot["world"]["clock_seconds"] == 45.5, "position/world clock projection mismatch")
+		var progression: Dictionary = snapshot["player"]["progression_state"]
+		_expect(progression["weapon_id"] == "equipment.weapon.pal_blade" and progression["armor_id"] == "equipment.armor.pal_warrior" and progression["stats"] == {"str": 1, "vit": 1, "sta": 0, "agi": 2}, "runtime progression must project stable gear and allocated stats")
+		_expect(progression["buff_id"] == "needs.buff.speed" and progression["buff_time_remaining"] > 44.0 and progression["max_hunger"] == 125.0, "runtime progression must project needs maxima and active buff")
 		snapshot["inventory"]["item.wood"] = 9999
 		_expect(source_inventory == inventory_before and party == party_before, "mutating snapshot must not mutate runtime source")
 	for group_name: Variant in RuntimeInventoryManifest.GROUPS:
@@ -258,6 +284,9 @@ func _test_runtime_snapshot_adapter() -> void:
 	var unmapped: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 1234)
 	_expect(unmapped.status == SnapshotResult.Status.UNMAPPED_ITEM and unmapped.snapshot.is_empty(), "unmapped inventory key must fail without partial snapshot")
 	source_inventory.erase("Chưa Có Mapping")
+	player.set("weapon_name", "Vũ khí không map")
+	var unsupported_gear: RefCounted = SnapshotAdapter.create_player_snapshot(player, &"save.slot_1", 1234)
+	_expect(unsupported_gear.status == SnapshotResult.Status.INVALID_SOURCE and unsupported_gear.snapshot.is_empty(), "unmapped legacy gear must fail snapshot without partial data")
 	root.remove_child(fixture)
 	fixture.free()
 	await process_frame
@@ -286,9 +315,10 @@ func _test_runtime_apply_adapter() -> void:
 	var save := Schema.create_empty(&"save.slot_1", 2000)
 	save["player"] = {
 		"position": {"x": 91.25, "y": 42.5}, "level": 4, "exp": 33,
-		"hp": 77, "max_hp": 140, "stamina": 62.5,
+		"hp": 77, "max_hp": 239, "stamina": 62.5,
 		"hunger": 51.0, "thirst": 49.0, "temperature": 36.5,
 		"active_pet_instance_id": "pet.loaded_1",
+		"progression_state": PlayerProgressionState.new(4, 33, PlayerProgressionState.expected_max_exp(4), 2, {"str": 2, "vit": 1, "sta": 2, "agi": 1}, PlayerEquipmentCatalog.IRON_SWORD, PlayerEquipmentCatalog.PAL_WARRIOR_ARMOR, 239, 130.0, 120.0, 110.0, PlayerNeedsState.BUFF_SPEED, 30.0).to_dto(),
 	}
 	save["inventory"] = {"item.wood": 21, "item.stone": 13}
 	save["pets"] = [{
@@ -305,6 +335,10 @@ func _test_runtime_apply_adapter() -> void:
 	var applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, save)
 	_expect(applied.is_applied() and is_equal_approx(applied.world_clock_seconds, 321.5), "valid Save v1 must apply and return world clock")
 	_expect(player.global_position == Vector2(91.25, 42.5) and player.get("level") == 4 and player.get("hp") == 77, "player scalar apply mismatch")
+	_expect(player.get("max_exp") == PlayerProgressionState.expected_max_exp(4) and player.get("stat_points") == 2 and player.get("stats") == {"str": 2, "vit": 1, "sta": 2, "agi": 1}, "allocated progression must apply atomically")
+	_expect(player.get("weapon_name") == "Kiếm Sắt Rèn Kỹ" and player.get("weapon_damage") == 48 and player.get("has_armor") and player.get("max_hp") == 239 and is_equal_approx(player.get("max_stamina"), 130.0), "stable gear must derive legacy presentation and maxima")
+	var applied_needs: PlayerNeedsState = player.get("needs_state")
+	_expect(applied_needs.buff_id == PlayerNeedsState.BUFF_SPEED and is_equal_approx(applied_needs.buff_time_remaining, 30.0) and is_equal_approx(applied_needs.max_hunger, 120.0), "needs maxima and active buff must apply")
 	_expect(player.get("inventory") == {"Gỗ": 21, "Đá": 13}, "stable inventory must map back to the single legacy store")
 	var loaded_party: Array = player.get("pet_party")
 	var loaded_pet: Node = player.get("active_pet_node")
@@ -317,6 +351,11 @@ func _test_runtime_apply_adapter() -> void:
 	_expect(apply_tree.respawn_remaining > 9.0 and apply_tree.respawn_remaining <= 9.5, "depleted tree respawn timer must restore and continue deterministically")
 	_expect(get_nodes_in_group("dropped_items").is_empty(), "depleted tree restore must not emit harvest drops")
 	_expect(apply_rock.health == 0 and apply_rock.respawn_remaining > 7.0 and apply_rock.respawn_remaining <= 7.25, "depleted rock health/timer must restore and continue deterministically")
+	var invalid_progression: Dictionary = save.duplicate(true)
+	invalid_progression["player"]["progression_state"]["weapon_id"] = "equipment.weapon.unknown"
+	var progression_before := {"level": player.get("level"), "stats": player.get("stats").duplicate(true), "weapon": player.get("weapon_name"), "buff": applied_needs.buff_id}
+	var rejected_progression: RefCounted = ApplyAdapter.apply_player_snapshot(player, invalid_progression)
+	_expect(rejected_progression.status == ApplyResult.Status.INVALID_SNAPSHOT and progression_before == {"level": player.get("level"), "stats": player.get("stats").duplicate(true), "weapon": player.get("weapon_name"), "buff": applied_needs.buff_id}, "invalid progression must fail before runtime mutation")
 	var invalid_tree_save: Dictionary = save.duplicate(true)
 	invalid_tree_save["world"]["resource_deltas"][0]["state"] = {"health": 61, "respawn_remaining": 0.0}
 	var tree_health_before: int = apply_tree.health
@@ -518,6 +557,15 @@ func _test_runtime_apply_adapter() -> void:
 	var invalid: RefCounted = ApplyAdapter.apply_player_snapshot(player, malformed)
 	_expect(invalid.status == ApplyResult.Status.INVALID_SNAPSHOT, "invalid schema must fail before planning")
 	_expect(player.global_position == position_before and player.get("inventory") == inventory_before and player.get("pet_party") == party_before and player.get("active_pet_node") == loaded_pet, "invalid schema must preserve all runtime source state")
+	var legacy_save := Schema.create_empty(&"save.slot_1", 2001)
+	legacy_save["player"].erase("progression_state")
+	legacy_save["player"]["level"] = 3
+	legacy_save["player"]["exp"] = 27
+	legacy_save["player"]["hp"] = 90
+	legacy_save["player"]["max_hp"] = 100
+	var legacy_applied: RefCounted = ApplyAdapter.apply_player_snapshot(player, legacy_save)
+	_expect(legacy_applied.is_applied() and player.get("max_exp") == PlayerProgressionState.expected_max_exp(3) and player.get("stat_points") == 6 and player.get("stats") == {"str": 0, "vit": 0, "sta": 0, "agi": 0}, "legacy save must receive conservative unspent progression defaults")
+	_expect(player.get("weapon_name") == "Kiếm Gỗ Sơ Cấp" and not player.get("has_armor") and (player.get("needs_state") as PlayerNeedsState).buff_id == PlayerNeedsState.BUFF_NONE, "legacy save must default to starter gear and no buff")
 	root.remove_child(fixture)
 	fixture.free()
 	await process_frame

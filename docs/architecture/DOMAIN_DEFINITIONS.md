@@ -6,7 +6,7 @@ U1.3 tạo catalog typed cho ba canary đang tồn tại trong prototype mà kh�
 
 | Domain | Canary stable ID | Prototype hiện tại | Trạng thái runtime U1.3 |
 |---|---|---|---|
-| Recipe | `recipe.pal_sphere.basic` | `player.gd` recipe `regular_sphere`: 1 Quặng Pal + 1 Gỗ → 2 Cầu Thu Phục | Typed mirror; dictionary Player vẫn authoritative |
+| Recipe | `recipe.pal_sphere.basic` và 17 `recipe.item/equipment/building.*` runtime IDs | Player craft giữ nguyên 17 balance row | `PlayerCraftDefinition`/catalog là runtime authority; legacy `RecipeDefinition` canary vẫn phục vụ registry foundation |
 | Building | `building.workbench` | `building_workbench.tscn/.gd`, 200 HP, mở crafting menu | Typed mirror; scene/script vẫn authoritative |
 | Crop | `crop.berry` | `ResourceNode.CropType.BERRY`, grow ready ở 10 giây, yield 3–5 | Typed mirror; enum và logic ResourceNode vẫn authoritative |
 

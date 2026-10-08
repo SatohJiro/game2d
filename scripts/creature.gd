@@ -403,7 +403,7 @@ func _physics_process(delta: float) -> void:
 			visual.position.x = sin(Time.get_ticks_msec() * 0.05) * 2.0
 			if state_timer <= 0:
 				var charge_skill := primary_skill_definition as ChargeSkillDefinition
-				state = State.CHARGING
+				apply_creature_transition(resolve_creature_transition(CreatureTransitionPolicy.EVENT_CHARGE_BEGIN, true))
 				charge_timer = charge_skill.charge_seconds if charge_skill != null else 0.95
 				spawn_floating_text("HÚC CỰC MẠNH!", Color(1.0, 0.3, 0.1))
 		
@@ -412,8 +412,8 @@ func _physics_process(delta: float) -> void:
 			charge_timer -= delta
 			velocity = charge_dir * (charge_skill.charge_speed if charge_skill != null else 330.0)
 			if charge_timer <= 0 or is_on_wall():
-				state = State.STUNNED
-				state_timer = charge_skill.stun_seconds if charge_skill != null else 1.4
+				var stun_seconds := charge_skill.stun_seconds if charge_skill != null else 1.4
+				apply_creature_transition(resolve_creature_transition(CreatureTransitionPolicy.EVENT_CHARGE_STUN, true, stun_seconds))
 				spawn_floating_text("@_@ CHOÁNG VÁNG! (SƠ HỞ)", Color(1.0, 0.9, 0.2))
 				visual.rotation = 0.3
 		
@@ -421,9 +421,9 @@ func _physics_process(delta: float) -> void:
 			velocity = Vector2.ZERO
 			visual.rotation = sin(Time.get_ticks_msec() * 0.02) * 0.2
 			if state_timer <= 0:
-				visual.rotation = 0.0
-				state = State.CHASE
-				attack_cooldown = 1.0
+				if apply_creature_transition(resolve_creature_transition(CreatureTransitionPolicy.EVENT_STUN_COMPLETE, true)):
+					visual.rotation = 0.0
+					attack_cooldown = 1.0
 		
 		State.ATTACK:
 			velocity = velocity.move_toward(Vector2.ZERO, 400 * delta)
@@ -541,10 +541,9 @@ func pack_howl_alert(threat: Node2D) -> void:
 				ally.join_pack_attack(threat)
 
 func join_pack_attack(threat: Node2D) -> void:
-	if state == State.CAPTURING or state == State.SLEEP:
+	var transition := resolve_creature_transition(CreatureTransitionPolicy.EVENT_PACK_ASSIST, true, 0.0, threat)
+	if not apply_creature_transition(transition, threat):
 		return
-	target = threat
-	state = State.CHASE
 	attack_cooldown = randf_range(0.2, 0.8)
 	spawn_floating_text("⚔️ TIẾP ỨNG BẦY ĐÀN!", Color(1.0, 0.8, 0.2))
 
@@ -669,8 +668,7 @@ func handle_smart_chase(delta: float) -> void:
 		1: # Slime (Nước) - Bouncy Hopper
 			if hp < max_hp * 0.30:
 				# Low HP Slime panics and flees!
-				state = State.FLEE
-				state_timer = 3.5
+				apply_creature_transition(resolve_creature_transition(CreatureTransitionPolicy.EVENT_LOW_HEALTH_FLEE, true, 3.5))
 				spawn_floating_text("💦 HOẢNG SỢ BỎ CHẠY!", Color(0.3, 0.9, 1.0))
 				return
 			
@@ -681,8 +679,7 @@ func handle_smart_chase(delta: float) -> void:
 		
 		2: # Mushroom (Thảo Mộc) - Kiting Sniper
 			if hp < max_hp * 0.25:
-				state = State.FLEE
-				state_timer = 3.0
+				apply_creature_transition(resolve_creature_transition(CreatureTransitionPolicy.EVENT_LOW_HEALTH_FLEE, true, 3.0))
 				spawn_floating_text("🍄 BỎ CHẠY THOÁT THÂN!", Color(0.5, 1.0, 0.4))
 				return
 			
@@ -701,8 +698,9 @@ func handle_smart_chase(delta: float) -> void:
 			var minimum_range := charge_skill.minimum_range if charge_skill != null else 70.0
 			var maximum_range := charge_skill.maximum_range if charge_skill != null else 220.0
 			if dist >= minimum_range and dist <= maximum_range and attack_cooldown <= 0:
-				state = State.TELEGRAPH_CHARGE
-				state_timer = charge_skill.anticipation_seconds if charge_skill != null else 0.45
+				var anticipation_seconds := charge_skill.anticipation_seconds if charge_skill != null else 0.45
+				if not apply_creature_transition(resolve_creature_transition(CreatureTransitionPolicy.EVENT_CHARGE_TELEGRAPH, true, anticipation_seconds)):
+					return
 				charge_dir = raw_dir
 				attack_cooldown = charge_skill.cooldown_seconds if charge_skill != null else 3.5
 				spawn_floating_text("! CHUẨN BỊ LAO TỚI", Color(1.0, 0.4, 0.1))
@@ -739,6 +737,8 @@ func perform_slime_hop(dir: Vector2, skill: SkillDefinition = null) -> void:
 	tween.tween_property(visual, "scale", Vector2.ONE, settle_seconds)
 
 func perform_fireball_attack(dir: Vector2, skill: SkillDefinition = null) -> void:
+	if not apply_creature_transition(resolve_creature_transition(CreatureTransitionPolicy.EVENT_ATTACK_BEGIN, true)):
+		return
 	var cooldown_seconds := skill.cooldown_seconds if skill != null else 2.2
 	var travel_distance := skill.travel_distance if skill != null else 240.0
 	var travel_seconds := skill.travel_seconds if skill != null else 0.55
@@ -746,7 +746,6 @@ func perform_fireball_attack(dir: Vector2, skill: SkillDefinition = null) -> voi
 	var recovery_seconds := skill.recovery_seconds if skill != null else 0.3
 	var damage_multiplier := skill.damage_multiplier if skill != null else 1.0
 	attack_cooldown = cooldown_seconds
-	state = State.ATTACK
 	velocity = Vector2.ZERO
 	
 	spawn_floating_text("🔥 Bắn Cầu Lửa!", Color(1.0, 0.4, 0.1))
@@ -773,6 +772,8 @@ func perform_fireball_attack(dir: Vector2, skill: SkillDefinition = null) -> voi
 	finish_legacy_attack_recovery()
 
 func perform_spore_attack(dir: Vector2, skill: SkillDefinition = null) -> void:
+	if not apply_creature_transition(resolve_creature_transition(CreatureTransitionPolicy.EVENT_ATTACK_BEGIN, true)):
+		return
 	var cooldown_seconds := skill.cooldown_seconds if skill != null else 2.0
 	var travel_distance := skill.travel_distance if skill != null else 200.0
 	var travel_seconds := skill.travel_seconds if skill != null else 0.5
@@ -780,7 +781,6 @@ func perform_spore_attack(dir: Vector2, skill: SkillDefinition = null) -> void:
 	var recovery_seconds := skill.recovery_seconds if skill != null else 0.25
 	var damage_multiplier := skill.damage_multiplier if skill != null else 1.0
 	attack_cooldown = cooldown_seconds
-	state = State.ATTACK
 	velocity = Vector2.ZERO
 	
 	spawn_floating_text("🌿 Bắn Bào Tử Độc!", Color(0.4, 1.0, 0.3))
@@ -806,7 +806,8 @@ func perform_spore_attack(dir: Vector2, skill: SkillDefinition = null) -> void:
 
 func perform_melee_attack(skill: MeleeSkillDefinition = null) -> void:
 	if not is_instance_valid(target): return
-	state = State.ATTACK
+	if not apply_creature_transition(resolve_creature_transition(CreatureTransitionPolicy.EVENT_ATTACK_BEGIN, true)):
+		return
 	attack_cooldown = skill.cooldown_seconds if skill != null else 1.2
 	
 	var dir = (target.global_position - global_position).normalized()
@@ -825,15 +826,10 @@ func perform_melee_attack(skill: MeleeSkillDefinition = null) -> void:
 
 
 func finish_legacy_attack_recovery() -> bool:
-	if (
-		defeat_committed
-		or state == State.CAPTURING
-		or state == State.STUNNED
-		or state != State.ATTACK
-	):
-		return false
-	state = State.CHASE
-	return true
+	return apply_creature_transition(resolve_creature_transition(
+		CreatureTransitionPolicy.EVENT_ATTACK_RECOVERY,
+		true
+	))
 
 
 func update_player_perception(delta: float) -> void:
@@ -941,12 +937,14 @@ func apply_creature_transition(result: CreatureTransitionResult, proposed_target
 
 
 func is_transition_request_protected(event_id: StringName) -> bool:
-	return defeat_committed or state == State.STUNNED or (state == State.CAPTURING and event_id != CreatureTransitionPolicy.EVENT_CAPTURE_REJECTED)
+	var stun_exit := event_id == CreatureTransitionPolicy.EVENT_STUN_COMPLETE
+	return defeat_committed or (state == State.STUNNED and not stun_exit) or (state == State.CAPTURING and event_id != CreatureTransitionPolicy.EVENT_CAPTURE_REJECTED)
 
 
 func is_transition_apply_protected(result: CreatureTransitionResult = null) -> bool:
 	var capture_rejection := result != null and result.reason_id == CreatureTransitionPolicy.EVENT_CAPTURE_REJECTED
-	return defeat_committed or state == State.STUNNED or (state == State.CAPTURING and not capture_rejection)
+	var stun_exit := result != null and result.reason_id == CreatureTransitionPolicy.EVENT_STUN_COMPLETE
+	return defeat_committed or (state == State.STUNNED and not stun_exit) or (state == State.CAPTURING and not capture_rejection)
 
 
 func get_creature_state_id() -> StringName:
@@ -973,6 +971,14 @@ func get_creature_state_id() -> StringName:
 			return CreatureTransitionPolicy.STATE_CAPTURING
 		State.HUNTING_PREY:
 			return CreatureTransitionPolicy.STATE_HUNTING_PREY
+		State.ATTACK:
+			return CreatureTransitionPolicy.STATE_ATTACK
+		State.TELEGRAPH_CHARGE:
+			return CreatureTransitionPolicy.STATE_TELEGRAPH_CHARGE
+		State.CHARGING:
+			return CreatureTransitionPolicy.STATE_CHARGING
+		State.STUNNED:
+			return CreatureTransitionPolicy.STATE_STUNNED
 		_:
 			return &"creature.state.legacy"
 
@@ -990,6 +996,10 @@ func is_supported_transition_state(state_id: StringName) -> bool:
 		or state_id == CreatureTransitionPolicy.STATE_FLEE
 		or state_id == CreatureTransitionPolicy.STATE_CAPTURING
 		or state_id == CreatureTransitionPolicy.STATE_HUNTING_PREY
+		or state_id == CreatureTransitionPolicy.STATE_ATTACK
+		or state_id == CreatureTransitionPolicy.STATE_TELEGRAPH_CHARGE
+		or state_id == CreatureTransitionPolicy.STATE_CHARGING
+		or state_id == CreatureTransitionPolicy.STATE_STUNNED
 	)
 
 
@@ -1015,6 +1025,14 @@ func creature_state_from_id(state_id: StringName) -> State:
 			return State.CAPTURING
 		CreatureTransitionPolicy.STATE_HUNTING_PREY:
 			return State.HUNTING_PREY
+		CreatureTransitionPolicy.STATE_ATTACK:
+			return State.ATTACK
+		CreatureTransitionPolicy.STATE_TELEGRAPH_CHARGE:
+			return State.TELEGRAPH_CHARGE
+		CreatureTransitionPolicy.STATE_CHARGING:
+			return State.CHARGING
+		CreatureTransitionPolicy.STATE_STUNNED:
+			return State.STUNNED
 		_:
 			return State.IDLE
 
@@ -1171,10 +1189,10 @@ func take_damage(amount: int, hit_origin: Vector2, attacker: Node2D = null) -> v
 	tween.tween_property(visual, "modulate", Color.WHITE, 0.18)
 	
 	if attacker and is_instance_valid(attacker):
-		target = attacker
-		state = State.CHASE
-		# Call pack assistance immediately
-		pack_howl_alert(attacker)
+		var retaliation := resolve_creature_transition(CreatureTransitionPolicy.EVENT_DAMAGE_RETALIATE, true, 0.0, attacker)
+		if apply_creature_transition(retaliation, attacker):
+			# Call pack assistance immediately
+			pack_howl_alert(attacker)
 	
 	var ecology_result := resolve_damage_panic(result.defeated)
 	if ecology_result.should_panic_flee():
@@ -1319,8 +1337,10 @@ func attempt_capture(player_ref: Node2D, catch_multiplier: float = 1.0, throw_po
 	if not result.is_resolved():
 		return
 
+	var capture_transition := resolve_creature_transition(CreatureTransitionPolicy.EVENT_CAPTURE_BEGIN, true)
+	if not apply_creature_transition(capture_transition):
+		return
 	capture_attempt_active = true
-	state = State.CAPTURING
 	velocity = Vector2.ZERO
 	if result.tags.has("back_strike"):
 		spawn_floating_text("🎯 ĐÁNH LÉN SAU LƯNG! (+35% BẮT)", Color(1.0, 0.9, 0.2))

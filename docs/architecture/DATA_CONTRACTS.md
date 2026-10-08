@@ -30,6 +30,8 @@ Domain đã dành trước:
 | `biome` | BiomeDefinition | `biome.starter_meadow` |
 | `quest` | QuestDefinition | `quest.base.first_capture` |
 
+U1.12ai dành namespace `equipment.weapon.*` và `equipment.armor.*` cho gear Player. Đây là allowlist persistence trong `PlayerEquipmentCatalog`, chưa phải registry definition: weapon gồm wood sword/iron sword/Pal blade; armor gồm none/Pal warrior. Localized name, crafting short ID, asset path và damage/bonus derived không được dùng làm identity.
+
 Runtime capture sphere IDs đã được admit ở U1.7b: `item.pal_sphere.basic`, `item.pal_sphere.mega`, `item.pal_sphere.giga`. Cả ba map vào backing dictionary legacy qua `LegacyItemAdapter`; stable ID là identity cho selection/projectile/drop, text cũ chỉ là compatibility storage/display.
 
 U1.7c dành năm stable species ID `creature.flam`, `creature.slime`, `creature.mushroom`, `creature.beast`, `creature.dragon`. `LegacySpeciesAdapter` map index hiện hữu sang ID và deep-copy snapshot tại capture boundary. Đây là compatibility mapping; chưa có typed `CreatureDefinition` hoặc registry entry.
@@ -51,6 +53,10 @@ U1.12f admit `ChestPlacementState` cho đúng `building.chest`. Inventory DTO d�
 U1.12g admit `FurnacePlacementState` cho đúng `building.furnace`. Các count và timer là scalar JSON-safe; active/boost presentation không trở thành identity hoặc persisted authority.
 
 U1.12h admit năm stable recipe ID `recipe.cooking.smoked_meat`, `hearty_stew`, `purified_water`, `berry_jam`, `golden_wheat_bread`. `CookingRecipeCatalog` là compatibility map tới row runtime hiện hữu; localized dish name và legacy short ID không được dùng trong save.
+
+U1.13b admit 17 Player craft ID dưới `recipe.item.*`, `recipe.equipment.*` và `recipe.building.*` qua typed `PlayerCraftDefinition`. Input/result chỉ dùng stable domain ID; localized name, success text và asset path là presentation. Legacy short recipe ID chỉ được resolve tại compatibility boundary, HUD mới phát stable ID.
+
+U2.1 thêm domain `biome.*` và `chunk.*`. `chunk.<name>` là content definition ID; runtime coordinate key dùng canonical `chunk.pN.nN`, không thay thế definition ID và không dùng raw dấu trừ. Chi tiết tại `WORLD_CHUNK_CONTRACT.md`.
 
 U1.12i admit `CompostBinPlacementState` cho đúng `building.compost_bin`. State chỉ chứa scalar JSON-safe với range/coherence validation; fertilizer display text không trở thành identity.
 

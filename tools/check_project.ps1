@@ -19,6 +19,7 @@ $contentLog = Join-Path $LogDirectory 'content-validation.log'
 $itemMigrationLog = Join-Path $LogDirectory 'item-migration-validation.log'
 $combatLog = Join-Path $LogDirectory 'combat-validation.log'
 $playerNeedsLog = Join-Path $LogDirectory 'player-needs-validation.log'
+$playerProgressionLog = Join-Path $LogDirectory 'player-progression-validation.log'
 $playerLocomotionLog = Join-Path $LogDirectory 'player-locomotion-validation.log'
 $playerActionsLog = Join-Path $LogDirectory 'player-actions-validation.log'
 $creaturePerceptionLog = Join-Path $LogDirectory 'creature-perception-validation.log'
@@ -33,6 +34,7 @@ $saveMigrationLog = Join-Path $LogDirectory 'save-migration-validation.log'
 $saveCoordinatorLog = Join-Path $LogDirectory 'save-coordinator-validation.log'
 $worldBossStateLog = Join-Path $LogDirectory 'world-boss-state-validation.log'
 $nightRaidStateLog = Join-Path $LogDirectory 'night-raid-state-validation.log'
+$worldChunkLog = Join-Path $LogDirectory 'world-chunk-validation.log'
 $smokeLog = Join-Path $LogDirectory 'headless-smoke.log'
 $failurePattern = 'SCRIPT ERROR|Parse Error|Failed to load script|Cannot open file|Node not found|Invalid get index|^ERROR:'
 
@@ -70,6 +72,9 @@ Invoke-GodotCheck -Name 'Combat validation' -LogPath $combatLog -Arguments @(
 )
 Invoke-GodotCheck -Name 'Player needs validation' -LogPath $playerNeedsLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_player_needs.gd')
+)
+Invoke-GodotCheck -Name 'Player progression validation' -LogPath $playerProgressionLog -Arguments @(
+    '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_player_progression.gd')
 )
 Invoke-GodotCheck -Name 'Player locomotion validation' -LogPath $playerLocomotionLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_player_locomotion.gd')
@@ -112,6 +117,9 @@ Invoke-GodotCheck -Name 'World boss state validation' -LogPath $worldBossStateLo
 )
 Invoke-GodotCheck -Name 'Night raid state validation' -LogPath $nightRaidStateLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_night_raid_state.gd')
+)
+Invoke-GodotCheck -Name 'World chunk validation' -LogPath $worldChunkLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_world_chunks.gd')
 )
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')

@@ -102,10 +102,16 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		errors.append("resource depletion owner or instance is unavailable")
 		return null
 	var player_data: Dictionary = snapshot["player"]
+	var progression_state := PlayerProgressionState.from_dto(player_data.get("progression_state"))
+	if progression_state == null:
+		progression_state = PlayerProgressionState.create_legacy_default(int(player_data["level"]), int(player_data["exp"]))
 	var cycle_state := WorldCycleState.from_dto(snapshot["world"].get("cycle_state", {"raid_triggered_this_cycle": false}), float(snapshot["world"]["clock_seconds"]))
 	var boss_state: WorldBossState = WorldBossState.from_dto(snapshot["world"].get("world_boss_state"))
 	if boss_state == null:
 		boss_state = WorldBossState.new(WorldBossState.DEFEATED, WorldBossState.INSTANCE_ID, 0, Vector2.ZERO) if cycle_state.boss_spawned else WorldBossState.new()
+	var raid_state: NightRaidState = NightRaidState.from_dto(snapshot["world"].get("night_raid_state"))
+	if raid_state == null:
+		raid_state = NightRaidState.new(NightRaidState.CLEARED, NightRaidState.ENCOUNTER_ID, int(floor(float(snapshot["world"]["clock_seconds"]) / NightRaidState.DAY_DURATION)), []) if cycle_state.raid_triggered_this_cycle else NightRaidState.new()
 	return ApplyPlan.new(
 		player_data,
 		legacy_inventory,
@@ -121,20 +127,36 @@ static func _create_plan(player: Node, snapshot: Dictionary, errors: PackedStrin
 		cycle_state.boss_spawned,
 		cycle_state.boss_timer,
 		cycle_state.spawn_timer,
-		boss_state
+		boss_state,
+		raid_state,
+		progression_state
 	)
 
 
 static func _commit(player: Node, plan: RefCounted) -> RefCounted:
 	_dismiss_active_pet(player)
 	player.global_position = Vector2(float(plan.player_state["position"]["x"]), float(plan.player_state["position"]["y"]))
-	player.set("level", int(plan.player_state["level"]))
-	player.set("exp_val", int(plan.player_state["exp"]))
-	player.set("max_hp", int(plan.player_state["max_hp"]))
-	player.set("hp", int(plan.player_state["hp"]))
-	player.set("stamina", float(plan.player_state["stamina"]))
-	player.set("hunger", float(plan.player_state["hunger"]))
-	player.set("thirst", float(plan.player_state["thirst"]))
+	var progression: PlayerProgressionState = plan.player_progression_state
+	player.set("level", progression.level)
+	player.set("exp_val", progression.exp)
+	player.set("max_exp", progression.max_exp)
+	player.set("stat_points", progression.stat_points)
+	var runtime_stats: Dictionary = player.get("stats")
+	runtime_stats.clear()
+	runtime_stats.merge(progression.stats, true)
+	player.set("weapon_name", PlayerEquipmentCatalog.weapon_display_name(progression.weapon_id))
+	player.set("weapon_damage", PlayerEquipmentCatalog.weapon_damage(progression.weapon_id))
+	player.set("has_armor", progression.armor_id == PlayerEquipmentCatalog.PAL_WARRIOR_ARMOR)
+	player.set("max_hp", progression.max_hp)
+	player.set("max_stamina", progression.max_stamina)
+	player.set("max_hunger", progression.max_hunger)
+	player.set("max_thirst", progression.max_thirst)
+	var needs_state: PlayerNeedsState = player.get("needs_state")
+	needs_state.set_buff(progression.buff_id, progression.buff_time_remaining)
+	player.set("hp", mini(int(plan.player_state["hp"]), progression.max_hp))
+	player.set("stamina", minf(float(plan.player_state["stamina"]), progression.max_stamina))
+	player.set("hunger", minf(float(plan.player_state["hunger"]), progression.max_hunger))
+	player.set("thirst", minf(float(plan.player_state["thirst"]), progression.max_thirst))
 	player.set("body_temperature", float(plan.player_state["temperature"]))
 	var inventory: Dictionary = player.get("inventory")
 	inventory.clear()
@@ -161,7 +183,7 @@ static func _commit(player: Node, plan: RefCounted) -> RefCounted:
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
 	if not bool(player.call("apply_resource_depletion_snapshot", plan.resource_depletions)):
 		return ApplyResult.new(ApplyResult.Status.COMMIT_FAILED)
-	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle, plan.boss_spawned, plan.boss_timer, plan.spawn_timer, plan.world_boss_state)
+	return ApplyResult.new(ApplyResult.Status.APPLIED, plan.world_clock_seconds, PackedStringArray(), plan.raid_triggered_this_cycle, plan.boss_spawned, plan.boss_timer, plan.spawn_timer, plan.world_boss_state, plan.night_raid_state)
 
 
 static func _is_default_base_state(state: BaseProgressState) -> bool:

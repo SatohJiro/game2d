@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ChunkDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/chunk_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+content_id = &"chunk.paloria_origin"
+display_name_key = &"chunk.paloria_origin.name"
+developer_notes = "Canary definition anchoring the current static world at coordinate (0, 0)."
+coordinate = Vector2i(0, 0)
+biome_id = &"biome.paloria_meadow"

@@ -182,7 +182,7 @@ func _validate_project_content() -> void:
 			_failures.append(message)
 		return
 
-	_expect(registry.size() == 42, "registry must contain forty-two definitions through U1.12k")
+	_expect(registry.size() == 44, "registry must contain forty-four definitions through U2.1")
 	_validate_runtime_inventory_manifest(registry)
 	_expect(registry.has(&"item.wood"), "registry is missing item.wood")
 	_expect(registry.has(&"item.pal_ore"), "registry is missing item.pal_ore")
@@ -207,6 +207,11 @@ func _validate_project_content() -> void:
 	_expect(registry.has(&"skill.flam.fireball"), "registry is missing skill.flam.fireball")
 	_expect(registry.has(&"skill.dragon.fireball"), "registry is missing skill.dragon.fireball")
 	_expect(registry.has(&"skill.mushroom.spore"), "registry is missing skill.mushroom.spore")
+	_expect(registry.has(&"biome.paloria_meadow"), "registry is missing biome.paloria_meadow")
+	_expect(registry.has(&"chunk.paloria_origin"), "registry is missing chunk.paloria_origin")
+	var origin_chunk := registry.get_definition(&"chunk.paloria_origin") as ChunkDefinition
+	_expect(origin_chunk != null and origin_chunk.coordinate == Vector2i.ZERO, "origin chunk definition mismatch")
+	_expect(origin_chunk != null and origin_chunk.biome_id == &"biome.paloria_meadow", "origin chunk biome reference mismatch")
 	var wood := registry.get_definition(&"item.wood") as ItemDefinition
 	_expect(wood != null, "item.wood must load as ItemDefinition")
 	if wood != null:

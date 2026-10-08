@@ -9,7 +9,7 @@ const BaseProgressStateModel = preload("res://systems/progression/base_progress_
 const DEFAULT_STANCE_ID := &"pet.stance.auto_work"
 
 
-static func create_player_snapshot(player: Node, save_id: StringName, saved_at_unix: int, world_clock_seconds: float = 0.0, raid_triggered_this_cycle: bool = false, boss_spawned: bool = false, boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS, spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS, world_boss_state: WorldBossState = null) -> RefCounted:
+static func create_player_snapshot(player: Node, save_id: StringName, saved_at_unix: int, world_clock_seconds: float = 0.0, raid_triggered_this_cycle: bool = false, boss_spawned: bool = false, boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS, spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS, world_boss_state: WorldBossState = null, night_raid_state: NightRaidState = null) -> RefCounted:
 	if player == null or not is_instance_valid(player) or not player.has_method("get"):
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
 	var inventory_value: Variant = player.get("inventory")
@@ -30,6 +30,14 @@ static func create_player_snapshot(player: Node, save_id: StringName, saved_at_u
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE, {}, ["invalid base progression source"])
 
 	var needs_snapshot: Variant = needs.create_snapshot()
+	var weapon_id := PlayerEquipmentCatalog.weapon_id_from_legacy(String(player.get("weapon_name")), int(player.get("weapon_damage")))
+	var progression := PlayerProgressionState.new(
+		int(player.get("level")), int(player.get("exp_val")), int(player.get("max_exp")), int(player.get("stat_points")), player.get("stats"),
+		weapon_id, PlayerEquipmentCatalog.armor_id_from_legacy(bool(player.get("has_armor"))), int(player.get("max_hp")), float(player.get("max_stamina")),
+		float(needs_snapshot.max_hunger), float(needs_snapshot.max_thirst), needs_snapshot.buff_id, float(needs_snapshot.buff_time_remaining)
+	)
+	if not progression.is_valid():
+		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE, {}, ["invalid player progression source"])
 	var dto := Schema.create_empty(save_id, saved_at_unix)
 	var position: Vector2 = player.global_position
 	dto["player"] = {
@@ -43,6 +51,7 @@ static func create_player_snapshot(player: Node, save_id: StringName, saved_at_u
 		"thirst": float(needs_snapshot.thirst),
 		"temperature": float(needs_snapshot.body_temperature),
 		"active_pet_instance_id": String(player.get("active_pet_instance_id")),
+		"progression_state": progression.to_dto(),
 	}
 	dto["inventory"] = inventory_dto
 	dto["pets"] = pets_dto
@@ -53,6 +62,10 @@ static func create_player_snapshot(player: Node, save_id: StringName, saved_at_u
 	if projected_boss_state == null or not projected_boss_state.is_valid():
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE, {}, ["invalid world boss source"])
 	dto["world"]["world_boss_state"] = projected_boss_state.to_dto()
+	var projected_raid_state := night_raid_state if night_raid_state != null else (NightRaidState.new(NightRaidState.CLEARED, NightRaidState.ENCOUNTER_ID, int(floor(world_clock_seconds / NightRaidState.DAY_DURATION)), []) if raid_triggered_this_cycle else NightRaidState.new())
+	if projected_raid_state == null or not projected_raid_state.is_coherent(raid_triggered_this_cycle, world_clock_seconds):
+		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE, {}, ["invalid night raid source"])
+	dto["world"]["night_raid_state"] = projected_raid_state.to_dto()
 	if not player.has_method("create_building_placement_snapshot"):
 		return SnapshotResult.new(SnapshotResult.Status.INVALID_SOURCE)
 	dto["world"]["entity_deltas"] = player.call("create_building_placement_snapshot")

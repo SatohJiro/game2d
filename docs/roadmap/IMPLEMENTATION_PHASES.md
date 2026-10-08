@@ -26,13 +26,14 @@ U0 chỉ hoàn tất khi baseline có thể khôi phục và asset mới không 
 9. **U1.9 Creature skills/drop — VERIFIED:** U1.9a–u gồm typed species, toàn bộ species attack tuning, deterministic defeat drops và burn tick qua combat boundary.
 10. **U1.10 Pet roster/command — VERIFIED:** U1.10a–d khóa persistent identity, single-node summon và deterministic cycle/explicit stance commands; target/job depth thuộc U5.
 11. **U1.11 Save v1 foundation — VERIFIED:** U1.11a–f gồm schema, runtime snapshot/apply, atomic repository, migration harness và explicit coordinator. Autosave/UI/world-base coverage thuộc package sau; gate U1 tổng thể chưa đạt.
-12. **U1.12 Persistence coverage — IN PROGRESS:** U1.12a–af VERIFIED: world-boss coverage đã đóng; night-raid typed contract và owned actor removal đã khóa. Night-raid Save admission là dependency kế tiếp.
+12. **U1.12 Persistence coverage — VERIFIED:** U1.12a–ak đóng explicit Save v1 cho vertical slice/world tĩnh; không còn gap HIGH/CRITICAL. Ambient wild population hoãn tới U2 chunk identity, autosave/slot UI thuộc U3.
+13. **U1.13 Boundary closure — VERIFIED:** U1.13a baseline; U1.13b chuyển Player craft sang typed stable catalog/pure resolver/atomic transaction; U1.13c chuyển 19 Creature FSM decision bypass vào transition policy/apply owner, writer surface 29 → 10 và không còn direct decision bypass.
 
-Gate U1: vertical slice combat → capture → pet → farm/build → save/load dùng ID/data typed; validator và regression xanh; player/creature giảm trách nhiệm có đo lường.
+Gate U1: **VERIFIED 2026-10-08**. Vertical slice combat → capture → pet → farm/build → save/load dùng ID/data typed; persistence đạt qua U1.12ak, Player craft boundary qua U1.13b và Creature FSM ownership qua U1.13c. Validator, editor load và smoke xanh; manual feel review vẫn là kiểm chứng bổ sung, không phải blocker gate kiến trúc.
 
 ## U2 — world rộng
 
-1. Biome/ChunkDefinition và coordinate contract.
+1. **Biome/ChunkDefinition và coordinate contract — VERIFIED:** typed canary, signed runtime key, catalog/context và Main read adapter; chưa stream/persist chunk.
 2. Chunk admission/unload quanh player với debug overlay.
 3. Persistent world delta cho resource/crop/building/captured spawn.
 4. Navigation theo chunk và obstacle update.
@@ -45,7 +46,7 @@ Gate U2: qua 9 chunk không mất state; soak 20 phút; không hitch vượt bud
 
 1. UI tokens + Theme + font/icon policy.
 2. HUD ViewModel và intent bridge.
-3. Inventory/crafting/build/pet roster screens.
+3. Inventory/crafting/build/pet roster screens; save/load slot UI và autosave controls trên explicit coordinator.
 4. Context prompt + device detection + command wheel.
 5. Settings: remap, scale, audio, reduced motion/flash/shake.
 6. Localization keys và Vietnamese/English baseline.

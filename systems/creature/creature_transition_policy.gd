@@ -12,6 +12,10 @@ const STATE_GRAZING := &"creature.state.grazing"
 const STATE_FLEE := &"creature.state.flee"
 const STATE_CAPTURING := &"creature.state.capturing"
 const STATE_HUNTING_PREY := &"creature.state.hunting_prey"
+const STATE_ATTACK := &"creature.state.attack"
+const STATE_TELEGRAPH_CHARGE := &"creature.state.telegraph_charge"
+const STATE_CHARGING := &"creature.state.charging"
+const STATE_STUNNED := &"creature.state.stunned"
 
 const EVENT_IDLE_WANDER := &"creature.transition.idle_wander"
 const EVENT_WANDER_COMPLETE := &"creature.transition.wander_complete"
@@ -35,6 +39,16 @@ const EVENT_ECOLOGY_HUNT_CONTACT := &"creature.transition.ecology_hunt_contact"
 const EVENT_ECOLOGY_PREDATOR_THREAT := &"creature.transition.ecology_predator_threat"
 const EVENT_ECOLOGY_SLEEP_ENTRY := &"creature.transition.ecology_sleep_entry"
 const EVENT_ECOLOGY_DRINKING_ENTRY := &"creature.transition.ecology_drinking_entry"
+const EVENT_PACK_ASSIST := &"creature.transition.pack_assist"
+const EVENT_LOW_HEALTH_FLEE := &"creature.transition.low_health_flee"
+const EVENT_CHARGE_TELEGRAPH := &"creature.transition.charge_telegraph"
+const EVENT_CHARGE_BEGIN := &"creature.transition.charge_begin"
+const EVENT_CHARGE_STUN := &"creature.transition.charge_stun"
+const EVENT_STUN_COMPLETE := &"creature.transition.stun_complete"
+const EVENT_ATTACK_BEGIN := &"creature.transition.attack_begin"
+const EVENT_ATTACK_RECOVERY := &"creature.transition.attack_recovery"
+const EVENT_DAMAGE_RETALIATE := &"creature.transition.damage_retaliate"
+const EVENT_CAPTURE_BEGIN := &"creature.transition.capture_begin"
 
 const REASON_SUSPICION_CONFIRMED := &"creature.transition.suspicion_confirmed"
 const REASON_SUSPICION_LOST := &"creature.transition.suspicion_lost"
@@ -204,6 +218,42 @@ static func resolve(request: CreatureTransitionRequest) -> CreatureTransitionRes
 			if not is_finite(request.proposed_timer) or request.proposed_timer < DRINKING_ENTRY_DURATION_MIN or request.proposed_timer > DRINKING_ENTRY_DURATION_MAX:
 				return _invalid(request)
 			return _changed(request, STATE_DRINKING, EVENT_ECOLOGY_DRINKING_ENTRY, request.proposed_timer, CreatureTransitionResult.TargetAction.KEEP)
+		EVENT_PACK_ASSIST, EVENT_DAMAGE_RETALIATE:
+			if request.current_state_id == STATE_SLEEP or not _has_valid_target(request):
+				return _no_change(request)
+			return _changed(request, STATE_CHASE, request.event_id, 0.0, CreatureTransitionResult.TargetAction.SET)
+		EVENT_LOW_HEALTH_FLEE:
+			if request.current_state_id != STATE_CHASE:
+				return _no_change(request)
+			if not _is_positive_finite(request.proposed_timer):
+				return _invalid(request)
+			return _changed(request, STATE_FLEE, EVENT_LOW_HEALTH_FLEE, request.proposed_timer, CreatureTransitionResult.TargetAction.KEEP)
+		EVENT_CHARGE_TELEGRAPH:
+			if request.current_state_id != STATE_CHASE:
+				return _no_change(request)
+			if not _is_positive_finite(request.proposed_timer):
+				return _invalid(request)
+			return _changed(request, STATE_TELEGRAPH_CHARGE, EVENT_CHARGE_TELEGRAPH, request.proposed_timer, CreatureTransitionResult.TargetAction.KEEP)
+		EVENT_CHARGE_BEGIN:
+			return _exact_transition(request, STATE_TELEGRAPH_CHARGE, STATE_CHARGING, EVENT_CHARGE_BEGIN)
+		EVENT_CHARGE_STUN:
+			if request.current_state_id != STATE_CHARGING:
+				return _no_change(request)
+			if not _is_positive_finite(request.proposed_timer):
+				return _invalid(request)
+			return _changed(request, STATE_STUNNED, EVENT_CHARGE_STUN, request.proposed_timer, CreatureTransitionResult.TargetAction.KEEP)
+		EVENT_STUN_COMPLETE:
+			return _exact_transition(request, STATE_STUNNED, STATE_CHASE, EVENT_STUN_COMPLETE)
+		EVENT_ATTACK_BEGIN:
+			if request.current_state_id in [STATE_ATTACK, STATE_CAPTURING, STATE_STUNNED]:
+				return _no_change(request)
+			return _changed(request, STATE_ATTACK, EVENT_ATTACK_BEGIN, 0.0, CreatureTransitionResult.TargetAction.KEEP)
+		EVENT_ATTACK_RECOVERY:
+			return _exact_transition(request, STATE_ATTACK, STATE_CHASE, EVENT_ATTACK_RECOVERY)
+		EVENT_CAPTURE_BEGIN:
+			if request.current_state_id == STATE_CAPTURING:
+				return _no_change(request)
+			return _changed(request, STATE_CAPTURING, EVENT_CAPTURE_BEGIN, 0.0, CreatureTransitionResult.TargetAction.KEEP)
 		_:
 			return _invalid(request)
 
@@ -265,3 +315,14 @@ static func _natural_timeout(
 	if request.current_state_id != expected_state_id:
 		return _no_change(request)
 	return _changed(request, STATE_IDLE, reason_id, next_timer, CreatureTransitionResult.TargetAction.KEEP)
+
+
+static func _exact_transition(
+	request: CreatureTransitionRequest,
+	expected_state_id: StringName,
+	to_state_id: StringName,
+	reason_id: StringName
+) -> CreatureTransitionResult:
+	if request.current_state_id != expected_state_id:
+		return _no_change(request)
+	return _changed(request, to_state_id, reason_id, 0.0, CreatureTransitionResult.TargetAction.KEEP)

@@ -15,7 +15,9 @@ const SCENE_PATHS := {
 	&"building.workbench": "res://scenes/building_workbench.tscn",
 }
 
-static func from_legacy(legacy_id: String) -> StringName: return LEGACY_TO_ID.get(legacy_id, &"")
+static func from_legacy(legacy_id: String) -> StringName:
+	var candidate := StringName(legacy_id)
+	return candidate if is_supported(candidate) else LEGACY_TO_ID.get(legacy_id, &"")
 static func is_supported(building_id: StringName) -> bool: return LEGACY_TO_ID.values().has(building_id)
 
 static func instantiate(building_id: StringName) -> Node2D:

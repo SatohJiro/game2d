@@ -11,6 +11,7 @@ const SCHEMA_VERSION := 1
 
 
 static func create_empty(save_id: StringName, saved_at_unix: int) -> Dictionary:
+	var default_progression := PlayerProgressionState.create_legacy_default(1, 0)
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"save_id": String(save_id),
@@ -26,11 +27,12 @@ static func create_empty(save_id: StringName, saved_at_unix: int) -> Dictionary:
 			"thirst": 100.0,
 			"temperature": 50.0,
 			"active_pet_instance_id": "",
+			"progression_state": default_progression.to_dto(),
 		},
 		"inventory": {},
 		"pets": [],
 		"base": {"base_level": 1, "active_quest_id": "quest.base.survival", "claimed_quest_ids": []},
-		"world": {"clock_seconds": 0.0, "cycle_state": {"raid_triggered_this_cycle": false}, "world_boss_state": WorldBossState.new().to_dto(), "entity_deltas": [], "resource_deltas": []},
+		"world": {"clock_seconds": 0.0, "cycle_state": {"raid_triggered_this_cycle": false}, "world_boss_state": WorldBossState.new().to_dto(), "night_raid_state": NightRaidState.new().to_dto(), "entity_deltas": [], "resource_deltas": []},
 	}
 
 
@@ -79,6 +81,19 @@ static func _validate_player(value: Variant, errors: PackedStringArray) -> void:
 	var active_id := StringName(player.get("active_pet_instance_id", ""))
 	if not active_id.is_empty() and ContentId.domain_of(active_id) != &"pet":
 		errors.append("player.active_pet_instance_id must be empty or pet.*")
+	var has_progression := player.has("progression_state")
+	var progression := PlayerProgressionState.from_dto(player.get("progression_state")) if has_progression else PlayerProgressionState.create_legacy_default(int(player.get("level", 1)), int(player.get("exp", 0)))
+	if progression == null:
+		errors.append("player.progression_state must be coherent")
+	elif has_progression:
+		if progression.level != int(player.get("level", 0)) or progression.exp != int(player.get("exp", -1)) or progression.max_hp != int(player.get("max_hp", 0)):
+			errors.append("player progression must match level/exp/max_hp scalars")
+		if _is_finite_number(player.get("stamina")) and float(player["stamina"]) > progression.max_stamina:
+			errors.append("player.stamina must not exceed progression max_stamina")
+		if _is_finite_number(player.get("hunger")) and float(player["hunger"]) > progression.max_hunger:
+			errors.append("player.hunger must not exceed progression max_hunger")
+		if _is_finite_number(player.get("thirst")) and float(player["thirst"]) > progression.max_thirst:
+			errors.append("player.thirst must not exceed progression max_thirst")
 
 
 static func _validate_inventory(value: Variant, errors: PackedStringArray) -> void:
@@ -142,6 +157,9 @@ static func _validate_world(value: Variant, errors: PackedStringArray) -> void:
 			var boss_state := _parse_world_boss_state(world.get("world_boss_state"), cycle_state.boss_spawned)
 			if boss_state == null or (boss_state.lifecycle_id == WorldBossState.PENDING) == cycle_state.boss_spawned:
 				errors.append("world.world_boss_state must be valid and coherent with cycle state")
+			var raid_state := _parse_night_raid_state(world.get("night_raid_state"), cycle_state.raid_triggered_this_cycle, float(world["clock_seconds"]))
+			if raid_state == null or not raid_state.is_coherent(cycle_state.raid_triggered_this_cycle, float(world["clock_seconds"])):
+				errors.append("world.night_raid_state must be valid and coherent with cycle state")
 	if typeof(world.get("entity_deltas")) != TYPE_ARRAY:
 		errors.append("world.entity_deltas must be an Array")
 		return
@@ -171,6 +189,12 @@ static func _parse_world_boss_state(value: Variant, boss_spawned: bool) -> World
 	if value == null:
 		return WorldBossState.new(WorldBossState.DEFEATED, WorldBossState.INSTANCE_ID, 0, Vector2.ZERO) if boss_spawned else WorldBossState.new()
 	return WorldBossState.from_dto(value)
+
+
+static func _parse_night_raid_state(value: Variant, raid_triggered: bool, clock_seconds: float) -> NightRaidState:
+	if value == null:
+		return NightRaidState.new(NightRaidState.CLEARED, NightRaidState.ENCOUNTER_ID, int(floor(clock_seconds / NightRaidState.DAY_DURATION)), []) if raid_triggered else NightRaidState.new()
+	return NightRaidState.from_dto(value)
 
 
 static func _validate_base(value: Variant, errors: PackedStringArray) -> void:

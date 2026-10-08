@@ -31,6 +31,8 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 | G15 | UI/settings/accessibility | HUD/crafting modal prototype | Theme, navigation, scale/remap/reduced motion | U3 |
 | G16 | Save/load | Chưa có | Versioned atomic save + migration | U1/U6 |
 
+U2.1 chưa đổi luật chơi: world position được project deterministic sang chunk 1024×1024 và stable signed key để làm dependency cho streaming; runtime vẫn là scene tĩnh.
+
 ## Luật và acceptance criteria
 
 ### G01 — locomotion
@@ -137,6 +139,8 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - RecipeDefinition chứa input/output/station/time/unlock. Start order reserve nguyên liệu atomically.
 - Cancel/refund policy ghi trong recipe/station; complete không thể chạy hai lần.
 - Workbench, furnace, cooking pot và compost dùng CraftOrder chung với adapter capability.
+- U1.13b: 17 Player recipe dùng stable `recipe.*`, typed result và atomic shadow inventory transaction; insufficient/locked/stale source không mutate. Player chỉ commit gear/build adapter và presentation, balance/unlock/card order giữ nguyên.
+- U1.13c: charge, attack/recovery, pack assist, damage retaliation, low-health flee và capture entry dùng stable Creature transition events; stale/protected result không mutate, timing/balance và presentation giữ nguyên.
 - Acceptance: nguyên liệu thiếu không đổi state; save giữa chừng resume đúng; output đầy chuyển pending thay vì mất.
 
 ### G11 — building và base
@@ -144,7 +148,7 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - Preview biểu diễn valid/invalid; placement kiểm tra terrain, collision, bounds, cost và unlock.
 - Build commit trừ cost và spawn entity trong một transaction logic; cancel không tốn cost.
 - Building có stable instance ID, health, repair/dismantle policy và state riêng theo subtype.
-- U1.12e: chín placement reachable có stable subtype/instance identity; U1.12f–s giữ mutable state qua turret structure durability. Workbench health chưa persist.
+- U1.12e: chín placement reachable có stable subtype/instance identity; U1.12f–t giữ mutable state và durability của các subtype có health, gồm workbench.
 - Acceptance: không overlap vùng cấm; reload giữ transform/state; dismantle trả đúng bảng refund.
 
 ### G12 — progression và quests
@@ -197,6 +201,9 @@ Vòng chơi mục tiêu: **khám phá → thu thập/chiến đấu → thu ph�
 - U1.12ad: capture accepted phát `creature.removal.captured` trước despawn; world boss chuyển terminal đúng một lần và save/reload không respawn. Reject/duplicate/actor khác không đổi encounter.
 - U1.12ae: night raid có typed pending/active/cleared contract, cycle index và tối đa ba stable actor slot; chưa restore cho tới khi Main sở hữu defeat/capture removal lifecycle.
 - U1.12af: night raid spawn đúng ba owned actor sau khi resolve roll, duplicate trigger fail closed; chỉ defeat/captured removal của đúng slot/encounter được aggregate và roster rỗng chuyển CLEARED một lần. Chưa restore từ Save v1.
+- U1.12ag: save/load night raid giữ lifecycle và exact remaining slot/species/level/HP/position; ACTIVE không reroll hay phát banner/reward, CLEARED/PENDING không spawn, save cũ thiếu field không tự tạo encounter.
+- U1.12ai: progression contract khóa hai điểm stat mỗi level, deterministic EXP threshold, derived HP/stamina theo stat/gear và stable buff/equipment ID. Package chưa đổi gameplay hoặc Save v1.
+- U1.12aj: save/load giữ stat allocation, threshold, gear và needs buff/maxima; gear presentation/damage được derive từ stable ID, save cũ dùng starter defaults bảo thủ. Luật level/craft/combat không đổi.
 - U1.12b: 25 inventory key reachable trong core/crafting/farming/ranch/cooking đều project sang stable `item.*`; regression từng nhóm bảo đảm output gameplay hợp lệ không làm save thất bại. Unknown key vẫn bị từ chối nguyên khối.
 - U1.12c: rarity, trait và stance của từng pet dùng stable ID; save/load giữ metadata và command stance cho cả pet active lẫn inactive. Badge/name localized chỉ là presentation; roll, multiplier và hành vi pet không đổi.
 - U1.12d: Save v1 giữ base level, active stable quest ID và claimed quest IDs; state skip/mâu thuẫn hoặc localized title fail closed, apply không phát reward.
