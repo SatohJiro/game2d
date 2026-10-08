@@ -234,7 +234,7 @@ U2.2b hiện thực admission bằng đúng 9 placeholder Node và overlay F8; p
 ## U2.5 ambient population foundation
 
 - Ambient wild population có budget 10 actor do director registry sở hữu; boss và night raid không tính vào budget này.
-- Admission ưu tiên chunk hiện tại rồi chunk gần; species ambient chỉ gồm Flam, Slime, Mushroom và Beast. Dragon vẫn là boss/non-ambient.
+- Admission ưu tiên chunk hiện tại rồi chunk gần; species ambient do authored biome table quyết định (U2.8): `biome.paloria_meadow` gồm Flam, Slime, Mushroom và Beast với trọng số đều, level 1–3, 2 slot/chunk — tái tạo chính xác công thức legacy. Dragon vẫn là boss/non-ambient.
 - Cùng active chunks với population đủ budget không reroll actor khi timer, time bucket hoặc seed input đổi. Crossing loại actor thuộc chunk inactive và fill slot deterministic trong active 3×3.
 - Đây là transient population: capture/defeat cooldown và exact ambient actor state chưa persist qua Save/load.
 

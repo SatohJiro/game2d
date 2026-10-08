@@ -1,5 +1,25 @@
 # Checkpoint triển khai Paloria 3.0
 
+## U2.8 — authored biome tables
+
+Trạng thái: `VERIFIED` ngày 2026-10-08.
+
+### Mục tiêu và kết quả
+
+- `BiomeSpawnTable` data thuần (không logic): biome ID → weighted species pool, level range, slot budget; định danh `biome.<id>`.
+- Policy giữ deterministic: `pick_species`/`pick_level` là pure function của (table, entropy); biome lạ → fallback `DEFAULT_BIOME_ID` + `push_warning`, không crash; request chấp nhận mọi `biome.*` hợp lệ.
+- Bảng meadow duy nhất hiện tại tái tạo bit-for-bit công thức legacy (weights [1,1,1,1], level 1–3, 2 slot/chunk).
+- Không đổi slot identity/cooldown/save schema.
+
+### Validation và bàn giao
+
+- Baseline full gate: pass bằng Godot 4.7.2 headless, 49 Markdown files và toàn bộ checks xanh.
+- `tools/validate_biome_spawn_table.gd` pass: table lookup/validity, weighted pick 75/25 deterministic, bit-for-bit reproduction qua sweep chunk/slot/bucket/seed (so với FNV-1a reimplement trong test), unknown biome fallback, invalid domain → INVALID, Main integration (spawn đúng pool meadow, đúng slot budget).
+- Full gate cuối: pass (headless editor load, 27 validator gồm biome table mới, main-scene smoke). Strict scan `build/checks` sạch `SCRIPT ERROR`/`Parse Error`/`ERROR:` (chỉ có WARNING expected từ test fallback); `git diff --check` sạch.
+- File mới: `systems/world/biome_spawn_table.gd`, `tools/validate_biome_spawn_table.gd` (+ `.uid`); sửa `systems/world/ambient_spawn_policy.gd` (bỏ SPECIES/SLOTS_PER_CHUNK cứng), `tools/check_project.ps1`, FEATURES/roadmap/CHECKPOINT/NEXT_UPDATE_PROMPT.
+- Rollback: xóa 2 file mới, revert policy/validator/docs (git revert commit này).
+- Package kế tiếp: U2.9 static content migration (world-building) theo `NEXT_UPDATE_PROMPT.md`.
+
 ## U2.7 — ambient spawn persistent cooldown/delta
 
 Trạng thái: `VERIFIED` ngày 2026-10-08.

@@ -142,8 +142,12 @@ Invoke-GodotCheck -Name 'Minimap validation' -LogPath $minimapLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_minimap.gd')
 )
 $ambientCooldownLog = Join-Path $LogDirectory 'ambient-cooldown-validation.log'
+$biomeTableLog = Join-Path $LogDirectory 'biome-table-validation.log'
 Invoke-GodotCheck -Name 'Ambient cooldown validation' -LogPath $ambientCooldownLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_ambient_cooldown.gd')
+)
+Invoke-GodotCheck -Name 'Biome table validation' -LogPath $biomeTableLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_biome_spawn_table.gd')
 )
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')

@@ -1,14 +1,22 @@
 class_name AmbientSpawnPolicy
 extends RefCounted
 
-const SPECIES: Array[StringName] = [
-	LegacySpeciesAdapter.FLAM_ID,
-	LegacySpeciesAdapter.SLIME_ID,
-	LegacySpeciesAdapter.MUSHROOM_ID,
-	LegacySpeciesAdapter.BEAST_ID,
-]
-const SLOTS_PER_CHUNK := 2
 const POSITION_MARGIN := 160
+
+
+static func pick_species(table: BiomeSpawnTable, entropy: int) -> StringName:
+	var total := table.total_weight()
+	var roll := absi(entropy) % total
+	var cumulative := 0
+	for i in table.species_ids.size():
+		cumulative += table.species_weights[i]
+		if roll < cumulative:
+			return table.species_ids[i]
+	return table.species_ids[table.species_ids.size() - 1]
+
+
+static func pick_level(table: BiomeSpawnTable, entropy: int) -> int:
+	return table.level_min + (absi(entropy) / 17) % (table.level_max - table.level_min + 1)
 
 
 static func resolve(request: AmbientSpawnRequest, applied_revision: int) -> AmbientSpawnResult:
@@ -17,6 +25,9 @@ static func resolve(request: AmbientSpawnRequest, applied_revision: int) -> Ambi
 	if request.chunk_revision < applied_revision:
 		return AmbientSpawnResult.new(AmbientSpawnResult.Status.STALE, [], [], [], applied_revision)
 	if request.chunk_revision > applied_revision + 1:
+		return AmbientSpawnResult.new(AmbientSpawnResult.Status.INVALID, [], [], [], applied_revision)
+	var table := BiomeSpawnTable.get_for_biome(request.biome_id)
+	if table == null or not table.is_valid():
 		return AmbientSpawnResult.new(AmbientSpawnResult.Status.INVALID, [], [], [], applied_revision)
 	var active_lookup: Dictionary = {}
 	for key in request.active_keys: active_lookup[key] = true
@@ -36,12 +47,12 @@ static func resolve(request: AmbientSpawnRequest, applied_revision: int) -> Ambi
 	var blocked_lookup: Dictionary = {}
 	for blocked_id in request.blocked_instance_ids: blocked_lookup[blocked_id] = true
 	for key in _priority_keys(request.active_keys, request.center):
-		for slot in range(SLOTS_PER_CHUNK):
+		for slot in range(table.slots_per_chunk):
 			if next_ids.size() >= request.budget: break
 			var instance_id := _instance_id(key, slot)
 			if request.existing_chunks.has(instance_id): continue
 			if blocked_lookup.has(instance_id): continue
-			var spec := _create_spec(key, slot, request)
+			var spec := _create_spec(key, slot, request, table)
 			if spec == null or not spec.is_valid():
 				return AmbientSpawnResult.new(AmbientSpawnResult.Status.INVALID, [], [], [], applied_revision)
 			admitted.append(spec)
@@ -52,7 +63,7 @@ static func resolve(request: AmbientSpawnRequest, applied_revision: int) -> Ambi
 
 
 static func _is_valid_request(request: AmbientSpawnRequest) -> bool:
-	if request == null or request.biome_id != WorldChunkCatalog.DEFAULT_BIOME_ID or request.time_bucket < 0 or request.time_bucket > 3 or request.budget < 0 or request.budget > 64 or request.chunk_revision < 1:
+	if request == null or ContentId.domain_of(request.biome_id) != &"biome" or request.time_bucket < 0 or request.time_bucket > 3 or request.budget < 0 or request.budget > 64 or request.chunk_revision < 1:
 		return false
 	var seen: Dictionary = {}
 	for key in request.active_keys:
@@ -89,15 +100,15 @@ static func _instance_id(chunk_key: StringName, slot: int) -> StringName:
 	return StringName("ambient.%s_s%d" % [String(chunk_key).trim_prefix("chunk.").replace(".", "_"), slot])
 
 
-static func _create_spec(chunk_key: StringName, slot: int, request: AmbientSpawnRequest) -> AmbientSpawnSpec:
+static func _create_spec(chunk_key: StringName, slot: int, request: AmbientSpawnRequest, table: BiomeSpawnTable) -> AmbientSpawnSpec:
 	var parsed: Array[Vector2i] = []
 	if not ChunkCoordinate.try_parse_key(chunk_key, parsed): return null
 	var entropy := _stable_entropy("%s|%s|%s|%s" % [chunk_key, slot, request.time_bucket, request.seed])
 	var usable_x := ChunkCoordinate.CHUNK_SIZE.x - POSITION_MARGIN * 2
 	var usable_y := ChunkCoordinate.CHUNK_SIZE.y - POSITION_MARGIN * 2
 	var local := Vector2(POSITION_MARGIN + entropy % usable_x, POSITION_MARGIN + (entropy / 97) % usable_y)
-	var species_id := SPECIES[entropy % SPECIES.size()]
-	var level := 1 + (entropy / 17) % 3
+	var species_id := pick_species(table, entropy)
+	var level := pick_level(table, entropy)
 	return AmbientSpawnSpec.new(_instance_id(chunk_key, slot), chunk_key, species_id, ChunkCoordinate.world_origin(parsed[0]) + local, level)
 
 
