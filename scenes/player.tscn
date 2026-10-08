@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_play"]
-[ext_resource type="Texture2D" path="res://assets/hunter/hunter_sheet.png" id="2_sheet"]
+[ext_resource type="Texture2D" path="res://assets/hero/hero_sheet.png" id="2_sheet"]
 [ext_resource type="Texture2D" path="res://assets/fx/shadow.png" id="3_shadow"]
 [ext_resource type="Texture2D" path="res://assets/items/sword.png" id="4_sword"]
 

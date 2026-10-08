@@ -159,6 +159,7 @@ $attackTimingLog = Join-Path $LogDirectory 'attack-timing-validation.log'
 $townGreyboxLog = Join-Path $LogDirectory 'town-greybox-validation.log'
 $townArtLog = Join-Path $LogDirectory 'town-art-validation.log'
 $townAtmosphereLog = Join-Path $LogDirectory 'town-atmosphere-validation.log'
+$heroArtLog = Join-Path $LogDirectory 'hero-art-validation.log'
 Invoke-GodotCheck -Name 'Static content validation' -LogPath $staticContentLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_static_content.gd')
 )
@@ -188,6 +189,9 @@ Invoke-GodotCheck -Name 'Town art validation' -LogPath $townArtLog -Arguments @(
 )
 Invoke-GodotCheck -Name 'Town atmosphere validation' -LogPath $townAtmosphereLog -Arguments @(
 	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_town_atmosphere.gd')
+)
+Invoke-GodotCheck -Name 'Hero art validation' -LogPath $heroArtLog -Arguments @(
+	'--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\validate_hero_art.gd')
 )
 Invoke-GodotCheck -Name 'Main scene smoke' -LogPath $smokeLog -Arguments @(
     '--headless', '--path', $ProjectPath, '--script', (Join-Path $ProjectPath 'tools\smoke_main.gd')

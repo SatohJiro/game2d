@@ -6,11 +6,11 @@ Generated: 2026-10-08
 
 ## Gate status
 
-- Source assets: 185
-- Referenced by current scripts/scenes: 68
-- Unreferenced: 117
+- Source assets: 187
+- Referenced by current scripts/scenes: 83
+- Unreferenced: 104
 - Duplicate hash groups: 2 (16 files)
-- Verified provenance: 80
+- Verified provenance: 82
 - Quarantined/unknown: 105
 
 `VERIFIED` assets are original project-generated content (CC0-1.0) or have a provenance receipt; they are cleared for distributable builds.
@@ -23,13 +23,14 @@ Generated: 2026-10-08
 | _root | 3 | 0 | 10171 |
 | buildings | 12 | 10 | 4433 |
 | fx | 10 | 9 | 9160 |
+| hero | 2 | 0 | 1881 |
 | hunter | 9 | 2 | 34812 |
 | items | 30 | 21 | 14261 |
 | monsters | 6 | 5 | 21381 |
 | music | 2 | 1 | 1300488 |
 | sfx | 8 | 8 | 134850 |
 | tilesets | 86 | 12 | 316386 |
-| town | 19 | 0 | 15405 |
+| town | 19 | 15 | 15405 |
 
 ## Exact duplicate groups
 
