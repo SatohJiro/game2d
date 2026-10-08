@@ -102,3 +102,10 @@ static func anchor_by_id(anchor_id: StringName) -> Dictionary:
 			if (anchor as Dictionary)["id"] == anchor_id:
 				return anchor
 	return {}
+
+
+static func district_at(world_position: Vector2) -> StringName:
+	for district in DISTRICTS:
+		if ((district as Dictionary)["rect"] as Rect2).has_point(world_position):
+			return (district as Dictionary)["id"]
+	return &""

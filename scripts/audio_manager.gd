@@ -28,17 +28,17 @@ func _ready() -> void:
 	# Setup SFX players
 	for i in range(POOL_SIZE):
 		var asp = AudioStreamPlayer.new()
-		asp.bus = &"Master"
+		asp.bus = &"SFX"
 		add_child(asp)
 		sfx_players.append(asp)
 	
 	# Setup BGM player
 	music_player = AudioStreamPlayer.new()
-	music_player.bus = &"Master"
+	music_player.bus = &"Music"
 	music_player.volume_db = -8.0
 	add_child(music_player)
-	if DisplayServer.get_name() != "headless":
-		_play_music_internal("res://assets/music/adventure_begin.ogg")
+	# Background music is driven by AudioDirector (AT-E); the legacy
+	# auto-play is retired so cues never fight the director.
 
 
 func _exit_tree() -> void:

@@ -324,7 +324,8 @@ func _process(delta: float) -> void:
 	day_time += delta
 	var progress = fmod(day_time / day_duration, 1.0)
 	lighting_director.update_clock(progress, GameSettings.reduce_motion, delta)
-	weather_director.update_clock(day_time, String(current_save_id), GameSettings.reduce_motion, delta)
+	var weather := weather_director.update_clock(day_time, String(current_save_id), GameSettings.reduce_motion, delta)
+	_tick_audio_director(progress, weather, delta)
 	
 	# Atmosphere: Wind sway on chunk static decorations (U2.9: decorations live
 	# under admitted chunk nodes and unload with them).
@@ -501,8 +502,28 @@ func update_chunk_admission(world_position: Vector2) -> bool:
 	chunk_debug_overlay.render_snapshot(chunk_admission.create_debug_snapshot())
 	return true
 
-func _build_town_for_delta(chunk_delta: ChunkAdmissionDelta) -> void:
-	if town_builder == null:
+var _audio_tick := 0.0
+
+
+func _tick_audio_director(progress: float, weather: int, delta: float) -> void:
+	_audio_tick += delta
+	if _audio_tick < 1.0:
+		return
+	_audio_tick = 0.0
+	if AudioDirector.instance == null:
+		return
+	var danger := night_raid_state.lifecycle_id == NightRaidState.ACTIVE \
+		or world_boss_state.lifecycle_id == WorldBossState.ACTIVE
+	var ctx := MusicContext.snapshot(
+		TownDistrictDB.district_at(player.global_position),
+		WorldClock.phase_name(WorldClock.phase_for_progress(progress)),
+		weather,
+		danger
+	)
+	(AudioDirector.instance as Node).update_context(ctx)
+
+
+func _build_town_for_delta(chunk_delta: ChunkAdmissionDelta) -> void:	if town_builder == null:
 		return
 	for key in chunk_delta.admitted_keys:
 		var chunk_node := chunk_scene_adapter.get_node_for_key(key)

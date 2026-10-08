@@ -6,11 +6,11 @@ Generated: 2026-10-08
 
 ## Gate status
 
-- Source assets: 187
-- Referenced by current scripts/scenes: 83
-- Unreferenced: 104
+- Source assets: 200
+- Referenced by current scripts/scenes: 84
+- Unreferenced: 116
 - Duplicate hash groups: 2 (16 files)
-- Verified provenance: 82
+- Verified provenance: 95
 - Quarantined/unknown: 105
 
 `VERIFIED` assets are original project-generated content (CC0-1.0) or have a provenance receipt; they are cleared for distributable builds.
@@ -21,10 +21,11 @@ Generated: 2026-10-08
 | Category | Files | Referenced | Bytes |
 |---|---:|---:|---:|
 | _root | 3 | 0 | 10171 |
+| audio | 13 | 0 | 1125946 |
 | buildings | 12 | 10 | 4433 |
 | fx | 10 | 9 | 9160 |
-| hero | 2 | 0 | 1881 |
-| hunter | 9 | 2 | 34812 |
+| hero | 2 | 2 | 1881 |
+| hunter | 9 | 1 | 34812 |
 | items | 30 | 21 | 14261 |
 | monsters | 6 | 5 | 21381 |
 | music | 2 | 1 | 1300488 |

@@ -6,23 +6,23 @@ Generated: 2026-10-08
 
 ## Gate status
 
-- Assets classified: 187/187
-- Runtime P0 assets: 83
-- Verified (distributable): 82
+- Assets classified: 200/200
+- Runtime P0 assets: 84
+- Verified (distributable): 95
 
 ## By action
 
 | Action | Files | Meaning |
 |---|---:|---|
 | DEDUP_AFTER_REFERENCE_AUDIT | 1 | Choose canonical copy only after reference audit. |
-| HOLD_FOR_REVIEW | 29 | Potential future content; decide use before removal. |
+| HOLD_FOR_REVIEW | 30 | Potential future content; decide use before removal. |
 | REMOVE_AFTER_REFERENCE_AUDIT | 68 | Scratch/preview candidate; remove in a separate reversible package. |
-| VERIFY_OR_REPLACE | 89 | Verify author/source/license; otherwise create or admit a replacement. |
+| VERIFY_OR_REPLACE | 101 | Verify author/source/license; otherwise create or admit a replacement. |
 
 ## By priority
 
 | Priority | Files |
 |---|---:|
-| P0 | 83 |
-| P2 | 30 |
-| P3 | 74 |
+| P0 | 84 |
+| P2 | 31 |
+| P3 | 85 |

@@ -18,6 +18,8 @@ boot_splash/bg_color=Color(0.12, 0.14, 0.18, 1)
 
 [autoload]
 
+AudioDirector="*res://scripts/audio_director.gd"
+
 AudioManager="*res://scripts/audio_manager.gd"
 
 [display]
