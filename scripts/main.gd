@@ -20,7 +20,6 @@ var spawn_timer: float = 3.0
 
 var day_time: float = 0.0
 var day_duration: float = 180.0
-var ambient_modulate: CanvasModulate = null
 var boss_spawned: bool = false
 var boss_timer: float = 50.0
 var world_boss_state := WorldBossState.new()
@@ -34,6 +33,9 @@ var save_coordinator: RefCounted
 var chunk_admission := ChunkAdmissionCoordinator.new()
 var chunk_scene_adapter: ChunkSceneAdapter
 var town_builder: TownBuilder
+var lighting_director: LightingDirector
+var weather_director: WeatherDirector
+var current_save_id: StringName = &"slot_1"
 var chunk_navigation_adapter: ChunkNavigationAdapter
 var ambient_spawn_adapter: AmbientSpawnAdapter
 var chunk_discovery_adapter := ChunkDiscoveryAdapter.new()
@@ -56,8 +58,6 @@ func _ready() -> void:
 	GameSettings.apply()
 	hud.add_to_group("hud")
 	
-	ambient_modulate = CanvasModulate.new()
-	add_child(ambient_modulate)
 	var chunk_container := Node2D.new()
 	chunk_container.name = "ChunkPlaceholders"
 	add_child(chunk_container)
@@ -65,6 +65,12 @@ func _ready() -> void:
 	town_builder = TownBuilder.new()
 	town_builder.name = "TownBuilder"
 	add_child(town_builder)
+	lighting_director = LightingDirector.new()
+	lighting_director.name = "LightingDirector"
+	add_child(lighting_director)
+	weather_director = WeatherDirector.new()
+	weather_director.name = "WeatherDirector"
+	add_child(weather_director)
 	chunk_navigation_adapter = ChunkNavigationAdapter.new(get_world_2d().navigation_map)
 	ambient_spawn_adapter = AmbientSpawnAdapter.new(creature_container, CREATURE_SCENE)
 	chunk_debug_overlay = ChunkDebugOverlay.new()
@@ -139,6 +145,7 @@ func save_game_to_slot(slot_id: StringName, saved_at_unix: int, make_current: bo
 	save_coordinator = save_slot_manager.coordinator_for(slot_id)
 	if make_current:
 		current_save_slot = slot_id
+		current_save_id = SaveSlotManager.save_id_for_slot(slot_id)
 	return save_game(saved_at_unix, SaveSlotManager.save_id_for_slot(slot_id))
 
 func load_game_from_slot(slot_id: StringName) -> RefCounted:
@@ -146,6 +153,7 @@ func load_game_from_slot(slot_id: StringName) -> RefCounted:
 		return SaveCoordinatorResult.new(SaveCoordinatorResult.Status.REPOSITORY_FAILED)
 	save_coordinator = save_slot_manager.coordinator_for(slot_id)
 	current_save_slot = slot_id
+	current_save_id = SaveSlotManager.save_id_for_slot(slot_id)
 	return load_game()
 
 func delete_save_slot(slot_id: StringName) -> bool:
@@ -295,7 +303,7 @@ func _update_context_prompt() -> void:
 func apply_world_clock(clock_seconds: float) -> bool:
 	if not is_finite(clock_seconds) or clock_seconds < 0.0: return false
 	day_time = clock_seconds
-	update_ambient_light(fmod(day_time / day_duration, 1.0))
+	lighting_director.update_clock(fmod(day_time / day_duration, 1.0), GameSettings.reduce_motion, 1.0)
 	return true
 
 func apply_world_cycle(clock_seconds: float, raid_triggered: bool, restored_boss_spawned: bool = false, restored_boss_timer: float = WorldCycleState.BOSS_SPAWN_SECONDS, restored_spawn_timer: float = WorldCycleState.INITIAL_AMBIENT_SPAWN_SECONDS) -> bool:
@@ -315,7 +323,8 @@ func _process(delta: float) -> void:
 	
 	day_time += delta
 	var progress = fmod(day_time / day_duration, 1.0)
-	update_ambient_light(progress)
+	lighting_director.update_clock(progress, GameSettings.reduce_motion, delta)
+	weather_director.update_clock(day_time, String(current_save_id), GameSettings.reduce_motion, delta)
 	
 	# Atmosphere: Wind sway on chunk static decorations (U2.9: decorations live
 	# under admitted chunk nodes and unload with them).
@@ -356,25 +365,6 @@ func _process(delta: float) -> void:
 		boss_timer -= delta
 		if boss_timer <= 0.0:
 			spawn_boss()
-
-func update_ambient_light(progress: float) -> void:
-	if not ambient_modulate:
-		return
-	
-	var col = Color.WHITE
-	if progress < 0.45:
-		col = Color(1.0, 1.0, 1.0)
-	elif progress < 0.65:
-		var t = (progress - 0.45) / 0.2
-		col = Color.WHITE.lerp(Color(1.0, 0.78, 0.55), t)
-	elif progress < 0.88:
-		var t = (progress - 0.65) / 0.23
-		col = Color(1.0, 0.78, 0.55).lerp(Color(0.42, 0.48, 0.75), t)
-	else:
-		var t = (progress - 0.88) / 0.12
-		col = Color(0.42, 0.48, 0.75).lerp(Color.WHITE, t)
-	
-	ambient_modulate.color = col
 
 func update_fireflies(progress: float, delta: float) -> void:
 	var is_night = progress >= 0.65 and progress < 0.95
